@@ -163,8 +163,8 @@ intentionally excluded because they mutate external authentication state.
 | Preliminary forecast | 3–6 active hours; about 3.5–7 total elapsed hours across 1–2 sessions; low-to-medium confidence |
 | Calibrated complete-milestone forecast | 2.5–5 active hours; 15–35 minutes of local commands; about 3–6 total elapsed hours; medium confidence |
 | Calibrated Milestone 6A forecast | 1.5–3 active hours; 8–20 minutes of local commands; about 1.75–3.5 total elapsed hours; medium confidence |
-| Observed Milestone 6A execution | Approximately 35–55 active minutes through implementation, security review, expanded native tests, documentation, and checkpoint preparation; approval delay excluded |
-| Observed local command time | Approximately 1–2 minutes across dependency-expanded checking and warm targeted/full Rust gates; file reads excluded |
+| Observed Milestone 6A execution | Approximately 45–70 active minutes through implementation, security review, expanded native tests, documentation, final validation, and checkpoint publication; approval delay excluded |
+| Observed local command time | Approximately 3–5 minutes across dependency-expanded checking, targeted/full Rust gates, and repeated full repository validation after correcting stale expectations; file reads excluded |
 | User approval/waiting time | Manual model, reasoning, audit, and start confirmations occurred before implementation; waiting time was excluded |
 | Sessions | One active native-core work period; frontend/integration work remains a separately gated checkpoint |
 | Usage intensity | High model/tool activity; moderate CPU and low memory pressure |
