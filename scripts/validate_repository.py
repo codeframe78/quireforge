@@ -44,19 +44,32 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/desktop-bootstrap.json",
     "apps/desktop/fixtures/codex-model-list-response.json",
     "apps/desktop/fixtures/codex-runtime.json",
+    "apps/desktop/fixtures/codex-auth.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/manifest.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeParams.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeResponse.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/ModelListParams.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/ModelListResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/AccountLoginCompletedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/AccountUpdatedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/CancelLoginAccountParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/CancelLoginAccountResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/GetAccountParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/GetAccountResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/LoginAccountParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/LoginAccountResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/LogoutAccountResponse.json",
     "apps/desktop/package.json",
     "apps/desktop/src/App.tsx",
     "apps/desktop/src/lib/bridge.ts",
+    "apps/desktop/src/lib/auth.ts",
     "apps/desktop/src/lib/codex.ts",
     "apps/desktop/src-tauri/Cargo.toml",
     "apps/desktop/src-tauri/capabilities/main.json",
     "apps/desktop/src-tauri/tauri.conf.json",
     "apps/desktop/src-tauri/src/codex/app_server.rs",
+    "apps/desktop/src-tauri/src/codex/auth/mod.rs",
+    "apps/desktop/src-tauri/src/codex/auth/types.rs",
     "apps/desktop/src-tauri/src/codex/backend.rs",
     "apps/desktop/src-tauri/src/codex/probe.rs",
     "docs/ARCHITECTURE.md",
@@ -107,6 +120,11 @@ IDENTITY_EXPECTATIONS = {
     "apps/desktop/src-tauri/src/lib.rs": (
         "codex_runtime_probe",
         "CodexRuntimeService::default()",
+        "codex_auth_status",
+        "codex_auth_start",
+        "codex_auth_cancel",
+        "codex_auth_logout",
+        "CodexAuthService::default()",
     ),
 }
 
@@ -238,6 +256,15 @@ def validate() -> list[str]:
         expected_schema_paths = {
             "v1/InitializeParams.json",
             "v1/InitializeResponse.json",
+            "v2/AccountLoginCompletedNotification.json",
+            "v2/AccountUpdatedNotification.json",
+            "v2/CancelLoginAccountParams.json",
+            "v2/CancelLoginAccountResponse.json",
+            "v2/GetAccountParams.json",
+            "v2/GetAccountResponse.json",
+            "v2/LoginAccountParams.json",
+            "v2/LoginAccountResponse.json",
+            "v2/LogoutAccountResponse.json",
             "v2/ModelListParams.json",
             "v2/ModelListResponse.json",
         }
@@ -272,6 +299,20 @@ def validate() -> list[str]:
         for forbidden_field in ("accountId", "codexHome", "installationId", "userAgent"):
             if forbidden_field in serialized_fixture:
                 errors.append(f"Codex runtime fixture contains raw field: {forbidden_field}")
+
+    auth_fixture_path = ROOT / "apps/desktop/fixtures/codex-auth.json"
+    if auth_fixture_path.is_file():
+        auth_fixture = json.loads(auth_fixture_path.read_text(encoding="utf-8"))
+        serialized_fixture = json.dumps(auth_fixture)
+        for forbidden_field in (
+            "accountId",
+            "email",
+            "loginId",
+            "accessToken",
+            "apiKey",
+        ):
+            if forbidden_field in serialized_fixture:
+                errors.append(f"Codex auth fixture contains raw field: {forbidden_field}")
 
     return errors
 
