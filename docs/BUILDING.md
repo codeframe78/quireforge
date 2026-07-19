@@ -1,7 +1,8 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and Milestone 3 desktop scaffold can be
-developed and built locally. No installable application package exists.
+Status: the Milestone 2 website and Milestones 3–4 desktop shell and Codex
+process adapter can be developed and built locally. No installable application
+package exists.
 
 ## Supported development baseline
 
@@ -94,9 +95,26 @@ pnpm desktop:preview
 ```
 
 Browser preview mode cannot call native IPC and labels itself accordingly.
-The production Tauri window exposes one versioned `desktop_bootstrap` command;
-no filesystem, shell, opener, process, Codex, or project command is present in
-Milestone 3.
+The production Tauri window exposes `desktop_bootstrap` and the fixed-purpose
+`codex_runtime_probe`. The latter accepts no arguments and may run only
+`codex --version` plus a bounded local app-server initialize/`model/list`
+exchange. No arbitrary filesystem, shell, opener, process, project, login,
+thread, turn, configuration, or integration command is exposed.
+
+## Refresh the reviewed Codex schemas
+
+With the intended Codex CLI active:
+
+```bash
+pnpm codex:schema
+```
+
+The generator writes a versioned fixture directory containing only initialize
+and `model/list` schemas plus SHA-256 hashes. It does not modify Codex
+configuration or sessions. Never accept a refresh mechanically: inspect the
+CLI version, generated diff, field semantics, adapter normalization, tests, and
+compatibility documentation before committing it. Do not commit the complete
+multi-megabyte experimental schema bundle.
 
 ## Full non-browser validation
 

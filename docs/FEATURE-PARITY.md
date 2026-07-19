@@ -12,8 +12,8 @@ Codex commands, protocol types, integration IDs, or compatibility boundaries.
 | Projects linked to local folders | Local project gives chats one or more folders | Absolute `cwd`, `--cd`, sandbox roots | Project DB, native picker, identity checks | M6 / feasible |
 | Original directory used in place | Project folder is working directory | App-server/CLI cwd | Never copy/import; relink and detach UX | M6 / feasible |
 | Multiple folder roots | Public project docs say one or more folders | Writable roots / `--add-dir` | Persistent association model and approvals | M6 / schema-first |
-| Model and reasoning picker | Desktop exposes available choices | `model/list` | Capability-driven controls | M4/M7 / feasible |
-| Streaming conversation | Rich item and event stream | App-server v2 | Event normalization/rendering | M4/M7 / feasible |
+| Model and reasoning picker | Desktop exposes available choices | `model/list` | Discovery normalized in M4; controls remain M7 | M4 adapter complete / M7 UI planned |
+| Streaming conversation | Rich item and event stream | App-server v2 | Base event contract in M4; turn normalization/rendering remains M7 | M4 boundary complete / M7 planned |
 | Stop task | Interactive interruption | `turn/interrupt` | Task controls and recovery | M7 / feasible |
 | Resume/fork/archive/restore | Documented conversation organization | Thread RPCs and CLI commands | Project association and UX | M8 / feasible |
 | Search conversations | Search past chats/projects | Stable title/cwd filters; deeper paging mixed | Local metadata index without copying authoritative content | M8 / partial |

@@ -1,6 +1,7 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery
+Status: Milestone 0 discovery with the Milestone 4 versioned runtime-probe
+subset implemented and validated locally
 Observed: 2026-07-19
 Installed CLI: `codex-cli 0.144.6`
 Platform: Ubuntu 26.04 LTS, x86_64, GNOME Wayland
@@ -96,6 +97,26 @@ The desktop application will use a versioned `CodexBackend` boundary:
 
 Raw JSON-RPC and CLI JSON must never cross into the frontend. Each adapter maps
 data into normalized domain events and capability records.
+
+### Implemented Milestone 4 subset
+
+The current adapter intentionally implements only the smallest non-billable
+compatibility slice:
+
+- fixed `codex --version` discovery with bounded output and strict version
+  normalization;
+- owned `codex app-server --listen stdio://` lifecycle;
+- truthful `initialize` metadata and correlated `model/list` request;
+- normalized model IDs, display names, default marker, and advertised reasoning
+  efforts;
+- explicit ready, degraded, and unavailable capability states;
+- deterministic mock/failure processes and a hashed generated-schema subset.
+
+The process receives no user path, prompt, arbitrary argument, or frontend
+input. Raw notifications, user-agent, Codex-home, account, installation,
+remote-control, and RPC error payloads are discarded. Authentication, thread,
+turn, approval, command, filesystem, integration, and configuration methods
+remain unavailable through QuireForge until their milestones.
 
 ## Local working-directory behavior
 

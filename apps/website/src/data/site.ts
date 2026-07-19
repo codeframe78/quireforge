@@ -299,7 +299,7 @@ export const sitePages: SitePage[] = [
     title: "Twenty-one gated milestones, one reviewable step at a time.",
     description:
       "QuireForge is built milestone by milestone, with model selection, acceptance criteria, tests, documentation, review, and explicit approval for external actions.",
-    status: "Milestone 3 complete locally · Milestone 4 next",
+    status: "Milestone 4 complete locally · Milestone 5 next",
     sections: [
       {
         heading: "Completed locally",
@@ -308,18 +308,16 @@ export const sitePages: SitePage[] = [
           "Milestone 1: permanent identity reconciliation and open-source governance",
           "Milestone 2: brand consumption, Astro foundation, responsive layout, accessibility, and Cloudflare-compatible static output",
           "Milestone 3: Tauri, React, TypeScript, and Rust desktop scaffold with typed IPC and local Wayland verification",
+          "Milestone 4: supervised Codex app-server probe, normalized runtime contracts, deterministic mocks, and bounded failure recovery",
         ],
       },
       {
         heading: "Next gated milestone",
-        items: [
-          "Milestone 4: versioned Codex process adapter and normalized event contracts",
-        ],
+        items: ["Milestone 5: Codex-managed authentication and onboarding"],
       },
       {
         heading: "Later",
         items: [
-          "Milestone 5: Codex-managed authentication and onboarding",
           "Milestone 6: direct local-directory attachment",
           "Milestones 13–14: integration discovery and management",
           "Milestones 19–20: packages, approved deployment, and beta release",
@@ -444,7 +442,7 @@ export const sitePages: SitePage[] = [
       {
         heading: "Can I install it today?",
         paragraphs: [
-          "Not yet. The website and desktop scaffold are locally verified, but neither an AppImage nor a Debian package has been produced. The downloads page will remain explicit until verified packages exist.",
+          "Not yet. The website, desktop scaffold, and non-billable Codex runtime probe are locally verified, but neither an AppImage nor a Debian package has been produced. The downloads page will remain explicit until verified packages exist.",
         ],
       },
       {

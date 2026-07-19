@@ -1,9 +1,9 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the Milestone 2 website foundation
-and Milestone 3 desktop scaffold implemented locally. Codex, persistence,
-project, Git, terminal, and integration interfaces remain subject to validation
-in their implementation milestones.
+and Milestones 3–4 desktop scaffold and Codex process adapter implemented
+locally. Authentication, persistence, project, Git, terminal, and integration
+interfaces remain subject to validation in their implementation milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -62,10 +62,33 @@ fixture in their contract tests.
 
 The main-window capability grants no plugin permissions. No filesystem, shell,
 opener, process, Codex, project, Git, database, or integration command exists in
-the scaffold. Browser preview mode reports that native IPC is unavailable
-instead of simulating success. The window enables the accepted GTK application
-ID, and a local GNOME Wayland launch verified ownership of
+the Milestone 3 scaffold. Browser preview mode reports that native IPC is
+unavailable instead of simulating success. The window enables the accepted GTK
+application ID, and a local GNOME Wayland launch verified ownership of
 `io.github.codeframe78.QuireForge` on the session bus.
+
+### Milestone 4 implementation boundary
+
+The native core now exposes the fixed-purpose `codex_runtime_probe` command. It
+accepts no user input, paths, commands, environment values, or credentials. A
+serialized `CodexRuntimeService` caches one normalized result per application
+run so React development effects cannot create duplicate app-server children.
+
+The adapter invokes only `codex --version`, starts `codex app-server --listen
+stdio://`, initializes with truthful QuireForge client metadata, and requests
+`model/list`. JSONL messages are size- and time-bounded, responses are
+correlated by numeric request ID, server requests fail closed, and unrelated
+notification payloads are discarded. User-agent, Codex-home, account,
+installation, remote-control, and raw error payloads are never retained or
+returned to the frontend. Closing or killing the owned child is followed by a
+wait, including timeout and early-exit paths.
+
+Only the initialize and `model/list` portions of the installed CLI's generated
+schema are committed with hashes. Runtime models and reasoning efforts always
+come from the live supported catalog; the sanitized fixture is a deterministic
+test contract, not a hardcoded production catalog. Authentication, threads,
+turns, approvals, project working directories, Codex configuration writes, and
+session persistence remain excluded.
 
 ## Application layers
 
@@ -84,15 +107,18 @@ processes. Long-running work is cancelable and keyed by stable IDs.
 
 ### Codex compatibility layer
 
-`CodexBackend` is selected after runtime probing:
+The Milestone 4 compatibility boundary consists of:
 
-- `AppServerBackend`: JSONL over local stdio for rich interactive flows.
-- `CliJsonBackend`: documented CLI commands with JSON output where available.
-- `MockCodexBackend`: deterministic fixture-backed behavior.
-- `UnavailableBackend`: structured diagnostics with no simulated success.
+- `CodexBackend`: the versioned asynchronous normalized-snapshot contract.
+- `SystemCodexBackend`: fixed CLI detection followed by local app-server JSONL
+  probing, with a CLI-only degraded result if app-server is unavailable.
+- `MockCodexBackend`: deterministic fixture-backed test behavior.
+- `CodexRuntimeSnapshot::unavailable`: structured diagnostics with no simulated
+  success when the CLI is missing or invalid.
 
-Each adapter declares method-level maturity and version constraints. Generated
-schemas and sanitized fixtures drive contract tests.
+Later milestones extend the boundary with conversation/authentication methods
+without bypassing this normalization layer. Generated schemas and sanitized
+fixtures drive contract tests.
 
 ## Required service boundaries
 

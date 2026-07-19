@@ -1,6 +1,6 @@
 # Local Build Performance
 
-Status: initial generalized baseline captured from required Milestone 3 work on
+Status: generalized baseline captured from required Milestones 3–4 work on
 2026-07-19. These measurements guide local forecasts; they are not release
 performance claims or a supported-hardware baseline.
 
@@ -45,6 +45,31 @@ Peak memory was not instrumented during Milestone 3. The post-build audit showed
 substantial available memory, minimal pre-existing swap use, low system load,
 and no evidence of memory pressure. GPU computation was not used.
 
+## Milestone 4 measurements
+
+The adapter work reused the existing Cargo and pnpm caches. Enabling Tokio
+process/I/O features added three locked transitive packages; no clean build was
+run. Resource values below come from commands already required by the milestone.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Full experimental app-server schema generation to a temporary directory | about 0.33 seconds | Not instrumented | Passed, 337 files / about 3.16 MB; temporary output removed |
+| First `cargo check` after Tokio feature additions | about 5.9 seconds | Not instrumented | Passed |
+| First Rust test-profile compile and adapter tests | about 15.1 seconds | Not instrumented | Passed |
+| Non-billable live CLI/app-server compatibility probe | about 0.32 seconds | Not instrumented | Passed; no child remained |
+| Warm Clippy with warnings denied | about 0.8–1.0 seconds | Not instrumented | Passed |
+| Successful unbundled release build after adapter changes | about 19.5 seconds | about 1.25 GiB | Passed |
+| Full non-browser `pnpm validate` gate | about 23.1–29.7 seconds | about 584 MiB–1.02 GiB | Passed |
+| Combined website and desktop browser suites | about 9.8 seconds | about 253 MiB | Passed, 14 tests |
+| Desktop Vite production build | about 0.12–0.13 seconds | Included above | Passed |
+
+An earlier release attempt stopped after about 12 seconds when the Tauri macro
+required an async state-borrowing command to return `Result`; the corrected
+build passed without repeating unchanged work. Running a production build and
+its preview test concurrently also demonstrated a stale-`dist` race, so those
+steps are now kept sequential. No OOM, heavy swapping, throttling, or material
+disk pressure was observed. GPU computation remained unused.
+
 ## Current execution guidance
 
 - Default to the Balanced profile and preserve desktop responsiveness.
@@ -53,6 +78,8 @@ and no evidence of memory pressure. GPU computation was not used.
 - Run the locked full validation and browser suites at milestone gates.
 - Avoid simultaneous cold Rust release builds and other heavy workloads unless
   a current memory/load check shows sufficient headroom.
+- Complete a frontend production build before starting a preview/E2E server;
+  those steps share `dist` and must not overlap.
 - Continue using the existing two-worker Playwright configuration.
 - Select a Cargo job count for each milestone after checking current load and
   task shape; do not persist a new limit without evidence.

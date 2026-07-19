@@ -1,7 +1,8 @@
 # Compatibility
 
-Status: Milestone 0 discovery with the Milestone 3 desktop scaffold implemented
-and verified on the discovery host.
+Status: Milestone 0 discovery with the Milestones 3–4 desktop scaffold and
+versioned Codex runtime-probe adapter implemented and verified on the discovery
+host.
 
 ## Identity compatibility contract
 
@@ -69,7 +70,7 @@ identity.
 | XDG desktop portal / GTK portal | Installed | Native picker feasible |
 
 The portal executables live under the distribution's libexec directory rather
-than the interactive shell `PATH`. The Milestone 3 shell does not request a
+than the interactive shell `PATH`. The current shell does not request a
 directory or invoke a portal yet.
 
 The host is newer than the intended packaging baseline. Tauri recommends
@@ -81,8 +82,8 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 
 | Capability | CLI 0.144.6 | Intended application route | Classification |
 |---|---|---|---|
-| Detect version and features | Yes | CLI + app-server | Stable official |
-| List account-visible models/efforts | Yes | `model/list` | Stable method on experimental server |
+| Detect version | Implemented | Fixed `codex --version` probe | Stable official |
+| List account-visible models/efforts | Implemented | Bounded `model/list` normalization | Stable method on experimental server |
 | Start in an absolute local cwd | Yes | `thread/start` / `turn/start`; CLI fallback | Stable method + stable CLI |
 | Additional writable roots | Yes | sandbox `writableRoots`; CLI `--add-dir` | Stable official |
 | Stream turns, commands, plans, diffs | Yes | app-server events | Stable methods on experimental server |
@@ -116,6 +117,13 @@ The same sanitized snapshot validated cwd-visible skill, configured
 marketplace, available/installed plugin, and configured MCP collections. No
 managed configuration requirements were returned. Counts, names, endpoints,
 paths, and account metadata are intentionally omitted.
+
+Milestone 4 commits only the CLI 0.144.6 initialize and `model/list` generated
+schemas, their hashes, and sanitized deterministic fixtures. The production
+adapter never treats fixture model names as account availability. A live
+non-billable probe completed initialization and catalog normalization, then
+exited with no additional app-server process. Authentication and turn execution
+were not invoked.
 
 ## Integration compatibility states
 

@@ -1,9 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2 and 3 establish repository, website, desktop frontend,
-native contract, and Tauri build checks. PTY, Git fixture, directory attachment,
-database migration, and Codex adapter suites arrive with the milestones that
-introduce those systems.
+Status: Milestones 2–4 establish repository, website, desktop frontend, native
+contract, Codex adapter, and Tauri build checks. PTY, Git fixture, directory
+attachment, database migration, authentication, and conversation suites arrive
+with the milestones that introduce those systems.
 
 ## Repository, website, and desktop checks
 
@@ -31,7 +31,10 @@ assets, internal links, canonical URLs, the unofficial disclaimer, inline-code
 restrictions, and version-controlled security headers. Desktop checks cover
 strict TypeScript, linting, shared Rust/TypeScript IPC fixtures, frontend
 behavior, Rust formatting, Clippy with warnings denied, native tests, and
-compilation against the locked Cargo graph.
+compilation against the locked Cargo graph. Codex adapter tests cover CLI
+version validation, deterministic mock snapshots, selected generated schemas,
+response correlation, notification-payload discard, catalog normalization,
+duplicate/default rejection, early exit, timeout, and child reaping.
 
 ## Responsive browser and accessibility checks
 
@@ -79,6 +82,32 @@ keyboard focus, native bridge status, resizing, and clean exit. On Linux the
 running application must own `io.github.codeframe78.QuireForge` on the session
 bus. An unbundled launch does not validate package installation or desktop-file
 naming; those remain packaging-milestone obligations.
+
+The routine suite does not require Codex authentication or make billable model
+calls. An ignored compatibility test performs only local initialization and
+`model/list` against the installed CLI:
+
+```bash
+cargo test --locked --workspace \
+  live_probe_uses_the_supported_local_app_server -- --ignored
+```
+
+Run it deliberately when validating a Codex version. Confirm the test leaves no
+additional `codex app-server` process. It must not start a thread or turn, write
+configuration, inspect session content, or print the account-visible catalog.
+
+## Manual Milestone 4 checklist
+
+- Run the ignored non-billable live probe against the intended Codex CLI.
+- Confirm the native shell reports the adapter as ready without exposing raw
+  app-server fields or catalog details beyond normalized model metadata.
+- Confirm browser preview reports that the native probe is unavailable.
+- Exercise missing-CLI, invalid-version, early-exit, timeout, duplicate-model,
+  multiple-default, and unexpected-server-request fixtures.
+- Confirm all owned child processes are reaped after success and failure.
+- Confirm the Tauri capability still grants no broad plugin permission.
+- Confirm no login, model turn, project path, configuration write, Codex
+  session mutation, package, or deployment occurs.
 
 ## Manual Milestone 3 checklist
 

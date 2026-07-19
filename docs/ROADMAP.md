@@ -31,8 +31,11 @@ work has not been pushed or merged. Milestone 2 added the local static website,
 production web exports, and automated website quality gates without creating a
 Cloudflare project or deployment. Milestone 3 added the locally verified Tauri
 desktop foundation, narrow typed IPC contract, Linux app icons, and desktop
-quality gates without producing an installable package. Application packages
-and external provider settings remain milestone- and approval-gated.
+quality gates without producing an installable package. Milestone 4 added the
+versioned Codex boundary, supervised app-server probe, normalized model catalog,
+mock/failure tests, and selected generated schemas without starting a model
+turn or modifying Codex state. Application packages and external provider
+settings remain milestone- and approval-gated.
 
 ## Status
 
@@ -42,8 +45,8 @@ and external provider settings remain milestone- and approval-gated.
 | 1 | QuireForge rename, move, GitHub migration, and governance closure | Medium | Complete locally; not pushed |
 | 2 | QuireForge brand and Cloudflare website foundation | Large | Complete locally; not pushed or deployed |
 | 3 | Desktop scaffold consolidation | Large | Complete locally; not pushed or packaged |
-| 4 | Codex process adapter and contracts | Very large | Current; not begun |
-| 5 | Authentication and onboarding | Medium | Planned |
+| 4 | Codex process adapter and contracts | Very large | Complete locally; not pushed |
+| 5 | Authentication and onboarding | Medium | Current; not begun |
 | 6 | Projects and direct local-directory attachment | Very large | Planned |
 | 7 | Conversation MVP | Very large | Planned |
 | 8 | Session lifecycle and crash recovery | Large | Planned |
@@ -113,6 +116,15 @@ created.
 Implement version/capability probing, process lifecycle, stable normalized
 events, app-server stdio adapter, CLI fallbacks, mock backend, generated schema
 fixtures, and contract tests.
+
+Completed locally: fixed-command CLI version detection, a versioned
+`CodexBackend` contract, serialized runtime probing, newline-delimited
+app-server request correlation, bounded messages/timeouts, deterministic mock
+and failure processes, normalized capability/model/error records, strict
+Rust/TypeScript fixtures, selected generated initialize/model schemas, and an
+honest desktop status. A non-billable live probe verified Codex CLI 0.144.6 and
+left no child process. Authentication, threads, turns, project paths,
+persistence, configuration writes, package, push, and release remain absent.
 
 ### 5 — Authentication and Onboarding
 

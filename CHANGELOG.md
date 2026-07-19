@@ -54,6 +54,15 @@ released a usable application.
   `desktop_bootstrap` command validated against a shared Rust/TypeScript fixture.
 - Desktop type, lint, format, unit, native contract, Clippy, build, responsive,
   theme, overflow, and axe-core accessibility gates in local scripts and CI.
+- A versioned `CodexBackend` boundary, fixed-command CLI detection, supervised
+  JSONL app-server lifecycle, normalized capability/model contracts, and
+  explicit unavailable/degraded diagnostics.
+- Deterministic Codex mocks, bounded protocol failure tests, and a reproducible
+  generator that commits only the reviewed initialize and `model/list` schema
+  subset for Codex CLI 0.144.6.
+- A narrow `codex_runtime_probe` Tauri command and strict TypeScript runtime
+  schema that prevent raw app-server, account, installation, path, or user-agent
+  fields from reaching React.
 
 ### Changed
 
@@ -92,6 +101,10 @@ released a usable application.
 - Completed the Milestone 3 desktop scaffold locally, including an unbundled
   Wayland launch and runtime application-identity check, without implementing
   Codex workflows, packaging, pushing, or merging.
+- Completed the Milestone 4 Codex process adapter locally, including a
+  non-billable live app-server probe, bounded failure recovery, exact process
+  cleanup, and normalized desktop status without login, conversation turns,
+  configuration writes, packaging, pushing, or merging.
 
 ### Migration note
 
@@ -107,7 +120,8 @@ released a usable application.
 
 ### Known limitations
 
-- The desktop scaffold and website are locally verified, but no Codex runtime
-  workflow, installable package, website deployment, or release exists.
+- The desktop adapter and website are locally verified, but no authentication,
+  project, conversation, installable package, website deployment, or release
+  workflow exists.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

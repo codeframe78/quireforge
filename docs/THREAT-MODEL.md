@@ -1,8 +1,9 @@
 # Threat Model
 
 Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary
-applied. It must be revisited before authentication, directory attachment,
-integrations, packaging, and release milestones.
+and Milestone 4 Codex process adapter controls applied. It must be revisited
+before authentication, directory attachment, integrations, packaging, and
+release milestones.
 
 ## Assets
 
@@ -26,7 +27,17 @@ integrations, packaging, and release milestones.
 The Milestone 3 shell exposes one versioned bootstrap command and grants the
 main window no Tauri plugin permissions. Its shared Rust/TypeScript fixture and
 runtime schema reject identity or shape drift before native data reaches UI
-state. No command currently accepts a path, process, credential, or user input.
+state.
+
+Milestone 4 adds a fixed-purpose, argument-free runtime probe. Only the native
+core can select the `codex` executable arguments or app-server methods. Protocol
+lines, catalog size, strings, waits, and CLI output are bounded; numeric request
+IDs are correlated; server requests fail closed; notification and error
+payloads are not retained; and owned children are killed and waited on when
+necessary. The React schema is strict and accepts only normalized capability,
+model, version, backend, and diagnostic fields. No command currently accepts a
+path, prompt, arbitrary process, credential, configuration value, or other user
+input.
 
 ## Principal threats and controls
 

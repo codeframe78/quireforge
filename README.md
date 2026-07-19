@@ -19,28 +19,33 @@ user-selected directories remain in place and Codex operates against those
 original directories through supported interfaces. The original Codex
 discovery, QuireForge identity, governance, and the local static website
 foundation are complete. The Tauri desktop foundation also builds and launches
-locally, but it does not implement Codex workflows yet. Cloudflare Pages is the
+locally, and its versioned Rust adapter detects the installed Codex CLI and
+normalizes the supported app-server model catalog. Authentication, projects,
+and conversation workflows remain later milestones. Cloudflare Pages is the
 selected production host, but the site has not been deployed. There is no
 application package to install yet.
 
 ## Project status
 
 - Supported distributions: none yet; Ubuntu support is being evaluated.
-- Installation: not available before the desktop and packaging milestones.
+- Installation: not available before the packaging milestone.
 - Website: the Astro site builds and passes local responsive/accessibility
   checks for `https://quireforge.jamesjennison.net`; it is not deployed.
-- Integration support: under validation against supported Codex interfaces.
+- Integration support: the local adapter is validated against Codex CLI
+  0.144.6; authentication and integration workflows remain planned.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
-  locally with a narrow typed IPC contract; Codex and project workflows remain
-  planned.
+  locally with narrow typed IPC and a supervised, non-billable Codex runtime
+  probe; project and conversation workflows remain planned.
 - CI status: repository, website, and desktop quality gates are configured
   locally but will not run on GitHub until the branch is approved and pushed.
-- Completed milestone: Milestone 3 — desktop scaffold consolidation.
-- Current milestone: Milestone 4 — Codex process adapter and contracts (not
-  begun; model confirmation required).
-- Upcoming milestone: Milestone 5 — authentication and onboarding.
-- Known limitations: no Codex runtime adapter, project attachment, packages,
-  releases, public deployment, or production Lighthouse evidence exists yet.
+- Completed milestone: Milestone 4 — Codex process adapter and contracts.
+- Current milestone: Milestone 5 — authentication and onboarding (not begun;
+  model confirmation required).
+- Upcoming milestone: Milestone 6 — projects and direct local-directory
+  attachment.
+- Known limitations: no authentication workflow, project attachment,
+  conversation execution, packages, releases, public deployment, or production
+  Lighthouse evidence exists yet.
 
 ## Discovery documents
 
@@ -76,7 +81,8 @@ packaging work must use `quireforge` for the executable and Debian package,
 `QuireForge` for the desktop display name and AppImage basename, and
 `io.github.codeframe78.QuireForge` as the application identifier. Its syntax is
 validated for Tauri and freedesktop application identity; functional bundle,
-GTK, and packaging wiring remains an implementation-milestone test obligation.
+and packaging wiring remains an implementation-milestone test obligation. The
+unbundled GTK/D-Bus runtime identity is verified locally.
 The canonical desktop entry is
 `io.github.codeframe78.QuireForge.desktop`; its `Exec` target remains
 `quireforge`.
@@ -110,11 +116,14 @@ With Rust 1.88 or newer and the documented Tauri Linux development packages:
 ```bash
 pnpm desktop:dev
 pnpm desktop:build
+pnpm codex:schema
 ```
 
 The first command launches the local development shell. The second produces an
 unbundled local executable for verification; it does not create or publish an
-installable package. See [Building](docs/BUILDING.md) for prerequisites.
+installable package. The third refreshes the reviewed Codex app-server schema
+subset and requires explicit diff review. See [Building](docs/BUILDING.md) for
+prerequisites.
 
 Application-owned files will use the XDG locations `~/.config/quireforge`,
 `~/.local/share/quireforge`, `~/.cache/quireforge`, and, where needed,
