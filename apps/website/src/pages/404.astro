@@ -1,0 +1,26 @@
+---
+import BrandMark from "../components/BrandMark.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="Page not found"
+  description="The requested QuireForge page could not be found."
+  noIndex
+>
+  <section class="not-found shell section-space">
+    <BrandMark size={72} />
+    <p class="eyebrow">404 · Path not attached</p>
+    <h1>This page isn't in the workspace.</h1>
+    <p class="lede">
+      The address may have moved, or the link may point to a route that has not
+      been forged yet.
+    </p>
+    <div class="hero-actions">
+      <a class="button" href="/">Return home</a>
+      <a class="text-link" href="/documentation/"
+        >Browse documentation <span aria-hidden="true">→</span></a
+      >
+    </div>
+  </section>
+</BaseLayout>

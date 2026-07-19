@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "codexCliVersion": "0.144.6",
+  "generator": "codex app-server generate-json-schema --experimental",
+  "selection": "initialize, model/list, and stable account lifecycle only",
+  "files": [
+    {
+      "path": "v1/InitializeParams.json",
+      "sha256": "049471f470f79af52083db0bf41e93cbb4628ae2cc5524bbcc7e06fcc9695630"
+    },
+    {
+      "path": "v1/InitializeResponse.json",
+      "sha256": "993c2fffce99dc5f8f4c5d4df1cdaa1de287ae3fb4b861dcc1329e408ed86601"
+    },
+    {
+      "path": "v2/AccountLoginCompletedNotification.json",
+      "sha256": "d84d815d8cdd623e9918eae73cdca57f0d3967fb0f30f07a72fbfcdf509df995"
+    },
+    {
+      "path": "v2/AccountUpdatedNotification.json",
+      "sha256": "ac58b60abbdfb5728b06073115eff726186eee4929a50de9688fccc2d16c86d0"
+    },
+    {
+      "path": "v2/CancelLoginAccountParams.json",
+      "sha256": "6ca09f50aa9c9a4062ef19a74ea55b1277cbe548285c890655e31bbd6ea35973"
+    },
+    {
+      "path": "v2/CancelLoginAccountResponse.json",
+      "sha256": "cf2ceac941dd0ccf56f789762143a90c850fee2886f4e209e9eb32ea5010d184"
+    },
+    {
+      "path": "v2/GetAccountParams.json",
+      "sha256": "076ae38aa92cabd4f834f119c04a9bd2b0e6c9c6cdd998e17a7636d283ec9ef5"
+    },
+    {
+      "path": "v2/GetAccountResponse.json",
+      "sha256": "87d61137c42dc411975abb0c8b3dba32eb42d655a7bae01804a904f67a0fd52e"
+    },
+    {
+      "path": "v2/LoginAccountParams.json",
+      "sha256": "9fcc9889f19eb073b10923e7ed314bd33b657654573d4b4992f3fc1f73e556c1"
+    },
+    {
+      "path": "v2/LoginAccountResponse.json",
+      "sha256": "ba324aa9243de39d7109b63adf63a51dbecdd25fc94d69bcdd04d2adebfd17b4"
+    },
+    {
+      "path": "v2/LogoutAccountResponse.json",
+      "sha256": "325094a79befac5c38a98c9e950db523015773cceaa0cf28019219a1e30da873"
+    },
+    {
+      "path": "v2/ModelListParams.json",
+      "sha256": "ff939a2a557d960e0ab76dc15b4221cca2ab7d747192110372be5379368fd028"
+    },
+    {
+      "path": "v2/ModelListResponse.json",
+      "sha256": "24baefddffde93794981495043ad6f7cd74b8220055e8b372ad58c075c856d9b"
+    }
+  ]
+}

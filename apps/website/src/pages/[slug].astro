@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PageHero from "../components/PageHero.astro";
+import { sitePages, type SitePage } from "../data/site";
+
+export function getStaticPaths() {
+  return sitePages.map((page) => ({
+    params: { slug: page.slug },
+    props: { page },
+  }));
+}
+
+type Props = { page: SitePage };
+const { page } = Astro.props;
+---
+
+<BaseLayout title={page.title} description={page.description}>
+  <PageHero
+    eyebrow={page.eyebrow}
+    title={page.title}
+    description={page.description}
+    status={page.status}
+  />
+  <div class="shell content-layout section-space section-space-topless">
+    <div class="content-sections">
+      {
+        page.sections.map((section) => (
+          <section class="content-section">
+            <h2>{section.heading}</h2>
+            {section.paragraphs?.map((paragraph) => (
+              <p>{paragraph}</p>
+            ))}
+            {section.items && (
+              <ul class="check-list">
+                {section.items.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ))
+      }
+    </div>
+    {
+      page.links && (
+        <aside class="related-panel" aria-labelledby="related-heading">
+          <p class="eyebrow" id="related-heading">
+            Continue reading
+          </p>
+          {page.links.map((link) => (
+            <a href={link.href}>
+              {link.label}
+              <span aria-hidden="true">↗</span>
+            </a>
+          ))}
+        </aside>
+      )
+    }
+  </div>
+</BaseLayout>

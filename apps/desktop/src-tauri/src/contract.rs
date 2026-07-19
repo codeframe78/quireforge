@@ -1,0 +1,94 @@
+use serde::Serialize;
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesktopBootstrap {
+    pub schema_version: u16,
+    pub product: ProductIdentity,
+    pub capabilities: Vec<CapabilitySummary>,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProductIdentity {
+    pub name: &'static str,
+    pub tagline: &'static str,
+    pub description: &'static str,
+    pub identifier: &'static str,
+    pub executable: &'static str,
+    pub version: &'static str,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CapabilitySummary {
+    pub id: &'static str,
+    pub label: &'static str,
+    pub state: CapabilityState,
+    pub milestone: u16,
+}
+
+#[derive(Debug, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum CapabilityState {
+    Ready,
+    Planned,
+}
+
+impl DesktopBootstrap {
+    pub fn current() -> Self {
+        Self {
+            schema_version: 1,
+            product: ProductIdentity {
+                name: "QuireForge",
+                tagline: "Build boldly. Work locally.",
+                description: "An unofficial native Linux workspace for Codex",
+                identifier: "io.github.codeframe78.QuireForge",
+                executable: "quireforge",
+                version: env!("CARGO_PKG_VERSION"),
+            },
+            capabilities: vec![
+                CapabilitySummary {
+                    id: "desktop-foundation",
+                    label: "Desktop foundation",
+                    state: CapabilityState::Ready,
+                    milestone: 3,
+                },
+                CapabilitySummary {
+                    id: "codex-runtime",
+                    label: "Codex runtime adapter",
+                    state: CapabilityState::Ready,
+                    milestone: 4,
+                },
+                CapabilitySummary {
+                    id: "codex-auth",
+                    label: "Codex authentication",
+                    state: CapabilityState::Ready,
+                    milestone: 5,
+                },
+                CapabilitySummary {
+                    id: "project-attachments",
+                    label: "Local project attachments",
+                    state: CapabilityState::Planned,
+                    milestone: 6,
+                },
+            ],
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::DesktopBootstrap;
+
+    #[test]
+    fn serialized_contract_matches_the_shared_fixture() {
+        let actual = serde_json::to_value(DesktopBootstrap::current())
+            .expect("desktop bootstrap must serialize");
+        let expected: serde_json::Value =
+            serde_json::from_str(include_str!("../../fixtures/desktop-bootstrap.json"))
+                .expect("shared desktop bootstrap fixture must be valid JSON");
+
+        assert_eq!(actual, expected);
+    }
+}

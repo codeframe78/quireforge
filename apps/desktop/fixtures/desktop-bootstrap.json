@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "product": {
+    "name": "QuireForge",
+    "tagline": "Build boldly. Work locally.",
+    "description": "An unofficial native Linux workspace for Codex",
+    "identifier": "io.github.codeframe78.QuireForge",
+    "executable": "quireforge",
+    "version": "0.0.0"
+  },
+  "capabilities": [
+    {
+      "id": "desktop-foundation",
+      "label": "Desktop foundation",
+      "state": "ready",
+      "milestone": 3
+    },
+    {
+      "id": "codex-runtime",
+      "label": "Codex runtime adapter",
+      "state": "ready",
+      "milestone": 4
+    },
+    {
+      "id": "codex-auth",
+      "label": "Codex authentication",
+      "state": "ready",
+      "milestone": 5
+    },
+    {
+      "id": "project-attachments",
+      "label": "Local project attachments",
+      "state": "planned",
+      "milestone": 6
+    }
+  ]
+}

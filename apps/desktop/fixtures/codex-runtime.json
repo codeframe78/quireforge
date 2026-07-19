@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "adapterVersion": "codex-app-server-v2",
+  "availability": "ready",
+  "backend": "app-server-stdio",
+  "cliVersion": "0.144.6",
+  "capabilities": [
+    {
+      "id": "runtime-probe",
+      "state": "ready",
+      "route": "cli"
+    },
+    {
+      "id": "app-server-stdio",
+      "state": "ready",
+      "route": "app-server"
+    },
+    {
+      "id": "model-discovery",
+      "state": "ready",
+      "route": "app-server"
+    },
+    {
+      "id": "normalized-events",
+      "state": "ready",
+      "route": "native"
+    }
+  ],
+  "models": [
+    {
+      "id": "gpt-5.6-sol",
+      "displayName": "GPT-5.6-Sol",
+      "isDefault": true,
+      "defaultReasoningEffort": "low",
+      "supportedReasoningEfforts": ["low", "medium", "high", "xhigh", "max"]
+    }
+  ],
+  "diagnosticCode": null
+}

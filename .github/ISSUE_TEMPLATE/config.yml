@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security policy
+    url: https://github.com/codeframe78/quireforge/blob/main/SECURITY.md
+    about: Request a private reporting route; do not disclose vulnerabilities publicly.
+  - name: Support guide
+    url: https://github.com/codeframe78/quireforge/blob/main/SUPPORT.md
+    about: Review support scope and safe diagnostic guidance.
+  - name: Official OpenAI support
+    url: https://help.openai.com/
+    about: Use for Codex accounts, billing, entitlements, or managed workspace policy.

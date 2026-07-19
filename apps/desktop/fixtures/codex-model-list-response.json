@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "id": "gpt-5.6-sol",
+      "model": "gpt-5.6-sol",
+      "displayName": "GPT-5.6-Sol",
+      "description": "Sanitized fixture model",
+      "hidden": false,
+      "supportedReasoningEfforts": [
+        {
+          "reasoningEffort": "low",
+          "description": "Sanitized fixture effort"
+        },
+        {
+          "reasoningEffort": "medium",
+          "description": "Sanitized fixture effort"
+        },
+        {
+          "reasoningEffort": "high",
+          "description": "Sanitized fixture effort"
+        },
+        {
+          "reasoningEffort": "xhigh",
+          "description": "Sanitized fixture effort"
+        },
+        {
+          "reasoningEffort": "max",
+          "description": "Sanitized fixture effort"
+        }
+      ],
+      "defaultReasoningEffort": "low",
+      "inputModalities": ["text", "image"],
+      "supportsPersonality": true,
+      "isDefault": true
+    }
+  ],
+  "nextCursor": null
+}

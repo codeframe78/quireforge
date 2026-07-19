@@ -1,0 +1,6 @@
+dist/
+fixtures/codex-schema/
+playwright-report/
+src-tauri/gen/
+src-tauri/target/
+test-results/

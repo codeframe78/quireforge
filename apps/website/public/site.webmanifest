@@ -1,0 +1,16 @@
+{
+  "name": "QuireForge",
+  "short_name": "QuireForge",
+  "description": "An unofficial native Linux workspace for Codex.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#f6f1e7",
+  "theme_color": "#1b2130",
+  "icons": [
+    {
+      "src": "/favicon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}

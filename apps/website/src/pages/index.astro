@@ -1,0 +1,244 @@
+---
+import BrandMark from "../components/BrandMark.astro";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StatusPill from "../components/StatusPill.astro";
+import { site } from "../data/site";
+
+const featureCards = [
+  {
+    index: "01",
+    title: "Attach, don't import",
+    body: "Select an existing Linux directory and keep it exactly where it is. Project identity, Git state, and accessibility remain visible.",
+  },
+  {
+    index: "02",
+    title: "See the work unfold",
+    body: "Follow commentary, plans, commands, approvals, diffs, and results as distinct events—not an opaque terminal transcript.",
+  },
+  {
+    index: "03",
+    title: "Integrate with evidence",
+    body: "Discover apps, plugins, skills, MCP servers, and marketplaces only through supported Codex interfaces and policies.",
+  },
+];
+
+const integrationTypes = [
+  "Apps & connectors",
+  "Plugins",
+  "Skills",
+  "MCP servers",
+  "Marketplaces",
+];
+---
+
+<BaseLayout>
+  <section class="hero">
+    <div class="hero-grid shell">
+      <div class="hero-copy">
+        <StatusPill label="Early development · no release yet" tone="active" />
+        <p class="eyebrow">Native Linux workspace for Codex</p>
+        <h1>Build boldly.<br /><em>Work locally.</em></h1>
+        <p class="lede">
+          Attach the repository already on your machine. Run supported Codex
+          workflows with clear approvals, observable progress, and Git-aware
+          review.
+        </p>
+        <div class="hero-actions">
+          <a class="button" href="/roadmap/">Explore the roadmap</a>
+          <a class="text-link" href={site.repository}
+            >View source on GitHub <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <p class="hero-note">Unofficial. Local-first. Built in the open.</p>
+      </div>
+
+      <div
+        class="workspace-concept"
+        aria-label="Conceptual local project workflow"
+      >
+        <div class="concept-titlebar">
+          <span class="concept-mark"><BrandMark size={26} /></span>
+          <span>project / quireforge</span>
+          <span class="concept-state">local</span>
+        </div>
+        <div class="concept-body">
+          <div class="concept-line">
+            <span class="concept-kicker">directory</span>
+            <strong>~/Projects/your-repository</strong>
+            <span class="concept-ok">connected</span>
+          </div>
+          <div class="concept-line">
+            <span class="concept-kicker">git</span>
+            <strong>feature/local-workspace</strong>
+            <span>3 changed</span>
+          </div>
+          <div class="concept-task">
+            <span class="pulse" aria-hidden="true"></span>
+            <div>
+              <small>Codex task</small>
+              <strong>Inspecting project context</strong>
+            </div>
+            <span>running</span>
+          </div>
+          <ol class="concept-steps">
+            <li class="done"><span>01</span> Verify attached directory</li>
+            <li class="active"><span>02</span> Review project instructions</li>
+            <li><span>03</span> Propose changes for approval</li>
+          </ol>
+        </div>
+        <p class="concept-caption">
+          Interface concept · Codex and project behavior remains planned
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="trust-strip" aria-label="Project principles">
+    <div class="shell">
+      <span>Original directories</span>
+      <span>Supported interfaces</span>
+      <span>Explicit approvals</span>
+      <span>Open development</span>
+    </div>
+  </section>
+
+  <section class="shell section-space feature-section">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">A deliberate workspace</p>
+        <h2>Keep context close.<br />Keep control visible.</h2>
+      </div>
+      <p>
+        QuireForge is shaped around the boundaries that matter on a developer
+        workstation: directory identity, process scope, reviewable changes, and
+        honest capability detection.
+      </p>
+    </div>
+    <div class="feature-grid">
+      {
+        featureCards.map((feature) => (
+          <article class="feature-card">
+            <span>{feature.index}</span>
+            <h3>{feature.title}</h3>
+            <p>{feature.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="local-section">
+    <div class="shell local-grid">
+      <div>
+        <p class="eyebrow">The foundational promise</p>
+        <h2>Your project is a place, not an upload.</h2>
+      </div>
+      <div class="local-copy">
+        <p>
+          QuireForge projects will keep a persistent association with the
+          directories you deliberately select. The active path, repository root,
+          branch, dirty state, and access status stay visible before work
+          begins.
+        </p>
+        <ul class="plain-list">
+          <li>
+            <span aria-hidden="true">→</span> No relocation into an application folder
+          </li>
+          <li>
+            <span aria-hidden="true">→</span> No silent fallback to home or another
+            project
+          </li>
+          <li>
+            <span aria-hidden="true">→</span> No deletion when you detach a directory
+          </li>
+        </ul>
+        <a class="text-link" href="/features/"
+          >How local projects will work <span aria-hidden="true">→</span></a
+        >
+      </div>
+    </div>
+  </section>
+
+  <section class="shell section-space integrations-section">
+    <div class="integrations-copy">
+      <p class="eyebrow">Integration Center</p>
+      <h2>Connected tools, with the labels left on.</h2>
+      <p>
+        Different integration types carry different capabilities, trust
+        boundaries, scopes, and authorization flows. QuireForge will keep those
+        distinctions intact.
+      </p>
+      <a class="button button-secondary" href="/integrations/"
+        >Understand integration support</a
+      >
+    </div>
+    <div class="integration-stack" aria-label="Planned integration categories">
+      {
+        integrationTypes.map((type, index) => (
+          <div class={`stack-${index + 1}`}>
+            <span>{String(index + 1).padStart(2, "0")}</span>
+            <strong>{type}</strong>
+            <small>capability-aware</small>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="status-section">
+    <div class="shell status-grid">
+      <div>
+        <p class="eyebrow">Project status</p>
+        <h2>Early enough to be honest.<br />Structured enough to follow.</h2>
+      </div>
+      <div class="milestone-list">
+        <div>
+          <StatusPill label="Complete locally" tone="complete" /><strong
+            >Discovery and feasibility</strong
+          ><span>Milestone 0</span>
+        </div>
+        <div>
+          <StatusPill label="Complete locally" tone="complete" /><strong
+            >Identity and governance</strong
+          ><span>Milestone 1</span>
+        </div>
+        <div>
+          <StatusPill label="Complete locally" tone="complete" /><strong
+            >Website foundation</strong
+          ><span>Milestone 2</span>
+        </div>
+        <div>
+          <StatusPill label="Complete locally" tone="complete" /><strong
+            >Desktop scaffold</strong
+          ><span>Milestone 3</span>
+        </div>
+        <div>
+          <StatusPill label="Complete locally" tone="complete" /><strong
+            >Codex process adapter</strong
+          ><span>Milestone 4</span>
+        </div>
+        <div>
+          <StatusPill label="Next" tone="planned" /><strong
+            >Authentication and onboarding</strong
+          ><span>Milestone 5</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing-cta shell section-space">
+    <BrandMark size={74} />
+    <p class="eyebrow">Build with us</p>
+    <h2>A careful Linux desktop starts with visible decisions.</h2>
+    <p>
+      Read the architecture, follow the roadmap, or help turn the documented
+      contracts into a working application.
+    </p>
+    <div class="hero-actions">
+      <a class="button" href="/contributing/">Contribute to QuireForge</a>
+      <a class="text-link" href="/documentation/"
+        >Browse documentation <span aria-hidden="true">→</span></a
+      >
+    </div>
+  </section>
+</BaseLayout>

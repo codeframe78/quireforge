@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://quireforge.jamesjennison.net/sitemap-index.xml

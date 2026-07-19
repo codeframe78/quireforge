@@ -1,0 +1,730 @@
+import { useEffect, useState, type ReactNode } from "react";
+
+import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
+import {
+  cancelCodexAuth,
+  loadCodexAuth,
+  loadCodexRuntime,
+  loadDesktopBootstrap,
+  logoutCodexAuth,
+  openCodexAuthBrowser,
+  refreshCodexAuth,
+  startCodexAuth,
+} from "./lib/bridge";
+import {
+  scaffoldCodexAuth,
+  type AuthLoginMethod,
+  type CodexAuthSnapshot,
+} from "./lib/auth";
+import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
+import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
+
+import "./styles.css";
+
+type BridgeState = "connecting" | "native" | "preview";
+type RuntimeState =
+  "checking" | "ready" | "degraded" | "unavailable" | "preview";
+type AuthViewState = CodexAuthSnapshot["state"] | "checking" | "preview";
+type Theme = "light" | "dark";
+
+interface AppProps {
+  loadBootstrap?: () => Promise<DesktopBootstrap>;
+  loadRuntime?: () => Promise<CodexRuntimeSnapshot>;
+  loadAuth?: () => Promise<CodexAuthSnapshot>;
+  refreshAuth?: () => Promise<CodexAuthSnapshot>;
+  startAuth?: (method: AuthLoginMethod) => Promise<CodexAuthSnapshot>;
+  cancelAuth?: () => Promise<CodexAuthSnapshot>;
+  logoutAuth?: () => Promise<CodexAuthSnapshot>;
+  openAuthBrowser?: () => Promise<void>;
+}
+
+const navigation = [
+  { label: "Workspace", milestone: 3, icon: "grid" },
+  { label: "Threads", milestone: 7, icon: "thread" },
+  { label: "Integrations", milestone: 14, icon: "blocks" },
+] as const;
+
+function initialTheme(): Theme {
+  const stored = window.localStorage.getItem("quireforge-theme");
+  if (stored === "light" || stored === "dark") return stored;
+  return window.matchMedia?.("(prefers-color-scheme: light)").matches
+    ? "light"
+    : "dark";
+}
+
+function Glyph({ name }: { name: string }) {
+  const paths: Record<string, ReactNode> = {
+    grid: (
+      <>
+        <rect x="3" y="3" width="7" height="7" rx="2" />
+        <rect x="14" y="3" width="7" height="7" rx="2" />
+        <rect x="3" y="14" width="7" height="7" rx="2" />
+        <rect x="14" y="14" width="7" height="7" rx="2" />
+      </>
+    ),
+    thread: (
+      <>
+        <path d="M6 7.5h12M6 12h8M6 16.5h5" />
+        <path d="M4 3.5h16a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-8l-5 3v-3H4a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2Z" />
+      </>
+    ),
+    blocks: (
+      <>
+        <path d="m8 3 4 2.3v4.6L8 12.2 4 9.9V5.3L8 3ZM16 11.8l4 2.3v4.6L16 21l-4-2.3v-4.6l4-2.3Z" />
+        <path d="m16 3 4 2.3v4.6l-4 2.3-4-2.3V5.3L16 3ZM8 11.8l4 2.3v4.6L8 21l-4-2.3v-4.6l4-2.3Z" />
+      </>
+    ),
+    plus: <path d="M12 5v14M5 12h14" />,
+    folder: (
+      <path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v8A2.5 2.5 0 0 1 18.5 19h-13A2.5 2.5 0 0 1 3 16.5v-10Z" />
+    ),
+    terminal: (
+      <>
+        <path d="m5 7 4 5-4 5M11 17h8" />
+        <rect x="2.5" y="3.5" width="19" height="17" rx="3" />
+      </>
+    ),
+    shield: (
+      <>
+        <path d="M12 2.8 20 6v5.7c0 4.5-3.1 8-8 9.5-4.9-1.5-8-5-8-9.5V6l8-3.2Z" />
+        <path d="m8.5 12 2.2 2.2 4.8-5" />
+      </>
+    ),
+    external: (
+      <>
+        <path d="M14 4h6v6M20 4l-9 9" />
+        <path d="M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" />
+      </>
+    ),
+    refresh: (
+      <>
+        <path d="M20 7v5h-5" />
+        <path d="M4 17v-5h5" />
+        <path d="M6.1 9A7 7 0 0 1 18.5 7L20 12M4 12l1.5 5A7 7 0 0 0 17.9 15" />
+      </>
+    ),
+    check: <path d="m5 12 4.2 4.2L19 6.5" />,
+    chevron: <path d="m9 18 6-6-6-6" />,
+  };
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="glyph"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="1.7"
+    >
+      {paths[name]}
+    </svg>
+  );
+}
+
+function StatusDot({ state }: { state: BridgeState }) {
+  return (
+    <span className={`status-dot status-dot--${state}`} aria-hidden="true" />
+  );
+}
+
+export default function App({
+  loadBootstrap = loadDesktopBootstrap,
+  loadRuntime = loadCodexRuntime,
+  loadAuth = loadCodexAuth,
+  refreshAuth = refreshCodexAuth,
+  startAuth = startCodexAuth,
+  cancelAuth = cancelCodexAuth,
+  logoutAuth = logoutCodexAuth,
+  openAuthBrowser = openCodexAuthBrowser,
+}: AppProps) {
+  const [bootstrap, setBootstrap] =
+    useState<DesktopBootstrap>(scaffoldBootstrap);
+  const [bridgeState, setBridgeState] = useState<BridgeState>("connecting");
+  const [runtime, setRuntime] =
+    useState<CodexRuntimeSnapshot>(scaffoldCodexRuntime);
+  const [runtimeState, setRuntimeState] = useState<RuntimeState>("checking");
+  const [auth, setAuth] = useState<CodexAuthSnapshot>(scaffoldCodexAuth);
+  const [authState, setAuthState] = useState<AuthViewState>("checking");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authActionError, setAuthActionError] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [theme, setTheme] = useState<Theme>(initialTheme);
+
+  useEffect(() => {
+    let active = true;
+    void loadBootstrap()
+      .then((result) => {
+        if (!active) return;
+        setBootstrap(result);
+        setBridgeState("native");
+      })
+      .catch(() => {
+        if (active) setBridgeState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadBootstrap]);
+
+  useEffect(() => {
+    let active = true;
+    void loadRuntime()
+      .then((result) => {
+        if (!active) return;
+        setRuntime(result);
+        setRuntimeState(result.availability);
+      })
+      .catch(() => {
+        if (active) setRuntimeState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadRuntime]);
+
+  useEffect(() => {
+    let active = true;
+    void loadAuth()
+      .then((result) => {
+        if (!active) return;
+        setAuth(result);
+        setAuthState(result.state);
+      })
+      .catch(() => {
+        if (active) setAuthState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadAuth]);
+
+  useEffect(() => {
+    if (authState !== "login-pending") return;
+    let active = true;
+    const poll = window.setInterval(() => {
+      void loadAuth()
+        .then((result) => {
+          if (!active) return;
+          setAuth(result);
+          setAuthState(result.state);
+        })
+        .catch(() => {
+          if (active) setAuthState("unavailable");
+        });
+    }, 750);
+
+    return () => {
+      active = false;
+      window.clearInterval(poll);
+    };
+  }, [authState, loadAuth]);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem("quireforge-theme", theme);
+  }, [theme]);
+
+  const bridgeLabel = {
+    connecting: "Checking native bridge",
+    native: "Native IPC verified",
+    preview: "Browser preview",
+  }[bridgeState];
+
+  const runtimeLabel = {
+    checking: "Checking Codex adapter",
+    ready: "Codex adapter ready",
+    degraded: "CLI fallback only",
+    unavailable: "Codex unavailable",
+    preview: "Native probe unavailable",
+  }[runtimeState];
+
+  const authLabel = {
+    checking: "Checking Codex account",
+    authenticated: "Codex account connected",
+    unauthenticated: "Codex sign-in available",
+    "login-pending": "Codex sign-in pending",
+    "not-required": "Provider sign-in not required",
+    unavailable: "Codex authentication unavailable",
+    preview: "Native authentication unavailable",
+  }[authState];
+
+  async function applyAuthAction(
+    action: () => Promise<CodexAuthSnapshot>,
+    openBrowser = false,
+  ) {
+    setAuthBusy(true);
+    setAuthActionError(false);
+    try {
+      const result = await action();
+      setAuth(result);
+      setAuthState(result.state);
+      if (openBrowser && result.state === "login-pending") {
+        await openAuthBrowser();
+      }
+    } catch {
+      setAuthActionError(true);
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  function beginLogin(method: AuthLoginMethod) {
+    void applyAuthAction(() => startAuth(method), true);
+  }
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand-lockup">
+          <img src={brandMark} alt="" className="brand-mark" />
+          <div>
+            <strong>{bootstrap.product.name}</strong>
+            <span>Linux workspace</span>
+          </div>
+        </div>
+
+        <button className="primary-action" type="button" disabled>
+          <Glyph name="plus" />
+          New thread
+          <span className="button-milestone">M7</span>
+        </button>
+
+        <nav className="primary-nav" aria-label="Primary navigation">
+          <p className="nav-label">Workbench</p>
+          {navigation.map((item, index) => (
+            <button
+              className={`nav-item ${index === 0 ? "nav-item--active" : ""}`}
+              type="button"
+              aria-current={index === 0 ? "page" : undefined}
+              disabled={index !== 0}
+              key={item.label}
+            >
+              <Glyph name={item.icon} />
+              <span>{item.label}</span>
+              {index !== 0 && (
+                <span className="nav-milestone">M{item.milestone}</span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="project-panel">
+          <div className="project-icon">
+            <Glyph name="folder" />
+          </div>
+          <div>
+            <strong>No project attached</strong>
+            <span>Direct local directories arrive in Milestone 6.</span>
+          </div>
+        </div>
+
+        <div className="sidebar-footer">
+          <div className="bridge-status" role="status" aria-live="polite">
+            <StatusDot state={bridgeState} />
+            <span>{bridgeLabel}</span>
+          </div>
+          <span className="version">v{bootstrap.product.version}</span>
+        </div>
+      </aside>
+
+      <main className="workspace">
+        <header className="topbar">
+          <div className="breadcrumb" aria-label="Current location">
+            <span>QuireForge</span>
+            <Glyph name="chevron" />
+            <strong>Workspace</strong>
+          </div>
+          <div className="topbar-actions">
+            <span className="foundation-badge">
+              <Glyph name="shield" />
+              Milestone 5 authentication
+            </span>
+            <button
+              className="theme-toggle"
+              type="button"
+              aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`}
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <span className="theme-toggle__track" aria-hidden="true">
+                <span className="theme-toggle__thumb" />
+              </span>
+            </button>
+          </div>
+        </header>
+
+        <div className="workspace-scroll">
+          <section className="hero" aria-labelledby="workspace-title">
+            <div className="hero-copy">
+              <p className="eyebrow">
+                <span /> Native Linux foundation
+              </p>
+              <h1 id="workspace-title">A quiet place for ambitious work.</h1>
+              <p className="hero-description">
+                QuireForge now reads normalized Codex account state and hands
+                sign-in back to Codex-managed browser or device flows. It never
+                asks for, copies, or stores your credentials.
+              </p>
+              <div className="hero-actions">
+                <button className="secondary-action" type="button" disabled>
+                  <Glyph name="folder" />
+                  Attach a local project
+                  <span>M6</span>
+                </button>
+                <a className="text-link" href="#foundation">
+                  Inspect foundation
+                  <Glyph name="chevron" />
+                </a>
+              </div>
+            </div>
+
+            <div
+              className="hero-visual"
+              aria-label="QuireForge foundation status"
+            >
+              <div className="visual-glow" />
+              <div className="terminal-card">
+                <div className="terminal-card__bar">
+                  <div className="window-dots" aria-hidden="true">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <span>quireforge / foundation</span>
+                  <Glyph name="terminal" />
+                </div>
+                <div className="terminal-card__body">
+                  <p>
+                    <span className="prompt">›</span> verify desktop boundary
+                  </p>
+                  <div className="verification-line">
+                    <Glyph name="check" />
+                    <div>
+                      <strong>Identity contract</strong>
+                      <span>io.github.codeframe78.QuireForge</span>
+                    </div>
+                    <em>verified</em>
+                  </div>
+                  <div className="verification-line">
+                    <Glyph name="check" />
+                    <div>
+                      <strong>Typed IPC fixture</strong>
+                      <span>desktop_bootstrap · schema v1</span>
+                    </div>
+                    <em>verified</em>
+                  </div>
+                  <div
+                    className={`verification-line ${runtimeState === "ready" ? "" : "verification-line--planned"}`}
+                  >
+                    {runtimeState === "ready" ? (
+                      <Glyph name="check" />
+                    ) : (
+                      <span className="planned-ring" />
+                    )}
+                    <div>
+                      <strong>Codex process adapter</strong>
+                      <span>
+                        {runtimeState === "ready"
+                          ? `${runtime.adapterVersion} · ${runtime.models.length} models`
+                          : "Supported native interfaces only"}
+                      </span>
+                    </div>
+                    <em>{runtimeLabel}</em>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="auth-onboarding" aria-labelledby="auth-title">
+            <div className="auth-onboarding__intro">
+              <p className="eyebrow">Codex account</p>
+              <h2 id="auth-title">Authentication stays with Codex.</h2>
+              <p>
+                QuireForge receives only a bounded connection state. Email,
+                tokens, account identifiers, raw errors, and completed sign-in
+                URLs do not enter application state or logs.
+              </p>
+            </div>
+
+            <div className="auth-card" aria-live="polite">
+              <div className="auth-card__heading">
+                <span
+                  className={"auth-state auth-state--" + authState}
+                  aria-hidden="true"
+                />
+                <div>
+                  <strong>{authLabel}</strong>
+                  <span>Codex CLI {runtime.cliVersion ?? "not detected"}</span>
+                </div>
+              </div>
+
+              {authState === "checking" && (
+                <p className="auth-card__copy">
+                  Reading a normalized account status from the local Codex
+                  runtime.
+                </p>
+              )}
+
+              {authState === "preview" && (
+                <p className="auth-card__copy">
+                  Browser preview cannot inspect or simulate a native Codex
+                  account.
+                </p>
+              )}
+
+              {authState === "authenticated" && (
+                <>
+                  <p className="auth-card__copy">
+                    Connected using{" "}
+                    {auth.accountKind === "chatgpt"
+                      ? "Codex-managed ChatGPT authentication"
+                      : "authentication already owned by Codex"}
+                    . No account identity is displayed or retained.
+                  </p>
+                  <div className="auth-actions">
+                    <button
+                      className="auth-button auth-button--quiet"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => void applyAuthAction(refreshAuth)}
+                    >
+                      <Glyph name="refresh" />
+                      Refresh status
+                    </button>
+                    {!confirmLogout ? (
+                      <button
+                        className="auth-button auth-button--danger"
+                        type="button"
+                        disabled={authBusy}
+                        onClick={() => setConfirmLogout(true)}
+                      >
+                        Sign out of Codex
+                      </button>
+                    ) : (
+                      <div
+                        className="logout-confirmation"
+                        role="group"
+                        aria-label="Confirm Codex sign out"
+                      >
+                        <button
+                          className="auth-button auth-button--danger"
+                          type="button"
+                          disabled={authBusy}
+                          onClick={() => {
+                            setConfirmLogout(false);
+                            void applyAuthAction(logoutAuth);
+                          }}
+                        >
+                          Confirm sign out
+                        </button>
+                        <button
+                          className="auth-button auth-button--quiet"
+                          type="button"
+                          disabled={authBusy}
+                          onClick={() => setConfirmLogout(false)}
+                        >
+                          Keep signed in
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {authState === "unauthenticated" && (
+                <>
+                  <p className="auth-card__copy">
+                    Continue in your browser or use an official device code.
+                    Codex hosts the callback and owns the resulting session.
+                  </p>
+                  <div className="auth-actions">
+                    <button
+                      className="auth-button auth-button--primary"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => beginLogin("browser")}
+                    >
+                      <Glyph name="external" />
+                      Continue in browser
+                    </button>
+                    <button
+                      className="auth-button auth-button--quiet"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => beginLogin("device-code")}
+                    >
+                      Use a device code
+                    </button>
+                    <button
+                      className="auth-button auth-button--quiet"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => void applyAuthAction(refreshAuth)}
+                    >
+                      <Glyph name="refresh" />
+                      Refresh
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {authState === "login-pending" && auth.handoff && (
+                <>
+                  <p className="auth-card__copy">
+                    Complete the official Codex sign-in page. This short-lived
+                    handoff is cleared after completion or cancellation.
+                  </p>
+                  {auth.handoff.userCode && (
+                    <div className="device-code">
+                      <span>One-time device code</span>
+                      <code>{auth.handoff.userCode}</code>
+                    </div>
+                  )}
+                  <div className="auth-actions">
+                    <button
+                      className="auth-button auth-button--primary"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => {
+                        setAuthActionError(false);
+                        void openAuthBrowser().catch(() =>
+                          setAuthActionError(true),
+                        );
+                      }}
+                    >
+                      <Glyph name="external" />
+                      Open sign-in page
+                    </button>
+                    <button
+                      className="auth-button auth-button--quiet"
+                      type="button"
+                      disabled={authBusy}
+                      onClick={() => void applyAuthAction(cancelAuth)}
+                    >
+                      Cancel sign-in
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {authState === "not-required" && (
+                <p className="auth-card__copy">
+                  The selected Codex provider does not require OpenAI account
+                  authentication. QuireForge will continue to defer credential
+                  ownership to Codex.
+                </p>
+              )}
+
+              {authState === "unavailable" && (
+                <>
+                  <p className="auth-card__copy">
+                    Authentication could not be verified safely. No raw Codex
+                    error or account metadata was retained.
+                  </p>
+                  <button
+                    className="auth-button auth-button--quiet"
+                    type="button"
+                    disabled={authBusy}
+                    onClick={() => void applyAuthAction(refreshAuth)}
+                  >
+                    <Glyph name="refresh" />
+                    Try again
+                  </button>
+                </>
+              )}
+
+              {authActionError && (
+                <p className="auth-error" role="alert">
+                  The native authentication action did not complete. Your Codex
+                  credentials were not changed by QuireForge.
+                </p>
+              )}
+            </div>
+          </section>
+
+          <section
+            className="foundation"
+            id="foundation"
+            aria-labelledby="foundation-title"
+          >
+            <div className="section-heading">
+              <div>
+                <p className="eyebrow">Implementation map</p>
+                <h2 id="foundation-title">Foundation, with honest edges.</h2>
+              </div>
+              <p>
+                Each surface reports what exists now and what remains planned.
+                Nothing here fabricates a Codex session, integration, or
+                project.
+              </p>
+            </div>
+
+            <div className="capability-grid">
+              {bootstrap.capabilities.map((capability, index) => (
+                <article className="capability-card" key={capability.id}>
+                  <div className="capability-card__top">
+                    <span
+                      className={`capability-number capability-number--${index}`}
+                    >
+                      0{index + 1}
+                    </span>
+                    <span
+                      className={`state-badge state-badge--${capability.state}`}
+                    >
+                      {capability.state}
+                    </span>
+                  </div>
+                  <h3>{capability.label}</h3>
+                  <p>
+                    {capability.id === "codex-runtime"
+                      ? "Version probing, supervised stdio, normalized models, and bounded failure states."
+                      : capability.id === "codex-auth"
+                        ? "Codex-owned browser and device login with bounded state, cancellation, and redaction."
+                        : capability.state === "ready"
+                          ? "Tauri, React, strict TypeScript, and a validated native contract."
+                          : "Explicit directory selection, identity verification, and in-place local work."}
+                  </p>
+                  <footer>
+                    <span>Milestone {capability.milestone}</span>
+                    <Glyph
+                      name={capability.state === "ready" ? "check" : "chevron"}
+                    />
+                  </footer>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="boundary-note" aria-label="Security boundary">
+            <div className="boundary-icon">
+              <Glyph name="shield" />
+            </div>
+            <div>
+              <strong>Local by design. Narrow by default.</strong>
+              <p>
+                The frontend cannot spawn arbitrary processes or read arbitrary
+                files. QuireForge metadata stays separate from Codex
+                credentials, configuration, sessions, and connector
+                authorization.
+              </p>
+            </div>
+            <span>{runtimeLabel}</span>
+          </section>
+
+          <footer className="product-footer">
+            <span>{bootstrap.product.tagline}</span>
+            <p>
+              QuireForge is an unofficial community project. It is not made,
+              endorsed, supported, or distributed by OpenAI.
+            </p>
+          </footer>
+        </div>
+      </main>
+    </div>
+  );
+}
