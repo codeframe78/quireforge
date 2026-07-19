@@ -1,0 +1,49 @@
+name: Bug report
+description: Report a reproducible QuireForge defect
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        QuireForge is unofficial and pre-release. Do not include credentials,
+        private source code, personal Codex data, or connector information.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction
+      description: Provide minimal, sanitized steps.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: QuireForge revision, Linux distribution, display server, Codex version, and installation method.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized diagnostics
+      description: Remove secrets, usernames, local paths, source content, account IDs, and private URLs.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety checks
+      options:
+        - label: I searched existing issues for this problem.
+          required: true
+        - label: I removed credentials, personal data, and private project content.
+          required: true
+        - label: This is not a security vulnerability requiring private handling.
+          required: true

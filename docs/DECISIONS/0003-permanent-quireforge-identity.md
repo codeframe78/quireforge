@@ -118,3 +118,27 @@ history are immutable historical records and are not rewritten.
 The local Git remote now uses the canonical QuireForge repository URL. The
 historical references above are not current branding and must not appear in new
 user-facing product surfaces.
+
+### Milestone 1 verification
+
+A case-insensitive tracked-source audit on 2026-07-19 found only these former
+identity references:
+
+| Location | Classification | Reason retained |
+|---|---|---|
+| This ADR | Historical reference | Records the temporary discovery name and verified source path of the intact move |
+| `CHANGELOG.md` | Historical reference | Describes the completed rename for future maintainers |
+| `docs/ROADMAP.md` | Historical reference | Preserves milestone history |
+| ADR 0004 | Historical reference | Explains why the proposed short desktop filename was superseded |
+
+No former repository URL, GitHub Pages URL presented as production, executable,
+package, application ID, storage path, environment prefix, database filename,
+window title, log prefix, or user-agent identity remains as a current product
+contract. Accurate official Codex/OpenAI terminology and superseded hosting
+records remain intentionally unchanged.
+
+The verification also rechecked the expected old and new XDG locations and
+desktop-entry paths. No released/development QuireForge data, temporary-name
+application data, or installed desktop entry exists, so no user-data migration
+is required at this stage. This conclusion must be reevaluated before any
+release writes persistent application data.

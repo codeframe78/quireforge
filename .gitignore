@@ -1,0 +1,38 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# JavaScript, Rust, and Tauri output
+node_modules/
+dist/
+target/
+apps/desktop/src-tauri/target/
+
+# Test and tool output
+coverage/
+.cache/
+.astro/
+playwright-report/
+test-results/
+
+# Local databases, logs, and support bundles
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+support-bundle-*.zip
