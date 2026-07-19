@@ -1,7 +1,9 @@
-# GitHub Pages Plan
+# Superseded GitHub Pages Plan
 
-Status: validated architecture only. GitHub Pages is not enabled and no site has
-been deployed.
+Status: superseded by [ADR 0005](DECISIONS/0005-a2-production-hosting.md).
+GitHub Pages was never enabled and no site was deployed. This file preserves
+the earlier discovery design for historical review; none of its activation or
+deployment steps are active requirements.
 
 ## Production target
 
@@ -11,7 +13,7 @@ been deployed.
 - Initial URL: `https://codeframe78.github.io/quireforge/`.
 - Source: `apps/website/` in the monorepo.
 - Generator: Astro with TypeScript and static output.
-- Host: GitHub Pages only.
+- Historical host target: GitHub Pages only.
 
 ## Official requirements verified
 
@@ -98,7 +100,7 @@ must never ingest local SQLite data, Codex session data, installed integration
 lists, account/workspace details, tokens, local paths, or unredacted diagnostic
 fixtures.
 
-## Activation checklist
+## Historical activation checklist — inactive
 
 - [ ] User explicitly approves Pages setting change.
 - [ ] Default branch and deployment environment are protected.

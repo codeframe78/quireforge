@@ -1,6 +1,6 @@
 # ADR 0003: Permanent QuireForge Identity
 
-- Status: Accepted
+- Status: Accepted; website-hosting decision amended by ADR 0005
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -35,8 +35,8 @@ The permanent identity is:
 | Default data path | `~/.local/share/quireforge` |
 | Default cache path | `~/.cache/quireforge` |
 | Default state path | `~/.local/state/quireforge` |
-| GitHub Pages base | `/quireforge/` |
-| GitHub Pages URL | `https://codeframe78.github.io/quireforge/` |
+| Production website | `https://quireforge.jamesjennison.net` |
+| Website host | A2 Hosting / cPanel |
 
 The home-relative storage paths are documentation shorthand. Implementations
 must honor the XDG base-directory environment and APIs. QuireForge logs belong
@@ -47,6 +47,8 @@ application identity. Functional validation against the actual Tauri, GTK,
 desktop-entry, D-Bus, and packaging versions remains mandatory during
 application scaffolding. The desktop filename decision is explained in
 [ADR 0004](0004-linux-desktop-entry-identity.md).
+The production-hosting decision is explained in
+[ADR 0005](0005-a2-production-hosting.md).
 
 ## Integration identity boundary
 
@@ -98,10 +100,11 @@ website, and packaging milestones because those structures do not exist yet.
 - All new product-owned identifiers derive from this map.
 - Historical Git records are preserved rather than rewritten.
 - Existing official Codex and integration terminology remains accurate.
-- Pages deployment, package release, pushing, merging, and destructive cleanup
-  remain independently approval-gated.
+- Authenticated hosting access, DNS/SSL changes, website deployment, package
+  release, pushing, merging, and destructive cleanup remain independently
+  approval-gated.
 - Future scaffolding must include automated tests that assert these identifiers
-  and the `/quireforge/` Pages base path.
+  and the production website origin/base configuration.
 
 ## Intentionally preserved legacy references
 

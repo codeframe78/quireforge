@@ -160,7 +160,7 @@ Controls:
 - Allowlisted external URL opening with visible destination.
 - No remote content receives privileged Tauri access.
 
-### Build, Pages, and release supply chain
+### Build, hosting, and release supply chain
 
 Threats include unpinned actions/dependencies, pull-request secrets, compromised
 registries, artifact substitution, and publishing local/private data.
@@ -168,10 +168,15 @@ registries, artifact substitution, and publishing local/private data.
 Controls:
 
 - Lock dependency graphs and use dependency review/update automation.
-- Pin third-party actions to reviewed immutable SHAs where practical; use
-  official GitHub Pages actions with minimum permissions.
+- Pin actions to reviewed immutable SHAs and use minimum workflow permissions.
 - Build PRs without deploy permissions or secrets.
-- Deploy only default-branch artifacts through the `github-pages` environment.
+- Make deployment secrets available only after a protected production-
+  environment approval and only to an approved default-branch artifact.
+- Use a dedicated SSH key, strict host verification, an exact destination, and
+  explicit generated-file manifests; never use plain FTP or wildcard-copy the
+  repository into public storage.
+- Prefer versioned releases and atomic switching; preserve the previous release
+  until post-deployment checks pass.
 - Produce checksums and provenance/signatures in release milestones.
 - Build Linux artifacts on the selected oldest compatible baseline.
 - Review website content so local integrations and account data never publish.
@@ -193,10 +198,11 @@ Controls:
   non-secret preferences; never migrate Codex authentication or session data.
 - Close or reopen processes before moving an active working copy, then verify
   its Git identity and exact path.
-- Update canonical repository and Pages links instead of relying indefinitely
-  on redirects.
-- Keep repository rename, local move, Pages deployment, and package cleanup as
-  separate approval-gated actions.
+- Update canonical repository and production-site links instead of relying
+  indefinitely on redirects.
+- Keep repository rename, local move, authenticated hosting access, DNS/SSL,
+  staging, production deployment, and package cleanup as separate
+  approval-gated actions.
 
 ## Privacy posture
 

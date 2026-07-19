@@ -16,7 +16,8 @@ the real toolchain rather than inferred from documentation alone:
 | Application identifier | `io.github.codeframe78.QuireForge` | Valid Tauri and freedesktop identifier form; functional wiring pending |
 | XDG directory leaf | `quireforge` | Valid; honor XDG environment overrides |
 | GitHub repository | `codeframe78/quireforge` | Connected and renamed in place |
-| GitHub Pages project base | `/quireforge/` | Valid Astro repository-project path; site not deployed |
+| Production website | `https://quireforge.jamesjennison.net` | Confirmed target; DNS/TLS present, site not deployed |
+| Website host | A2 Hosting / cPanel | Public phase audited; authenticated capabilities pending |
 
 No Tauri, Cargo, JavaScript, Astro, package, or desktop-entry configuration
 exists yet, so this table is a future implementation contract rather than a
@@ -38,9 +39,9 @@ Validation sources:
 - [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/):
   configuration, data, cache, and state derive from their respective XDG base
   variables and documented home-relative defaults.
-- [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/):
-  a project site uses `site = "https://codeframe78.github.io"` and a
-  repository-name base such as `/quireforge`.
+- [Astro configuration reference](https://docs.astro.build/en/reference/configuration-reference/#site):
+  the production origin belongs in `site`; the dedicated subdomain uses the
+  root base rather than a repository subpath.
 
 The outer AppImage filename pattern
 `QuireForge-{version}-{architecture}.AppImage` is a project release convention,
@@ -64,6 +65,10 @@ identity.
 | Tauri WebKitGTK development package | Not installed | Blocking desktop builds |
 | Tauri Linux development packages | Partially installed | Blocking desktop builds |
 | XDG desktop portal / GTK portal | Installed | Native picker feasible |
+
+The portal executables live under the distribution's libexec directory rather
+than the interactive shell `PATH`. Runtime packages are installed, but the
+development headers required to compile Tauri are not.
 
 The host is newer than the intended packaging baseline. Tauri recommends
 building AppImages on the oldest supported compatible distribution to avoid
@@ -97,6 +102,18 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 | Managed policy read | Yes | `configRequirements/read` | Stable method on experimental server |
 | Integrated process API | Present | Do not use as default terminal | Experimental/outside Codex sandbox |
 | Scheduled hosted tasks | Not established | Defer | Unsupported until discovered |
+
+Account-scoped inspection on 2026-07-19 returned a multi-page app directory
+from both the default OpenAI catalog and ecosystem directory, with only a small
+accessible subset. Catalog `isEnabled` and install-URL fields were much broader
+than accessibility, so they are not proof of installation, authorization,
+health, or eligibility. QuireForge must preserve that distinction and must not
+publish the account-scoped rows or counts as a guaranteed catalog.
+
+The same sanitized snapshot validated cwd-visible skill, configured
+marketplace, available/installed plugin, and configured MCP collections. No
+managed configuration requirements were returned. Counts, names, endpoints,
+paths, and account metadata are intentionally omitted.
 
 ## Integration compatibility states
 
@@ -142,14 +159,16 @@ Portal availability does not establish filesystem access. The service must
 still check metadata, read/write expectations, mount state, Git state, and the
 selected sandbox before saving an association or starting a task.
 
-## GitHub Pages compatibility
+## A2/cPanel website compatibility
 
-The website design is feasible as a static Astro site deployed by GitHub
-Actions. Project sites require the repository name as Astro's `base`; root-hosted
-user sites do not. Build output must have its entry file at the artifact root.
+The static Astro design is compatible in principle with ordinary cPanel static
+hosting. Public inspection confirms the dedicated subdomain, valid TLS 1.2/1.3,
+and LiteSpeed, but the endpoint currently returns 403. The exact document root,
+account resource limits, SSH/transfer tools, symlink policy, backups, staging,
+and cPanel feature set remain unknown until separately approved authenticated
+inspection. See [the capability audit](A2-HOSTING-CAPABILITY-AUDIT.md).
 
-The deployment workflow will use GitHub's official Pages artifact and deploy
-actions, with pull requests performing validation but never deployment.
+GitHub Pages remains disabled and is not a production fallback.
 
 ## Known discovery limitations
 
@@ -159,5 +178,7 @@ actions, with pull requests performing validation but never deployment.
 - App-server protocol contracts can change with the installed Codex version.
 - The plugin snapshot is account- and time-specific and cannot be treated as a
   public compatibility list.
+- Public HTTP inspection is blocked by the host's current 403 behavior; no
+  existing document-root or website-platform conclusion is possible.
 - Rust/Tauri builds cannot run until the missing toolchain and system packages
   are installed in a later approved milestone.

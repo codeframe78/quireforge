@@ -5,8 +5,9 @@ maintainer must inspect currently available Codex models, recommend the newest
 suitable GPT model and reasoning level, provide the full milestone briefing,
 and wait for manual confirmation.
 
-No milestone may merge, deploy, publish a release, enable GitHub Pages, install
-an integration, or authorize a connector without its required approval.
+No milestone may merge, access authenticated hosting, change DNS/SSL/cPanel,
+deploy, publish a release, install an integration, or authorize a connector
+without its required approval.
 
 ## Permanent identity migration
 
@@ -19,7 +20,7 @@ assets are handled as separately verified and approval-gated migration steps.
 The working copy moved through a controlled Codex-session handoff to
 `/mnt/faststorage/quireforge`. The existing GitHub repository was renamed in
 place to `codeframe78/quireforge`; neither operation authorized a push, merge,
-Pages deployment, or release.
+website deployment, or release.
 
 Migration status: the tracked identity contract, authoritative naming audit,
 in-place GitHub repository rename, local working-copy handoff, and core vector
@@ -31,10 +32,10 @@ GitHub branding settings remain milestone- and approval-gated.
 
 | Milestone | Scope | Size | Status |
 |---:|---|---|---|
-| 0 | Discovery and feasibility | Large | Complete |
-| 1 | Dedicated repository and governance | Medium | Next; repository prerequisite initialized |
-| 2 | QuireForge design system and GitHub Pages foundation | Large | Planned |
-| 3 | Tauri/React/Rust desktop scaffold | Large | Planned |
+| 0 | Existing project, A2 capability audit, and feasibility | Very large | In progress; public/local phase complete, authenticated phase pending |
+| 1 | QuireForge rename, move, GitHub migration, and governance closure | Medium | Core migration complete locally; reconciliation pending |
+| 2 | QuireForge brand and A2 website foundation | Large | Brand sources complete; Astro/hosting foundation pending |
+| 3 | Desktop scaffold consolidation | Large | Planned |
 | 4 | Codex process adapter and contracts | Very large | Planned |
 | 5 | Authentication and onboarding | Medium | Planned |
 | 6 | Projects and direct local-directory attachment | Very large | Planned |
@@ -47,36 +48,40 @@ GitHub branding settings remain milestone- and approval-gated.
 | 13 | Integration discovery and compatibility | Very large | Planned |
 | 14 | Integration Center and installation workflows | Very large | Planned |
 | 15 | File previews and desktop integration | Large | Planned |
-| 16 | Complete GitHub Pages website | Large | Planned |
+| 16 | Complete A2-hosted website | Very large | Planned |
 | 17 | Scheduled tasks and advanced supported features | Medium–Large | Planned/dependency-gated |
 | 18 | Security, accessibility, and performance hardening | Very large | Planned |
 | 19 | Packaging and release automation | Large | Planned |
-| 20 | GitHub Pages deployment and beta release candidate | Large | Planned/approval-gated |
+| 20 | A2/cPanel production deployment and beta release | Very large | Planned/approval-gated |
 
 ## Milestone definitions
 
-### 0 — Discovery and Feasibility
+### 0 — Existing Project Audit, A2 Capability Audit, and Feasibility
 
 Inspect the installed Codex CLI, app-server, plugins, marketplaces, skills,
 MCP, apps/connectors, policy, authentication, local cwd behavior, Linux/Tauri
-prerequisites, GitHub Pages, and Actions. Produce compatibility, architecture,
-feature-parity, threat-model, and decision documents. No major implementation.
+prerequisites, GitHub, public DNS/TLS/site behavior, and—with separate access
+approval—the A2/cPanel account. Compare deployment methods and document the
+production URL, hosting constraints, staging, security, and rollback. Make no
+hosting, DNS, repository-setting, or production change.
 
-### 1 — Dedicated Repository and Governance
+### 1 — QuireForge Rename, Move, and GitHub Migration
 
-Complete the monorepo/governance baseline: license choice, contribution and
-security policy, conduct/support documents, issue and PR templates, dependency
-automation, initial CI, and repository status. Review the already-created
-dedicated repository rather than creating another one.
+Verify and reconcile the already-completed intact local move, permanent
+QuireForge identity, in-place GitHub repository rename, package/application
+contracts, historical references, and user-data conclusion. Complete the
+required governance baseline—license, contribution/security/conduct/support
+policies, templates, dependency automation, and initial CI—without repeating or
+discarding completed migration work.
 
-### 2 — QuireForge Design System and GitHub Pages Foundation
+### 2 — Brand Identity and A2 Website Foundation
 
-Develop the approved QuireForge identity into production vector assets and
-scaffold the Astro site, design tokens, themes, navigation, metadata,
-accessibility foundation, and `/quireforge/` repository-subpath behavior. Do
-not deploy.
+Develop the approved QuireForge vectors into consuming assets and scaffold the
+Astro site, design tokens, themes, navigation, metadata, responsive layout, and
+accessibility foundation. Confirm the audited document-root/deployment design.
+Do not touch staging or production without separate approval.
 
-### 3 — Desktop Application Scaffold
+### 3 — Desktop Scaffold Consolidation
 
 Install/verify prerequisites, scaffold Tauri 2 + React + TypeScript + Rust,
 establish typed frontend/native IPC, shell layout, lint/format/test commands,
@@ -153,12 +158,13 @@ when connector management is unavailable.
 Add safe previews, drag/drop and attachments, notifications, editor/open-with,
 and Wayland/X11 verification.
 
-### 16 — Complete GitHub Pages Website
+### 16 — Complete A2-Hosted Website
 
 Build Home, Features, Integrations, Downloads, Installation, Documentation,
 Compatibility, Roadmap, Changelog, Security/Privacy, Contributing, FAQ,
-Troubleshooting, About, authentic screenshots, and comprehensive subpath/a11y
-validation. Do not deploy without approval.
+Troubleshooting, About, authentic screenshots, and comprehensive
+production-origin/responsive/accessibility validation. Build a verified static
+artifact and deploy only to separately approved non-production staging.
 
 ### 17 — Scheduled Tasks and Advanced Features
 
@@ -177,11 +183,13 @@ Produce AppImage and Debian packages on an appropriate baseline, checksums,
 release workflows, install/upgrade/uninstall tests, and website download data.
 Do not publish a release without approval.
 
-### 20 — GitHub Pages Deployment and Beta Release Candidate
+### 20 — A2/cPanel Production Deployment and Beta Release
 
-Run final website/package QA, request approval to enable/deploy Pages, request
-separate beta release approval, verify downloads/checksums, and record the
-release checklist. Deployment and release remain independently approval-gated.
+Run final website/package QA; confirm hostname, document root, artifact,
+backup, and rollback; request approval for the protected A2 production
+deployment; verify DNS, HTTPS, headers, live assets, the unaffected main site,
+and rollback; then request separate beta-release approval and verify downloads
+and checksums. Deployment and release remain independently approval-gated.
 
 ## Forecast policy
 

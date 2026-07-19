@@ -16,19 +16,21 @@
 QuireForge is an early-stage open-source project building a native graphical
 Codex workspace for Linux. It works toward a direct, local-first project model:
 user-selected directories remain in place and Codex operates against those
-original directories through supported interfaces. **Milestone 0: discovery
-and feasibility is complete**; there is no application package to install yet.
+original directories through supported interfaces. The original Codex
+discovery and QuireForge identity foundation are complete; the expanded A2
+Hosting audit is in progress. There is no application package to install yet.
 
 ## Project status
 
 - Supported distributions: none yet; Ubuntu support is being evaluated.
 - Installation: not available during discovery.
-- Website: planned at `https://codeframe78.github.io/quireforge/`; not deployed.
+- Website: planned at `https://quireforge.jamesjennison.net`; not deployed.
 - Integration support: under validation against supported Codex interfaces.
-- Completed milestone: Milestone 0 — Discovery and Feasibility.
-- Current milestone: the QuireForge identity migration is complete locally on
-  an unpushed feature branch and awaits review/publication decisions.
-- Upcoming milestone: Milestone 1 — Repository and Governance.
+- Completed milestone: QuireForge identity migration submilestones A–E.
+- Current milestone: Milestone 0 — existing-project and A2 Hosting capability
+  audit; authenticated hosting inspection remains separately approval-gated.
+- Upcoming milestone: Milestone 1 — residual rename/move/GitHub reconciliation;
+  its core migration work is already complete locally.
 - Known limitations: no desktop implementation, packages, releases, or public
   website exist yet.
 
@@ -39,7 +41,10 @@ and feasibility is complete**; there is no application package to install yet.
 - [Compatibility](docs/COMPATIBILITY.md)
 - [Feature parity](docs/FEATURE-PARITY.md)
 - [Threat model](docs/THREAT-MODEL.md)
-- [GitHub Pages plan](docs/GITHUB-PAGES.md)
+- [A2 Hosting capability audit](docs/A2-HOSTING-CAPABILITY-AUDIT.md)
+- [cPanel deployment architecture](docs/CPANEL-DEPLOYMENT.md)
+- [Website architecture](docs/WEBSITE.md)
+- [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Brand sources and usage](assets/brand/README.md)
 - [Roadmap](docs/ROADMAP.md)
@@ -61,6 +66,11 @@ GTK, and packaging wiring remains an implementation-milestone test obligation.
 The canonical desktop entry is
 `io.github.codeframe78.QuireForge.desktop`; its `Exec` target remains
 `quireforge`.
+
+The production website target is
+`https://quireforge.jamesjennison.net`, hosted as a static Astro site on the
+owner's A2 Hosting cPanel account. GitHub remains the source, CI, issue, and
+release host. GitHub Pages is disabled and is not the production host.
 
 Application-owned files will use the XDG locations `~/.config/quireforge`,
 `~/.local/share/quireforge`, `~/.cache/quireforge`, and, where needed,

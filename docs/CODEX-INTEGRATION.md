@@ -212,6 +212,13 @@ account. Live validation returned catalog and account-aware rows with fields
 including ID, name, description, icons, distribution channel, metadata,
 install URL, `isAccessible`, and `isEnabled`.
 
+A paginated 2026-07-19 snapshot returned a multi-page directory across the
+default OpenAI catalog and ecosystem directory, while only a small subset
+reported `isAccessible`. Catalog-wide `isEnabled` and install-URL values
+demonstrate why those fields must not be presented as installed, authorized,
+healthy, or eligible state. The repository does not publish the account-
+specific entries or counts.
+
 The Integration Center may therefore:
 
 - Display only rows actually returned by Codex.
@@ -243,9 +250,9 @@ codex plugin marketplace upgrade [NAME] --json
 codex plugin marketplace remove NAME --json
 ```
 
-The local snapshot contained one configured `openai-curated` marketplace, 179
-available entries, and one installed plugin at inspection time. These are local
-observations only and must never be published as a guaranteed catalog.
+The local snapshot validated separate configured-marketplace and
+available/installed-plugin collections. Their account-specific rows and counts
+are not published as a guaranteed catalog.
 
 App-server schemas include marketplace and plugin management methods, but the
 official documentation explicitly marks `plugin/list`, `plugin/read`,
@@ -271,6 +278,10 @@ documented; npm installation does not run package lifecycle scripts.
 Rows include enabled state, interface metadata, and dependency metadata.
 `skills/config/write` enables or disables a skill by absolute manifest path.
 
+The QuireForge cwd returned enabled, scope, interface, and dependency metadata
+for visible skills. The environment-specific rows and count are not website
+content.
+
 The desktop app must preserve scope and provenance: built-in, personal,
 project, repository-provided, or plugin-bundled. A project suggestion must not
 silently enable a global skill.
@@ -280,6 +291,10 @@ silently enable a global skill.
 The CLI provides list/get/add/remove/login/logout commands. App-server provides
 status, tools, resources, auth state, OAuth login URL, completion notification,
 and startup/reauthentication failure state.
+
+The configured-server collection was validated without recording its rows.
+Names, counts, commands, working directories, URLs, and authentication details
+are intentionally absent from this repository.
 
 MCP OAuth stays owned by Codex. The desktop app may open an authorization URL
 and render status, but it must not log codes/tokens or save them to SQLite.

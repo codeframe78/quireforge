@@ -101,7 +101,7 @@ Generate them from these committed vectors rather than redrawing the mark.
 | Tauri/Linux application | 32, 64, 128, 256, and 512 px PNG; toolchain-required platform variants |
 | AppImage | 512 px PNG named for QuireForge by the packaging workflow |
 | Desktop entry | Installed icon sizes selected by the packaging baseline |
-| GitHub Pages | SVG mark/lockups, responsive raster fallbacks where measured useful |
+| Astro website | SVG mark/lockups, responsive raster fallbacks where measured useful |
 | Browser | SVG favicon plus generated 16 and 32 px fallbacks |
 | Social metadata | 1200×630 raster rendered from `quireforge-social-card.svg` |
 | GitHub social preview | Approved 1200×630 export uploaded manually in a later gated operation |

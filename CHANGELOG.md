@@ -14,6 +14,10 @@ released a usable application.
   repository, GitHub Pages, integration-client, and XDG storage identifiers.
 - Original path-based QuireForge mark, wordmark, light/dark lockups, favicon,
   application-icon source, social card, palette, and brand usage guidance.
+- Public/local A2 Hosting capability audit, preliminary cPanel deployment
+  architecture, and an explicit authenticated-access boundary.
+- ADR 0005 selecting the dedicated A2-hosted production subdomain while
+  retaining the earlier GitHub Pages plan as superseded history.
 
 ### Changed
 
@@ -27,6 +31,10 @@ released a usable application.
   and Debian package remain `quireforge`.
 - Defined app-server initialization as `clientInfo.name = "quireforge"`,
   `clientInfo.title = "QuireForge"`, and the real application version.
+- Selected `https://quireforge.jamesjennison.net` as the production website;
+  GitHub remains the source, CI, issue, and release host.
+- Refreshed account-scoped Codex discovery without publishing catalog entries
+  or integration identifiers.
 
 ### Migration note
 
