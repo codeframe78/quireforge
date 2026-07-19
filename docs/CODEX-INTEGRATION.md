@@ -11,17 +11,19 @@ workspaces.
 
 ## QuireForge client identity
 
-QuireForge is the intended client display name wherever an official Codex or
-MCP interface accepts client metadata. A versioned adapter may send a truthful,
-minimal identity such as `QuireForge` and its application version only when the
-installed interface documents that field. It must not impersonate an official
-OpenAI client or claim OpenAI verification.
+QuireForge is the intended client identity wherever an official Codex or MCP
+interface accepts client metadata. A versioned adapter sends only truthful,
+documented fields and must not impersonate an official OpenAI client or claim
+OpenAI verification.
 
 Integration-facing identifiers follow these rules:
 
-- Human-facing client name: `QuireForge`.
-- Product-owned user-agent token, when a supported interface needs one:
-  `quireforge/<version>`.
+- App-server machine identity: `clientInfo.name = "quireforge"`.
+- App-server human title: `clientInfo.title = "QuireForge"`.
+- App-server version: `clientInfo.version` is the real QuireForge application
+  version.
+- The upstream user-agent string is the value returned by Codex after
+  initialization; QuireForge does not spoof or independently construct it.
 - Official plugin, connector, marketplace, MCP tool, Codex protocol, and API
   identifiers remain unchanged.
 - Connector authorization uses only official returned URLs and callback
@@ -32,6 +34,12 @@ Integration-facing identifiers follow these rules:
 
 Client metadata and logs must not contain local paths, account identifiers,
 tokens, or repository contents.
+
+The current [Codex app-server documentation](https://learn.chatgpt.com/docs/app-server)
+requires `clientInfo` during initialization and states that `clientInfo.name`
+identifies the integration in the OpenAI Compliance Logs Platform. An
+enterprise-targeted QuireForge deployment may therefore require coordination
+through OpenAI's supported known-client process.
 
 ## Evidence sources
 

@@ -6,8 +6,8 @@ been deployed.
 ## Production target
 
 - Product: QuireForge.
-- Repository: `codeframe78/quireforge` (target; repository rename is separately
-  approval-gated).
+- Repository: `codeframe78/quireforge` (renamed in place; Pages remains
+  disabled).
 - Initial URL: `https://codeframe78.github.io/quireforge/`.
 - Source: `apps/website/` in the monorepo.
 - Generator: Astro with TypeScript and static output.
@@ -45,9 +45,9 @@ path. No root-relative path may accidentally omit the repository prefix.
 The built artifact must contain the entry page at its root, not nested inside an
 extra `dist` directory layer.
 
-The repository currently has no Astro source, workflow, or deployed Pages
-site. This identity update establishes the production contract; it does not
-enable Pages, change repository settings, or deploy anything.
+The repository currently has no Astro source, workflow, or deployed Pages site.
+This identity contract does not enable Pages, change repository settings, or
+deploy anything.
 
 ## Workflow design
 

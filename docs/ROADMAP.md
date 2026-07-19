@@ -21,10 +21,11 @@ The working copy moved through a controlled Codex-session handoff to
 place to `codeframe78/quireforge`; neither operation authorized a push, merge,
 Pages deployment, or release.
 
-Migration status: the tracked identity contract, in-place GitHub repository
-rename, local working-copy handoff, and core vector brand sources are complete
-on the dedicated migration branch. Production application/website exports and
-external GitHub branding settings remain milestone- and approval-gated.
+Migration status: the tracked identity contract, authoritative naming audit,
+in-place GitHub repository rename, local working-copy handoff, and core vector
+brand sources are complete on the dedicated migration branch. The branch has
+not been pushed or merged. Production application/website exports and external
+GitHub branding settings remain milestone- and approval-gated.
 
 ## Status
 

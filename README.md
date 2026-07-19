@@ -26,8 +26,8 @@ and feasibility is complete**; there is no application package to install yet.
 - Website: planned at `https://codeframe78.github.io/quireforge/`; not deployed.
 - Integration support: under validation against supported Codex interfaces.
 - Completed milestone: Milestone 0 — Discovery and Feasibility.
-- Current milestone: permanent QuireForge identity migration, with external
-  repository and local-path changes separately approval-gated.
+- Current milestone: the QuireForge identity migration is complete locally on
+  an unpushed feature branch and awaits review/publication decisions.
 - Upcoming milestone: Milestone 1 — Repository and Governance.
 - Known limitations: no desktop implementation, packages, releases, or public
   website exist yet.
@@ -55,8 +55,12 @@ guaranteed public catalog.
 The repository is `codeframe78/quireforge`. Future application and
 packaging work must use `quireforge` for the executable and Debian package,
 `QuireForge` for the desktop display name and AppImage basename, and
-`io.github.codeframe78.QuireForge` as the application-identifier candidate
-pending validation in the actual Tauri and Linux packaging toolchains.
+`io.github.codeframe78.QuireForge` as the application identifier. Its syntax is
+validated for Tauri and freedesktop application identity; functional bundle,
+GTK, and packaging wiring remains an implementation-milestone test obligation.
+The canonical desktop entry is
+`io.github.codeframe78.QuireForge.desktop`; its `Exec` target remains
+`quireforge`.
 
 Application-owned files will use the XDG locations `~/.config/quireforge`,
 `~/.local/share/quireforge`, `~/.cache/quireforge`, and, where needed,

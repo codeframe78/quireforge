@@ -22,11 +22,16 @@ released a usable application.
   temporary discovery-stage label.
 - Updated the planned repository-project website to
   `https://codeframe78.github.io/quireforge/` with base path `/quireforge/`.
+- Replaced the initially proposed `quireforge.desktop` filename with the
+  freedesktop-aligned `io.github.codeframe78.QuireForge.desktop`; the executable
+  and Debian package remain `quireforge`.
+- Defined app-server initialization as `clientInfo.name = "quireforge"`,
+  `clientInfo.title = "QuireForge"`, and the real application version.
 
 ### Migration note
 
-- The existing Git history and discovery work are being migrated in place; no
-  replacement project or rewritten history is involved.
+- The existing Git history and discovery work were migrated in place; no
+  replacement project or rewritten history was involved.
 - The GitHub repository was renamed in place to `codeframe78/quireforge`, and
   the intact working copy moved to `/mnt/faststorage/quireforge`, through
   separate approval-gated operations.

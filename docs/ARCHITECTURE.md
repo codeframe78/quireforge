@@ -273,5 +273,6 @@ Most tests require neither model calls nor third-party authorization.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or
   only through Codex-supported configuration RPCs.
-- Final validation of the application identifier against the selected Tauri,
-  desktop-entry, D-Bus, and packaging toolchain versions.
+- Functional validation that the selected Tauri, GTK, desktop-entry, D-Bus,
+  and packaging toolchain versions preserve the canonical application ID and
+  reverse-DNS desktop filename.

@@ -9,18 +9,44 @@ the real toolchain rather than inferred from documentation alone:
 
 | Surface | Target identity | Current validation state |
 |---|---|---|
-| Product/window/desktop display | `QuireForge` | Valid display name |
-| Executable and Debian package | `quireforge` | Valid Linux package/binary form |
-| Desktop entry filename | `quireforge.desktop` | Valid filename form |
-| AppImage basename | `QuireForge` | Valid artifact basename |
-| Application identifier | `io.github.codeframe78.QuireForge` | Candidate; verify with Tauri, D-Bus, desktop, and packaging tools |
+| Product/window/desktop display | `QuireForge` | Valid Tauri product/display name |
+| Executable and Debian package | `quireforge` | Valid Linux binary and Debian package form |
+| Desktop entry filename | `io.github.codeframe78.QuireForge.desktop` | Valid and reverse-DNS aligned; replaces the initial short-name proposal |
+| AppImage release basename | `QuireForge` | Project release policy; verify the final workflow-renamed artifact |
+| Application identifier | `io.github.codeframe78.QuireForge` | Valid Tauri and freedesktop identifier form; functional wiring pending |
 | XDG directory leaf | `quireforge` | Valid; honor XDG environment overrides |
-| GitHub repository | `codeframe78/quireforge` | Target available at identity audit; rename separately gated |
-| GitHub Pages project base | `/quireforge/` | Valid repository-project path; site not deployed |
+| GitHub repository | `codeframe78/quireforge` | Connected and renamed in place |
+| GitHub Pages project base | `/quireforge/` | Valid Astro repository-project path; site not deployed |
 
 No Tauri, Cargo, JavaScript, Astro, package, or desktop-entry configuration
 exists yet, so this table is a future implementation contract rather than a
 claim that those artifacts have already been migrated.
+
+Validation sources:
+
+- [Tauri configuration reference](https://v2.tauri.app/reference/config/#identifier):
+  identifiers use reverse-domain notation and accept ASCII alphanumerics,
+  hyphens, and periods; `mainBinaryName` independently controls the executable.
+- [Freedesktop desktop-entry file naming](https://specifications.freedesktop.org/desktop-entry/latest/file-naming.html):
+  application desktop filenames should use a reverse-DNS well-known name.
+- [Freedesktop D-Bus activation](https://specifications.freedesktop.org/desktop-entry/latest/dbus.html):
+  if enabled later, the D-Bus name must match the desktop filename without the
+  `.desktop` suffix.
+- [Debian Policy](https://www.debian.org/doc/debian-policy/ch-controlfields.html#s-f-source):
+  package names use lowercase letters, digits, plus, minus, and period and begin
+  with an alphanumeric character.
+- [XDG Base Directory Specification](https://specifications.freedesktop.org/basedir/):
+  configuration, data, cache, and state derive from their respective XDG base
+  variables and documented home-relative defaults.
+- [Astro GitHub Pages guide](https://docs.astro.build/en/guides/deploy/github/):
+  a project site uses `site = "https://codeframe78.github.io"` and a
+  repository-name base such as `/quireforge`.
+
+The outer AppImage filename pattern
+`QuireForge-{version}-{architecture}.AppImage` is a project release convention,
+not an interface identity. The release workflow must rename and verify the
+Tauri-produced artifact without changing its embedded executable or desktop
+identity.
 
 ## Validated discovery environment
 
