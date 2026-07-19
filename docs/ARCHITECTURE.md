@@ -252,12 +252,13 @@ backend and receives only version-controlled public content. Screenshots and
 compatibility data are curated release assets; local project, connector, and
 account data never enter the site build.
 
-Production is `https://quireforge.jamesjennison.net` on the owner's A2 Hosting
-cPanel account. GitHub owns source, validation, issues, and release binaries;
-GitHub Pages remains disabled. The preferred deployment architecture is a
-protected GitHub Actions build followed by strict-host-verified SSH/`rsync` of
-only the generated artifact into a versioned release, conditional on the
-authenticated hosting audit. The document root is never inferred or hard-coded.
+Production is `https://quireforge.jamesjennison.net` on Cloudflare Pages.
+GitHub owns source, validation, issues, and release binaries; GitHub Pages
+remains disabled. Cloudflare is authoritative DNS while A2 retains the
+main-site and mail origins unless separately changed. The deployment adapter
+builds a static artifact, creates isolated previews, applies version-controlled
+headers/redirects, and promotes only an approved production-branch deployment.
+DNS cutover is independently approval-gated and recoverable.
 
 ## Testing seams
 
@@ -280,8 +281,8 @@ Most tests require neither model calls nor third-party authorization.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or
   only through Codex-supported configuration RPCs.
-- Exact cPanel document root, staging layout, and whether atomic release
-  switching is supported.
+- Cloudflare Git integration versus protected GitHub Actions direct upload,
+  pending project-level permission review.
 - Functional validation that the selected Tauri, GTK, desktop-entry, D-Bus,
   and packaging toolchain versions preserve the canonical application ID and
   reverse-DNS desktop filename.

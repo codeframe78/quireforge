@@ -13,16 +13,17 @@ and must not imply OpenAI ownership or endorsement.
 ## Production contract
 
 - URL: `https://quireforge.jamesjennison.net`.
-- Host: the owner's A2 Hosting cPanel account.
+- Host: Cloudflare Pages.
 - Source: `apps/website/` in `codeframe78/quireforge`.
 - Generator: Astro with TypeScript and static output.
 - Production base: `/` on the dedicated subdomain.
 - Application downloads: GitHub Releases.
 - Runtime services: none.
 
-GitHub Pages remains disabled and is not a fallback production host. The exact
-cPanel document root and deployment mechanism remain pending the separately
-approved authenticated capability audit.
+GitHub Pages remains disabled and is not a fallback production host. Cloudflare
+is authoritative DNS; A2 keeps the main-site and mail origins unless separately
+changed. The currently absent QuireForge record will use Cloudflare's supported
+Pages CNAME flow after separately approved project setup and validation.
 
 ## Information architecture
 
@@ -68,6 +69,7 @@ Only reviewed, version-controlled public content enters the site build. Local
 paths, SQLite data, Codex sessions, account/workspace details, installed
 integrations, credentials, and unsanitized diagnostics are prohibited.
 
-See [the A2 capability audit](A2-HOSTING-CAPABILITY-AUDIT.md),
-[cPanel deployment architecture](CPANEL-DEPLOYMENT.md), and
-[ADR 0005](DECISIONS/0005-a2-production-hosting.md).
+See [the Cloudflare Pages capability audit](CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md),
+[deployment architecture](CLOUDFLARE-PAGES-DEPLOYMENT.md), and
+[ADR 0006](DECISIONS/0006-cloudflare-pages-production-hosting.md). The
+[A2 audit](A2-HOSTING-CAPABILITY-AUDIT.md) is retained as migration evidence.

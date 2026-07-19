@@ -2,20 +2,26 @@
 
 - Audit date: 2026-07-19
 - Production target: `https://quireforge.jamesjennison.net`
-- Status: public/local phase complete; authenticated read-only phase pending
-- Hosting changes made: none
+- Status: public, local, and authenticated read-only inspection complete
+- Hosting changes made: a dedicated audit public key was authorized; no site,
+  DNS, SSL, repository, deployment, or content setting changed
+- Production disposition: superseded by Cloudflare Pages; A2 remains the
+  main-site/mail origin and a recoverable prior QuireForge origin
 
 ## Scope and redaction
 
 This report evaluates whether the owner's A2 Hosting cPanel account can safely
-host QuireForge's statically generated Astro website. The first phase used only
-the local QuireForge checkout, read-only GitHub metadata, public DNS, public
-HTTP/TLS responses, and authoritative documentation.
+host QuireForge's statically generated Astro website. Evidence comes from the
+local QuireForge checkout, read-only GitHub metadata, public DNS and HTTP/TLS,
+authoritative documentation, and an approval-gated read-only SSH/cPanel audit.
 
 Raw IP addresses, mail-routing values, account usernames, home paths, account
-IDs, credentials, and unrelated hosting content are intentionally omitted.
-No cPanel login, SSH connection, API token, DNS mutation, upload, or deployment
-occurred.
+IDs, credentials, host-key material, and unrelated hosting content are
+intentionally omitted. A dedicated passphrase-protected local audit key was
+authorized in cPanel and strict host checking pinned the repeatedly observed
+Ed25519 server key using trust on first use. Independent confirmation of that
+server fingerprint by A2 remains desirable. No API token, DNS mutation,
+upload, content edit, package installation, or deployment occurred.
 
 Status labels mean:
 
@@ -29,24 +35,25 @@ Status labels mean:
 
 ## Executive summary
 
-The dedicated subdomain is already present in authoritative A2-hosted DNS and
-has a distinct, valid Let's Encrypt certificate. Both it and the existing main
-site currently return `403 Forbidden` to the audit clients. Public responses
-identify LiteSpeed and include a two-year HSTS policy with
-`includeSubDomains`. This means HTTPS continuity for the QuireForge subdomain
-is already security-sensitive.
+The dedicated subdomain is already isolated from the main site with its own
+document root outside `public_html`, a distinct Let's Encrypt AutoSSL
+certificate, and ModSecurity enabled. Its root contains only provider-managed
+ACME/CGI directories and no index file, which explains the current
+`403 Forbidden`; the main document root is similarly unpopulated except for a
+small `robots.txt`. LiteSpeed serves HTTP/2 over TLS 1.2/1.3.
 
-The public phase cannot determine the A2 plan, document root, current files,
-reason for the 403, account quotas, backup coverage, shell availability, cPanel
-feature set, or whether versioned/atomic deployment is possible. Those items
-remain blocked on separately approved authenticated read-only access.
+The account is an A2 `Drive 2020` shared-hosting plan on cPanel 110 and an
+EL7-derived CloudLinux kernel. SSH, Git Version Control, `rsync`, SFTP/SCP,
+archives, AutoSSL, backups, cron, logs, ModSecurity, API tokens, and 2FA are
+available. Node/npm/Corepack/pnpm are not exposed in the shell and persistent
+Passenger applications are provider-disabled. cPanel 110/CloudLinux 7 is in
+Extended Lifecycle Support only through January 1, 2027, making provider
+migration timing a material production risk.
 
-Subject to that audit, the preliminary preferred architecture is: GitHub
-Actions builds and validates Astro, a protected production environment gates
-access to a dedicated SSH key, and `rsync` transfers only the verified static
-artifact into a versioned release directory. A symlink or similarly atomic
-switch is preferred if supported. This is not a final deployment decision and
-does not authorize credential creation or deployment.
+The audit established that GitHub Actions plus SSH/`rsync` was viable but
+required custom release and rollback machinery. The owner subsequently selected
+Cloudflare Pages as the production host in ADR 0006. The audit key is not a
+deployment key, and no A2 deployment is authorized.
 
 ## Preserved project and GitHub baseline
 
@@ -79,6 +86,10 @@ No GitHub settings changed during this audit.
 
 ## Public DNS and domain findings
 
+This table records the A2-authoritative snapshot taken before the owner moved
+the domain's delegation to Cloudflare later on 2026-07-19. Current DNS state is
+maintained in `CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md`.
+
 | Capability | Status | Finding |
 |---|---|---|
 | Authoritative DNS | Available | Four `a2hosting.com` authoritative nameservers |
@@ -90,9 +101,9 @@ No GitHub settings changed during this audit.
 | Mail routing | Available | Existing MX data is present and was not recorded or changed |
 | CAA | Unavailable | No CAA record observed; issuance is not DNS-restricted to a named CA |
 | DNSSEC delegation | Unavailable | No DS record or authenticated-data response observed |
-| Zone Editor | Unknown | Requires authenticated cPanel inspection |
-| Redirect configuration | Unknown | Public requests are denied before a canonical redirect is demonstrated |
-| Proposed document root | Unknown | Must be read from cPanel; never infer or hard-code it |
+| Zone Editor | Available | cPanel exposes simple and advanced zone editing; no record changed |
+| Redirect configuration | Available | cPanel exposes redirects, but QuireForge currently has no HTTPS or canonical-host redirect |
+| Proposed document root | Available | Dedicated root outside `public_html`; account-specific prefix is redacted |
 
 The QuireForge deployment must not alter MX, SPF, DKIM, DMARC, unrelated TXT,
 or other domain records. Any future CAA, DNSSEC, address, or redirect change is
@@ -109,12 +120,12 @@ a separate state-changing approval.
 | TLS 1.0 / 1.1 | Unavailable | Rejected by both hosts |
 | Web server | Available | Public response identifies LiteSpeed |
 | HTTPS response | Available | Both hosts returned `403 Forbidden`; content access is restricted |
-| HTTP-to-HTTPS redirect | Unknown | HTTP also returned 403, so redirect behavior was not established |
+| HTTP-to-HTTPS redirect | Unavailable | HTTP returns 403 directly; no redirect is configured |
 | HSTS | Available | `max-age=63072000; includeSubDomains` already present |
 | Clickjacking protection | Available | `X-Frame-Options: SAMEORIGIN` observed |
 | MIME-sniffing protection | Available | `X-Content-Type-Options: nosniff` observed |
-| Content Security Policy | Unknown | Not present on the observed 403 response |
-| Referrer / Permissions policy | Unknown | Not present on the observed 403 response |
+| Content Security Policy | Unavailable on placeholder | Not present on the observed 403 response |
+| Referrer / Permissions policy | Unavailable on placeholder | Not present on the observed 403 response |
 | Compression and static caching | Unknown | Cannot evaluate representative content through the 403 response |
 | Mixed-content state | Unknown | No production page was readable |
 
@@ -124,34 +135,33 @@ site unreachable without an HTTP fallback.
 
 ## Existing-site findings
 
-The main site and QuireForge subdomain denied both ordinary command-line and
-browser-style audit requests. Search discovery returned no indexed pages. The
-main site's `robots.txt` was public and specified a crawl delay; common sitemap
-and security-contact paths were not found.
+The main site and QuireForge subdomain have separate cPanel document roots.
+Neither root contains an index or `.htaccess`; the main root contains only a
+small public `robots.txt`, while QuireForge contains provider-managed
+`.well-known/acme-challenge` and `cgi-bin` directories. No WordPress, Astro,
+package manifest, or Git checkout marker was found in either root. The 403 is
+therefore the expected no-index placeholder response, not evidence of a failed
+QuireForge deployment.
 
-The following remain unknown and require authenticated inspection or
-owner-provided sanitized information:
-
-- main-site platform and private document root;
-- current QuireForge document root and contents;
-- `.htaccess`, redirect, error-page, caching, compression, and security rules;
-- analytics and deployment mechanism;
-- whether the 403 is intentional, permission-related, or placeholder behavior;
-- whether a separate staging hostname/root already exists.
+No canonical redirect, custom error page, sitemap, application-level caching,
+compression rule, or analytics marker was established. No separate QuireForge
+staging hostname/root was found or created. Future synchronization must
+preserve `.well-known` and `cgi-bin` rather than using an unqualified
+`--delete` against the document root.
 
 No existing-site content was downloaded into the repository.
 
 ## Hosting plan and resource matrix
 
-| Item | Status | Required evidence |
+| Item | Status | Finding |
 |---|---|---|
-| Shared / managed VPS / unmanaged VPS / dedicated | Unknown | cPanel/account plan view or owner confirmation |
-| Plan/tier | Unknown | Sanitized plan name only |
-| Domain/subdomain allowance | Unknown | Account limits; existing subdomain proves at least one is configured |
-| Disk quota and use | Unknown | Sanitized cPanel Disk Usage/quota output |
-| Inode quota and use | Unknown | Sanitized Resource Usage or provider confirmation |
-| Bandwidth policy/use | Unknown | Sanitized Metrics/plan output |
-| CPU, RAM, process, entry-process, I/O limits | Unknown | Sanitized Resource Usage/CloudLinux view |
+| Hosting class | Available | Shared CloudLinux/cPanel environment |
+| Plan/tier | Available | A2 `Drive 2020` |
+| Domain/subdomain allowance | Available | Reported unlimited; five subdomains in use at audit time |
+| Disk quota and use | Available | Unlimited account quota; approximately 4.2 GiB used |
+| Inode quota and use | Available | 102,931 of 600,000 used |
+| Bandwidth policy/use | Available | Unlimited account quota; approximately 645 MiB used in the current month |
+| CPU, RAM, process, entry-process, I/O limits | Available | 100% CPU, 1 GiB RAM, 75 processes, 50 entry processes, 4 MiB/s I/O, 1,024 IOPS |
 | Concurrent connection and file-size limits | Unknown | Plan/provider evidence |
 | Database allowance | Not relevant initially | Static production site uses no database |
 | Backup size/retention limits | Unknown | Backup interface and plan evidence |
@@ -160,24 +170,24 @@ No existing-site content was downloaded into the repository.
 
 | Feature | Status | Notes |
 |---|---|---|
-| Domains / subdomains | Unknown | Public DNS and TLS exist; management UI not audited |
-| Zone Editor / redirects | Unknown | Authenticated inspection required |
-| File Manager / Disk Usage | Unknown | Authenticated inspection required |
-| Backup / Backup Wizard | Unknown | Feature and provider retention must be verified |
-| Git Version Control | Unknown | Provider may disable it; shell access affects functionality |
-| Terminal / SSH Access | Unknown | cPanel supports these generally; account entitlement unknown |
-| SSH key management | Unknown | Preferred access/deployment method if account exposes it |
-| Cron Jobs | Unknown | Not required for preferred push deployment |
-| Application Manager / Node.js | Unknown | Node is build-only if available; no persistent app is needed |
-| SSL/TLS Status / AutoSSL | Unknown | Public certificates exist; renewal/status UI not inspected |
-| ModSecurity / malware tools | Unknown | Must not be disabled for deployment convenience |
-| Hotlink Protection / Directory Privacy | Unknown | Evaluate compatibility without weakening controls |
-| Error Pages | Unknown | Needed for an intentional static 404 experience |
-| Metrics / raw access / error / resource logs | Unknown | Audit only QuireForge-relevant views |
-| MIME Types / Indexes | Unknown | Static asset types and directory listing policy require checks |
-| API tokens / 2FA | Unknown | Token creation is not authorized; 2FA state should be confirmed |
-| IP blocking / WAF | Unknown | May explain the observed 403 |
-| Server caching / optimization | Unknown | Must not rewrite immutable Astro assets incorrectly |
+| Domains / subdomains | Available | Dedicated QuireForge subdomain and isolated root confirmed |
+| Zone Editor / redirects | Available | Interfaces enabled; no settings changed |
+| File Manager / Disk Usage | Available | Interfaces and account usage API available |
+| Backup / Backup Wizard | Available | Feature enabled; no downloadable backups listed and provider retention unknown |
+| Git Version Control | Available | Feature and read-only API work; no repositories configured |
+| Terminal / SSH Access | Available | Bash over key-authenticated SSH on the provider port |
+| SSH key management | Available | Dedicated audit key imported and authorized |
+| Cron Jobs | Available | UI feature enabled; this server lacks the current Cron UAPI module |
+| Application Manager / Node.js | Provider-disabled / degraded | Passenger disabled; Node selector shown but Node/npm absent from shell |
+| SSL/TLS Status / AutoSSL | Available | Let's Encrypt AutoSSL active for QuireForge and its `www` alias |
+| ModSecurity / malware tools | Mixed | ModSecurity installed/enabled; account malware scanner disabled |
+| Hotlink Protection / Directory Privacy | Available | cPanel features enabled |
+| Error Pages | Available | cPanel interface enabled; no QuireForge custom page configured |
+| Metrics / raw access / error / resource logs | Available | Interfaces and account log paths present |
+| MIME Types / Indexes | Available / untested | Interfaces enabled; representative static artifact not served |
+| API tokens / 2FA | Available / not inspected | Interfaces enabled; no token created and account 2FA state not retained |
+| IP blocking / WAF | Available | IP blocker and ModSecurity available; 403 was caused by the empty root |
+| Server caching / optimization | Available / untested | LiteSpeed and optimize interface present; artifact behavior untested |
 | Staging / clone / restore | Unknown | Needed for deployment and rollback recommendation |
 
 cPanel documents that providers may disable Git Version Control, SSH, SSL
@@ -188,18 +198,20 @@ documentation therefore cannot establish their availability on this account.
 
 | Capability | Status | Public or local finding |
 |---|---|---|
-| Server OS / cPanel version | Unknown | Authenticated inspection required |
-| Web server | Available | LiteSpeed observed publicly |
-| SSH hostname / port / shell type | Unknown | Must be explicitly confirmed before connection |
-| Git, Node, npm, Corepack, pnpm | Unknown | Server-side build cannot be assumed |
-| `rsync`, SFTP, SCP, `tar` | Unknown | Required to choose transfer/rollback method |
-| Symlink support | Unknown | Determines atomic-release feasibility |
-| Cron | Unknown / not required | Preferred deployment does not depend on it |
+| Server OS / cPanel version | Available | EL7-derived CloudLinux kernel; cPanel 110.0.136 |
+| Web server | Available | LiteSpeed publicly; Apache 2.4.68 reported by cPanel |
+| SSH / shell | Available | Nonstandard provider port, Bash, dedicated key, strict pinned Ed25519 host key |
+| Git | Available | 2.39.1 |
+| Node, npm, Corepack, pnpm | Unavailable in shell | On-host Astro build rejected as an architecture |
+| `rsync`, SFTP, SCP, `tar` | Available | `rsync` 3.1.2 and transfer/archive tools present |
+| PHP / Python | Available | PHP 8.3.31 and Python 3.6.8; unnecessary for static production |
+| Symlink support | Partially available | Account symlink observed; public-root switching not tested |
+| Cron | Available / not required | Feature enabled; preferred deployment does not depend on it |
 | Background processes | Not relevant | Production is static and requires no service process |
 | Custom binaries | Not relevant initially | Build occurs on GitHub-hosted runners |
-| cPanel Git hooks / `.cpanel.yml` | Unknown | Account-specific feature audit required |
+| cPanel Git hooks / `.cpanel.yml` | Available / untested | Git feature/API works; no repository or deployment test created |
 | Outbound GitHub connectivity | Unknown | Needed only for cPanel pull deployment |
-| Strict SSH host verification | Unknown | Required for any SSH-based method |
+| Strict SSH host verification | Available | Enforced with a dedicated pinned known-hosts file; provider confirmation remains desirable |
 
 The local development host is Ubuntu 26.04 LTS on x86_64 with Node 22,
 Git/GitHub CLI, `rsync`, OpenSSH, SFTP/SCP, `tar`, DNS, TLS, and HTTP tooling.
@@ -209,10 +221,9 @@ installed during this audit.
 
 ## Backup and recovery findings
 
-cPanel's Backup Wizard can expose full and partial backups when enabled, but
-full restore may require provider/WHM assistance. Account availability,
-provider-managed backup frequency, retention, quota impact, file-level restore,
-and on-demand backup support remain unknown.
+cPanel Backup/Backup Wizard is enabled, but its read-only API listed no account
+backup files. Provider-managed frequency, retention, quota impact, file-level
+restore, and on-demand backup support remain unknown.
 
 QuireForge deployment must retain a project-owned release manifest containing
 the Git commit, build timestamp, and artifact checksum. Provider backups cannot
@@ -229,25 +240,32 @@ read-only phase.
 - The default branch is not protected and no deployment environment exists.
 - Existing HSTS already covers subdomains.
 - TLS 1.2 and 1.3 work; TLS 1.0 and 1.1 do not.
-- No cPanel, SSH, API, or deployment credential was accessed or created.
-- Two-factor authentication, ModSecurity, malware scanning, account shell
-  isolation, and file permissions remain unknown.
+- A dedicated passphrase-protected audit SSH key was created locally and its
+  public key authorized; no password, API token, or deployment credential was
+  accessed or created.
+- ModSecurity is enabled for QuireForge; the account malware scanner is
+  disabled. Account directories are owner-restricted and the document roots
+  use the provider's expected shared-web-group permissions.
+- OpenSSH 7.4 warned that the connection lacks post-quantum key exchange.
+- cPanel 110/CloudLinux 7 receives Extended Lifecycle Support only through
+  January 1, 2027; provider migration timing is a material risk.
 
 ## Deployment-method comparison
 
 | Method | Availability | Security | Reliability / rollback | Complexity | Preliminary disposition |
 |---|---|---|---|---|---|
-| GitHub Actions build + SSH/`rsync` | Unknown until SSH audit | Strong when environment-gated with a dedicated key and pinned host key | High if versioned releases and atomic switch are supported | Medium | **Preferred, conditional** |
-| cPanel Git + `.cpanel.yml` | Unknown until feature audit | Keeps Git pull server-side but executes repository deployment tasks | Medium; clean tree and explicit deployment commands required | Medium–high | Secondary option |
-| Manual verified artifact upload | Likely possible but unverified | No CI credential; greater human-error risk | Low–medium unless each upload is backed up | Low setup / high recurring effort | Emergency fallback |
+| GitHub Actions build + SSH/`rsync` | Available, deployment untested | Strong when environment-gated with a separate deployment key and pinned host key | Medium–high; atomic switch untested | Medium | Viable but superseded |
+| cPanel Git + `.cpanel.yml` | Available, deployment untested | Executes repository deployment tasks on an aging host | Medium; Node build unavailable | Medium–high | Superseded |
+| Manual verified artifact upload | Available in principle | Greater human-error risk | Low–medium unless each upload is backed up | Low setup / high recurring effort | Emergency fallback only |
 
 cPanel requires a checked-in top-level `.cpanel.yml`, at least one branch, and
 a clean tree for Git deployment. Its documentation explicitly warns against
 wildcard copying because doing so can publish `.git` and other unintended data.
 
-## Preliminary production architecture
+## Superseded production architecture
 
-If authenticated inspection confirms SSH, `rsync`, and safe release switching:
+The audit confirmed SSH and `rsync` but did not test release switching. The
+following design was viable before Cloudflare Pages superseded it:
 
 1. GitHub Actions checks out an exact approved commit.
 2. It installs pinned dependencies from a committed lockfile.
@@ -265,31 +283,24 @@ If authenticated inspection confirms SSH, `rsync`, and safe release switching:
 The final layout and switching mechanism depend on the real document root and
 symlink policy. No path is assumed here.
 
-## Remaining authenticated audit questions
+## Remaining untested A2 questions
 
-1. What exact A2 plan and cPanel version serve the domain?
-2. What SSH hostname, port, shell mode, and host-key fingerprints apply?
-3. What is the exact QuireForge document root, and what currently causes 403?
-4. Are SSH key management, Terminal, Git Version Control, backups, AutoSSL,
-   ModSecurity, metrics, cron, and API tokens exposed?
-5. What are the account's disk, inode, bandwidth, CPU, memory, process, I/O,
-   connection, and file-size limits?
-6. Are Git, Node, npm/Corepack, `rsync`, SFTP/SCP, `tar`, and symlinks available?
-7. Can releases live outside the public root and switch atomically?
-8. Is a staging subdomain/root available without affecting the main site?
-9. What provider backups and file-level restore paths cover the document root?
-10. Why are public requests receiving 403, and which security control owns it?
+1. Can an A2-hosted release live outside the public root and switch atomically?
+2. What staging/clone workflow applies to a plain static site?
+3. What provider backups and file-level restore paths cover the document root?
+4. Can the account reach GitHub outbound, and what transfer/file-size policies
+   apply? These tests are no longer needed for the selected Pages architecture.
 
-## Proposed authenticated access boundary
+## Authenticated access record
 
-Use a dedicated QuireForge SSH key, authorized through cPanel, only after a
-separate approval naming the exact hostname, port, account scope, and verified
-host-key fingerprint. The private key stays in an approved local credential
-store and is never pasted into chat or committed. The initial authenticated
-session runs read-only version, quota, feature, filesystem-metadata, and
-configuration-inspection commands only. It does not create directories, alter
-permissions, edit `.htaccess`, install packages, run deployments, or inspect
-unrelated sites, mail, or databases.
+A dedicated passphrase-protected QuireForge audit key was authorized after
+separate approval. Strict host checking used a locally pinned Ed25519 key after
+consistent trust-on-first-use observations; independent A2 confirmation remains
+desirable. The private key and passphrase were never displayed or committed.
+Only read-only version, quota, feature, filesystem-metadata, and configuration
+commands ran. No directory, permission, `.htaccess`, package, content, DNS,
+deployment, mail, or database change occurred. The key should be revoked after
+the owner approves audit-access cleanup.
 
 ## Authoritative sources
 
@@ -298,6 +309,7 @@ unrelated sites, mail, or databases.
 - [cPanel Git deployment guide](https://docs.cpanel.net/knowledge-base/web-services/guide-to-git-deployment/)
 - [cPanel SSL/TLS Status](https://docs.cpanel.net/cpanel/security/ssl-tls-status/)
 - [cPanel Backup Wizard](https://docs.cpanel.net/cpanel/files/backup-wizard/)
+- [cPanel product lifecycle](https://docs.cpanel.net/knowledge-base/cpanel-product/product-versions-and-the-release-process/)
 - [GitHub secure-use reference](https://docs.github.com/en/actions/reference/security/secure-use)
 - [GitHub deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 - Public DNS, HTTP, and TLS observations recorded on 2026-07-19.

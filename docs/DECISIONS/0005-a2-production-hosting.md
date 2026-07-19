@@ -1,6 +1,6 @@
 # ADR 0005: Host the Production Website on A2/cPanel
 
-- Status: Accepted
+- Status: Superseded by [ADR 0006](0006-cloudflare-pages-production-hosting.md)
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -61,3 +61,11 @@ application, package, desktop-entry, repository, or XDG identities.
   deployment scope.
 - Public DNS/TLS and authenticated hosting findings are maintained in
   `docs/A2-HOSTING-CAPABILITY-AUDIT.md`.
+
+## Supersession note
+
+The authenticated audit established that A2 could host the static site, but
+Cloudflare Pages is a better operational fit and is now the selected production
+host. A2 content and settings were not removed when this decision was
+superseded; the owner later moved authoritative DNS to Cloudflare while
+retaining the A2 main-site and mail origins.

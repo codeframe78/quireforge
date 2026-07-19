@@ -17,7 +17,7 @@ the real toolchain rather than inferred from documentation alone:
 | XDG directory leaf | `quireforge` | Valid; honor XDG environment overrides |
 | GitHub repository | `codeframe78/quireforge` | Connected and renamed in place |
 | Production website | `https://quireforge.jamesjennison.net` | Confirmed target; DNS/TLS present, site not deployed |
-| Website host | A2 Hosting / cPanel | Public phase audited; authenticated capabilities pending |
+| Website host | Cloudflare Pages | Public and owner-mediated account capabilities reviewed; project setup pending |
 
 No Tauri, Cargo, JavaScript, Astro, package, or desktop-entry configuration
 exists yet, so this table is a future implementation contract rather than a
@@ -159,14 +159,18 @@ Portal availability does not establish filesystem access. The service must
 still check metadata, read/write expectations, mount state, Git state, and the
 selected sandbox before saving an association or starting a task.
 
-## A2/cPanel website compatibility
+## Website-host compatibility
 
-The static Astro design is compatible in principle with ordinary cPanel static
-hosting. Public inspection confirms the dedicated subdomain, valid TLS 1.2/1.3,
-and LiteSpeed, but the endpoint currently returns 403. The exact document root,
-account resource limits, SSH/transfer tools, symlink policy, backups, staging,
-and cPanel feature set remain unknown until separately approved authenticated
-inspection. See [the capability audit](A2-HOSTING-CAPABILITY-AUDIT.md).
+The static Astro design is compatible with Cloudflare Pages static output,
+preview deployments, custom domains, headers, and redirects. Account-level
+inspection is complete; project-specific GitHub integration remains pending. The earlier
+A2/cPanel design was compatible with ordinary cPanel static hosting. Its
+authenticated audit confirmed an isolated document root, TLS 1.2/1.3,
+LiteSpeed, SSH/`rsync`, Git, AutoSSL, ModSecurity, and account resource limits;
+the empty endpoint currently returns the expected no-index 403. Atomic release
+switching and staging were not tested before that design was superseded. See the
+[Cloudflare audit](CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md) and historical
+[A2 audit](A2-HOSTING-CAPABILITY-AUDIT.md).
 
 GitHub Pages remains disabled and is not a production fallback.
 

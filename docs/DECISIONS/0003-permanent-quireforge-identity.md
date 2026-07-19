@@ -1,6 +1,6 @@
 # ADR 0003: Permanent QuireForge Identity
 
-- Status: Accepted; website-hosting decision amended by ADR 0005
+- Status: Accepted; website-hosting decision amended by ADR 0006
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -36,7 +36,7 @@ The permanent identity is:
 | Default cache path | `~/.cache/quireforge` |
 | Default state path | `~/.local/state/quireforge` |
 | Production website | `https://quireforge.jamesjennison.net` |
-| Website host | A2 Hosting / cPanel |
+| Website host | Cloudflare Pages |
 
 The home-relative storage paths are documentation shorthand. Implementations
 must honor the XDG base-directory environment and APIs. QuireForge logs belong
@@ -48,7 +48,7 @@ desktop-entry, D-Bus, and packaging versions remains mandatory during
 application scaffolding. The desktop filename decision is explained in
 [ADR 0004](0004-linux-desktop-entry-identity.md).
 The production-hosting decision is explained in
-[ADR 0005](0005-a2-production-hosting.md).
+[ADR 0006](0006-cloudflare-pages-production-hosting.md).
 
 ## Integration identity boundary
 

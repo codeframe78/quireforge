@@ -1,7 +1,9 @@
 # cPanel Deployment
 
-Status: preliminary architecture; no credential, hosting setting, staging
-deployment, or production deployment is authorized.
+Status: superseded production plan retained as historical fallback analysis.
+Cloudflare Pages is selected by
+[ADR 0006](DECISIONS/0006-cloudflare-pages-production-hosting.md). No A2
+staging or production deployment is authorized.
 
 ## Production target
 
