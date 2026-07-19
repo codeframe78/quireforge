@@ -24,6 +24,13 @@ released a usable application.
   Workers & Pages availability, DNS, managed TLS, and security settings.
 - ADR 0006 selecting Cloudflare Pages as the production website host and
   authoritative DNS while A2 retains main-site and mail origins.
+- Apache License 2.0 and repository-wide contributor guidance.
+- Security, contribution, conduct, support, issue, and pull-request policies.
+- GitHub Actions dependency updates and a minimum-permission repository-checks
+  workflow pinned to a reviewed checkout revision.
+- A dependency-free repository validator for required files, local links,
+  QuireForge identity contracts, SVG XML, text encoding, and high-confidence
+  secret patterns.
 
 ### Changed
 
@@ -53,6 +60,10 @@ released a usable application.
   DNS record, deployment, push, or release was created by Codex.
 - Refreshed account-scoped Codex discovery without publishing catalog entries
   or integration identifiers.
+- Reconciled the completed QuireForge path/repository migration, classified all
+  remaining former-name references as intentional history, confirmed that no
+  pre-release application data requires migration, and completed Milestone 1
+  locally without pushing or changing repository settings.
 
 ### Migration note
 

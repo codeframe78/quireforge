@@ -18,8 +18,8 @@ Codex workspace for Linux. It works toward a direct, local-first project model:
 user-selected directories remain in place and Codex operates against those
 original directories through supported interfaces. The original Codex
 discovery and QuireForge identity foundation are complete; production-hosting
-feasibility is being reconciled for Cloudflare Pages. There is no application
-package to install yet.
+feasibility is complete and Cloudflare Pages is the selected production host.
+There is no application package to install yet.
 
 ## Project status
 
@@ -28,12 +28,13 @@ package to install yet.
 - Website: planned at `https://quireforge.jamesjennison.net` on Cloudflare
   Pages; not deployed.
 - Integration support: under validation against supported Codex interfaces.
-- Completed milestone: Milestone 0 — existing-project, Codex, GitHub, A2, DNS,
-  and Cloudflare Pages feasibility audit.
-- Current milestone: Milestone 1 — residual rename/move/GitHub reconciliation;
-  its core migration work is already complete locally.
-- Upcoming milestone: Milestone 2 — brand and Cloudflare Pages website
+- CI status: repository validation is configured locally but will not run on
+  GitHub until the branch is approved and published.
+- Completed milestone: Milestone 1 — QuireForge migration reconciliation and
+  open-source governance baseline.
+- Current milestone: Milestone 2 — brand and Cloudflare Pages website
   foundation.
+- Upcoming milestone: Milestone 3 — desktop scaffold consolidation.
 - Known limitations: no desktop implementation, packages, releases, or public
   website exist yet.
 
@@ -82,3 +83,11 @@ Application-owned files will use the XDG locations `~/.config/quireforge`,
 `~/.local/share/quireforge`, `~/.cache/quireforge`, and, where needed,
 `~/.local/state/quireforge`. Codex-owned authentication, configuration, and
 session storage are outside this identity migration.
+
+## Governance
+
+QuireForge is licensed under the [Apache License 2.0](LICENSE). Contributions
+follow [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Review [SECURITY.md](SECURITY.md) before
+reporting a vulnerability and [SUPPORT.md](SUPPORT.md) before sharing sanitized
+diagnostics.

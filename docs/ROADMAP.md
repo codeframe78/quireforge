@@ -24,17 +24,19 @@ website deployment, or release.
 
 Migration status: the tracked identity contract, authoritative naming audit,
 in-place GitHub repository rename, local working-copy handoff, and core vector
-brand sources are complete on the dedicated migration branch. The branch has
-not been pushed or merged. Production application/website exports and external
-GitHub branding settings remain milestone- and approval-gated.
+brand sources are complete. Milestone 1 also established the Apache-2.0 license,
+repository guidance, contribution/security/conduct/support policies, issue and
+pull-request templates, dependency automation, and initial repository CI. The
+work has not been pushed or merged. Production application/website exports and
+external GitHub branding settings remain milestone- and approval-gated.
 
 ## Status
 
 | Milestone | Scope | Size | Status |
 |---:|---|---|---|
 | 0 | Existing project, hosting capability audit, and feasibility | Very large | Complete locally; not pushed |
-| 1 | QuireForge rename, move, GitHub migration, and governance closure | Medium | Current; core migration complete locally, reconciliation pending |
-| 2 | QuireForge brand and Cloudflare website foundation | Large | Brand sources complete; Astro/hosting foundation pending |
+| 1 | QuireForge rename, move, GitHub migration, and governance closure | Medium | Complete locally; not pushed |
+| 2 | QuireForge brand and Cloudflare website foundation | Large | Current; brand sources complete, Astro/hosting foundation pending |
 | 3 | Desktop scaffold consolidation | Large | Planned |
 | 4 | Codex process adapter and contracts | Very large | Planned |
 | 5 | Authentication and onboarding | Medium | Planned |
