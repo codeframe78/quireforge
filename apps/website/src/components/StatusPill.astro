@@ -1,0 +1,8 @@
+---
+type Props = { label: string; tone?: "active" | "planned" | "complete" };
+const { label, tone = "planned" } = Astro.props;
+---
+
+<span class={`status-pill status-${tone}`}
+  ><span aria-hidden="true"></span>{label}</span
+>

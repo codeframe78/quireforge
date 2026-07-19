@@ -1,0 +1,25 @@
+{
+  "name": "quireforge",
+  "version": "0.0.0",
+  "private": true,
+  "description": "QuireForge — an unofficial native Linux workspace for Codex.",
+  "license": "Apache-2.0",
+  "packageManager": "pnpm@11.15.0",
+  "engines": {
+    "node": ">=22.12.0 <23",
+    "pnpm": ">=11.0.0 <12"
+  },
+  "scripts": {
+    "build": "pnpm --filter @quireforge/website build",
+    "check": "pnpm --filter @quireforge/website check",
+    "dev": "pnpm --filter @quireforge/website dev",
+    "format": "pnpm --filter @quireforge/website format",
+    "format:check": "pnpm --filter @quireforge/website format:check",
+    "lint": "pnpm --filter @quireforge/website lint",
+    "preview": "pnpm --filter @quireforge/website preview",
+    "test": "pnpm --filter @quireforge/website test",
+    "test:e2e": "pnpm --filter @quireforge/website test:e2e",
+    "validate": "python3 scripts/validate_repository.py && pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm validate:dist",
+    "validate:dist": "pnpm --filter @quireforge/website validate:dist"
+  }
+}

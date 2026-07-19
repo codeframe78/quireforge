@@ -1,0 +1,35 @@
+---
+import markUrl from "../../../../assets/brand/quireforge-mark-dark.svg?url";
+import { footerNavigation, site } from "../data/site";
+---
+
+<footer class="site-footer">
+  <div class="shell footer-grid">
+    <div class="footer-identity">
+      <img src={markUrl} width="44" height="44" alt="" aria-hidden="true" />
+      <strong>{site.name}</strong>
+      <p>{site.tagline}</p>
+    </div>
+    {
+      footerNavigation.map((group) => (
+        <nav aria-label={group.title}>
+          <h2>{group.title}</h2>
+          <ul>
+            {group.links.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ))
+    }
+  </div>
+  <div class="shell footer-legal">
+    <p>
+      QuireForge is an unofficial community project. It is not made, endorsed,
+      supported, or distributed by OpenAI.
+    </p>
+    <p>Apache-2.0 · No telemetry on this website</p>
+  </div>
+</footer>

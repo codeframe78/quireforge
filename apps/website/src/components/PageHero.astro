@@ -1,0 +1,19 @@
+---
+import StatusPill from "./StatusPill.astro";
+
+type Props = {
+  eyebrow: string;
+  title: string;
+  description: string;
+  status?: string | undefined;
+};
+
+const { eyebrow, title, description, status } = Astro.props;
+---
+
+<header class="page-hero shell section-space">
+  <p class="eyebrow">{eyebrow}</p>
+  <h1>{title}</h1>
+  <p class="lede">{description}</p>
+  {status && <StatusPill label={status} tone="active" />}
+</header>
