@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -41,12 +42,23 @@ REQUIRED_PATHS = (
     "apps/website/src/pages/404.astro",
     "apps/website/src/pages/index.astro",
     "apps/desktop/fixtures/desktop-bootstrap.json",
+    "apps/desktop/fixtures/codex-model-list-response.json",
+    "apps/desktop/fixtures/codex-runtime.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/manifest.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ModelListParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ModelListResponse.json",
     "apps/desktop/package.json",
     "apps/desktop/src/App.tsx",
     "apps/desktop/src/lib/bridge.ts",
+    "apps/desktop/src/lib/codex.ts",
     "apps/desktop/src-tauri/Cargo.toml",
     "apps/desktop/src-tauri/capabilities/main.json",
     "apps/desktop/src-tauri/tauri.conf.json",
+    "apps/desktop/src-tauri/src/codex/app_server.rs",
+    "apps/desktop/src-tauri/src/codex/backend.rs",
+    "apps/desktop/src-tauri/src/codex/probe.rs",
     "docs/ARCHITECTURE.md",
     "docs/BUILDING.md",
     "docs/LOCAL-BUILD-PERFORMANCE.md",
@@ -55,6 +67,7 @@ REQUIRED_PATHS = (
     "docs/TESTING.md",
     "docs/THREAT-MODEL.md",
     "docs/WEBSITE.md",
+    "scripts/generate_codex_schema_fixtures.py",
 )
 
 IDENTITY_EXPECTATIONS = {
@@ -84,6 +97,16 @@ IDENTITY_EXPECTATIONS = {
         '"executable": "quireforge"',
         '"identifier": "io.github.codeframe78.QuireForge"',
         '"state": "planned"',
+    ),
+    "apps/desktop/fixtures/codex-runtime.json": (
+        '"schemaVersion": 1',
+        '"adapterVersion": "codex-app-server-v2"',
+        '"backend": "app-server-stdio"',
+        '"diagnosticCode": null',
+    ),
+    "apps/desktop/src-tauri/src/lib.rs": (
+        "codex_runtime_probe",
+        "CodexRuntimeService::default()",
     ),
 }
 
@@ -197,7 +220,7 @@ def validate() -> list[str]:
         if capability.get("platforms") != ["linux"]:
             errors.append("desktop capability must target only Linux")
         if capability.get("permissions") != []:
-            errors.append("Milestone 3 desktop capability must grant no plugin permissions")
+            errors.append("desktop capability must grant no broad plugin permissions")
 
     tauri_path = ROOT / "apps/desktop/src-tauri/tauri.conf.json"
     if tauri_path.is_file():
@@ -207,6 +230,48 @@ def validate() -> list[str]:
             errors.append("desktop production CSP must be explicit")
         if tauri_config.get("bundle", {}).get("active") is not False:
             errors.append("desktop packaging must remain disabled before Milestone 19")
+
+    schema_root = ROOT / "apps/desktop/fixtures/codex-schema/0.144.6"
+    manifest_path = schema_root / "manifest.json"
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        expected_schema_paths = {
+            "v1/InitializeParams.json",
+            "v1/InitializeResponse.json",
+            "v2/ModelListParams.json",
+            "v2/ModelListResponse.json",
+        }
+        manifest_files = manifest.get("files", [])
+        recorded_paths = {
+            entry.get("path") for entry in manifest_files if isinstance(entry, dict)
+        }
+        if manifest.get("codexCliVersion") != "0.144.6":
+            errors.append("Codex schema manifest must record CLI 0.144.6")
+        if recorded_paths != expected_schema_paths:
+            errors.append("Codex schema manifest must contain only the reviewed subset")
+
+        for entry in manifest_files:
+            if not isinstance(entry, dict):
+                errors.append("Codex schema manifest contains a malformed entry")
+                continue
+            relative = entry.get("path")
+            digest = entry.get("sha256")
+            if not isinstance(relative, str) or relative not in expected_schema_paths:
+                continue
+            schema_path = schema_root / relative
+            if not schema_path.is_file():
+                continue
+            actual = hashlib.sha256(schema_path.read_bytes()).hexdigest()
+            if digest != actual:
+                errors.append(f"Codex schema hash mismatch: {relative}")
+
+    runtime_fixture_path = ROOT / "apps/desktop/fixtures/codex-runtime.json"
+    if runtime_fixture_path.is_file():
+        runtime_fixture = json.loads(runtime_fixture_path.read_text(encoding="utf-8"))
+        serialized_fixture = json.dumps(runtime_fixture)
+        for forbidden_field in ("accountId", "codexHome", "installationId", "userAgent"):
+            if forbidden_field in serialized_fixture:
+                errors.append(f"Codex runtime fixture contains raw field: {forbidden_field}")
 
     return errors
 
