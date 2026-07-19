@@ -16,10 +16,15 @@ migration preserves the repository and its history. Tracked documentation,
 GitHub repository identity, original local working-copy path, and branding
 assets are handled as separately verified and approval-gated migration steps.
 
-The target local path is `/mnt/faststorage/quireforge`, but moving the active
-working copy requires a controlled Codex-session handoff. The target repository
-is `codeframe78/quireforge`; renaming it does not authorize a push, merge,
+The working copy moved through a controlled Codex-session handoff to
+`/mnt/faststorage/quireforge`. The existing GitHub repository was renamed in
+place to `codeframe78/quireforge`; neither operation authorized a push, merge,
 Pages deployment, or release.
+
+Migration status: the tracked identity contract, in-place GitHub repository
+rename, local working-copy handoff, and core vector brand sources are complete
+on the dedicated migration branch. Production application/website exports and
+external GitHub branding settings remain milestone- and approval-gated.
 
 ## Status
 

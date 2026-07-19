@@ -88,11 +88,11 @@ an idempotent identity-migration path that:
 
 ## Branding
 
-QuireForge branding will use original, maintainable vector sources suitable for
-light and dark themes and small Linux application icons. It will not copy
-OpenAI or ChatGPT logos, iconography, or visual systems. Production exports are
-part of the design-system milestone because no desktop or website asset
-structure exists yet.
+QuireForge branding uses original, maintainable vector sources under
+`assets/brand/`, with light and dark variants and sources designed for small
+Linux application icons. It does not copy OpenAI or ChatGPT logos, iconography,
+or visual systems. Production exports remain part of the consuming desktop,
+website, and packaging milestones because those structures do not exist yet.
 
 ## Consequences
 

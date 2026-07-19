@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Monochrome QuireForge mark</title>
+  <desc id="desc">A single-color angular letter Q with an open folio counter.</desc>
+  <path fill="#1B2130" fill-rule="evenodd" d="M152 32h208l120 120v208l-58 58 58 58-62 36-70-70-54 38H152L32 360V152L152 32Zm18 118v162l86 32 86-32V150l-86 26-86-26Z"/>
+  <path fill="#1B2130" d="m274 306 206 170-62 36-170-162 26-44Z"/>
+  <path fill="#1B2130" d="m256 176 18-5v135l-18 38V176Z"/>
+</svg>

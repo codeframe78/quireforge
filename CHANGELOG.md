@@ -12,6 +12,8 @@ released a usable application.
   threat-model, GitHub Pages, roadmap, and architecture-decision documentation.
 - Permanent QuireForge identity contract covering application, package,
   repository, GitHub Pages, integration-client, and XDG storage identifiers.
+- Original path-based QuireForge mark, wordmark, light/dark lockups, favicon,
+  application-icon source, social card, palette, and brand usage guidance.
 
 ### Changed
 
@@ -25,9 +27,9 @@ released a usable application.
 
 - The existing Git history and discovery work are being migrated in place; no
   replacement project or rewritten history is involved.
-- The GitHub repository rename and local working-copy move are separate,
-  approval-gated operations and are not part of the tracked-documentation
-  change.
+- The GitHub repository was renamed in place to `codeframe78/quireforge`, and
+  the intact working copy moved to `/mnt/faststorage/quireforge`, through
+  separate approval-gated operations.
 - No released or development application data was detected under the temporary
   identity, so there is currently no user configuration to move. Future
   releases must preserve old data and never modify Codex-owned authentication

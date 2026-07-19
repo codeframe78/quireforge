@@ -1,5 +1,11 @@
 # QuireForge
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/quireforge-lockup-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="assets/brand/quireforge-lockup.svg">
+  <img alt="QuireForge — Build boldly. Work locally." src="assets/brand/quireforge-lockup.svg" width="620">
+</picture>
+
 > **Build boldly. Work locally.**
 
 > [!IMPORTANT]
@@ -35,6 +41,7 @@ and feasibility is complete**; there is no application package to install yet.
 - [Threat model](docs/THREAT-MODEL.md)
 - [GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
+- [Brand sources and usage](assets/brand/README.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)
 
@@ -45,7 +52,7 @@ guaranteed public catalog.
 
 ## Permanent identity
 
-The target repository is `codeframe78/quireforge`. Future application and
+The repository is `codeframe78/quireforge`. Future application and
 packaging work must use `quireforge` for the executable and Debian package,
 `QuireForge` for the desktop display name and AppImage basename, and
 `io.github.codeframe78.QuireForge` as the application-identifier candidate
