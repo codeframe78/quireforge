@@ -1,6 +1,6 @@
 # Local Build Performance
 
-Status: generalized baseline captured from required Milestones 3–5 work on
+Status: generalized baseline captured from required Milestones 3–6 work on
 2026-07-19. These measurements guide local forecasts; they are not release
 performance claims or a supported-hardware baseline.
 
@@ -101,6 +101,48 @@ tests remained sequential to avoid the previously measured shared-`dist` race.
 Approximately 46 GiB of system memory remained available during the final
 native smoke test. No OOM, heavy swapping, throttling, orphaned app-server, or
 disk pressure was observed. GPU computation remained unused.
+
+## Milestone 6A measurements
+
+The native project core reused existing Rust/Tauri caches. Adding bundled
+SQLite, UUIDv7 generation, and the native dialog plugin locked 22 packages. No
+cache was deleted and no clean or release build was run solely for timing.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| First dependency-expanded `cargo check` | about 14.2 seconds | about 718 MiB | Reached six ordinary compile errors after resolving dependencies |
+| Warm corrected `cargo check` | about 1.5 seconds | about 452 MiB | Passed |
+| Initial 10-test project suite | about 5.5 seconds | about 1.24 GiB | Passed |
+| Expanded 18-test project suite | about 6.4 seconds | about 1.24 GiB | Passed |
+| Final 20-test project suite | about 5.0 seconds | about 1.24 GiB | Passed |
+| Warm Clippy, warnings denied | about 2.0 seconds | about 495 MiB | Passed |
+| Full locked Rust suite | about 5.7 seconds | about 1.24 GiB | Passed, 38 tests; 2 deliberate live probes ignored |
+| Final full non-browser repository gate | about 25.8 seconds | about 605 MiB | Passed, including 40 Rust tests; 2 deliberate live probes ignored |
+
+Four Cargo workers preserved desktop responsiveness and were sufficient for
+the small native graph. The test linker, not SQLite execution, produced the
+peak memory use. No swap activity, OOM, throttling, material disk pressure, or
+competing QuireForge build was observed. The RTX 3050 was correctly unused.
+
+## Milestone 6B measurements
+
+The project UI and integration checkpoint reused warm pnpm, Vite, Playwright,
+Cargo, and Tauri caches. The Balanced profile retained four Cargo workers and
+two Playwright workers. No dependency installation or clean build was needed.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Desktop production build | about 2.1 seconds | about 300 MiB | Passed, 108 modules |
+| Desktop-only browser suite | about 5.7 seconds | about 236 MiB | Passed, 6 tests |
+| Unbundled native release build | about 67.0 seconds | about 1.36 GiB | Passed |
+| Isolated native release launch | Manual smoke interval | Low runtime pressure | Exact D-Bus identity and owner-only temporary metadata permissions verified |
+| Final full non-browser repository gate | about 30.0 seconds | about 1.23 GiB | Passed, including 41 Rust tests; 2 deliberate live probes ignored |
+| Final combined browser gate | about 8.3 seconds | about 251 MiB | Passed, 14 tests |
+
+The release link remained the critical local command but stayed well within
+available system memory. No swap growth, OOM, throttling, cache deletion, or
+competing build was observed. GPU computation remained unnecessary; native
+WebKit rendering used the normal graphics stack only.
 
 ## Current execution guidance
 

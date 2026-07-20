@@ -1,8 +1,8 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and Milestones 3–5 desktop shell, Codex process
-adapter, and authentication boundary can be developed and built locally. No
-installable application package exists.
+Status: the Milestone 2 website and Milestones 3–6 desktop shell, Codex,
+authentication, and project-attachment work can be developed and built locally.
+An installable application package does not yet exist.
 
 ## Supported development baseline
 
@@ -96,12 +96,15 @@ pnpm desktop:preview
 
 Browser preview mode cannot call native IPC and labels itself accordingly.
 The production Tauri window exposes `desktop_bootstrap`, the fixed-purpose
-`codex_runtime_probe`, and narrow `codex_auth_*` commands. Runtime probing accepts
-no arguments and may run only `codex --version` plus a bounded local app-server
+`codex_runtime_probe`, narrow `codex_auth_*` commands, and fixed-purpose
+`project_*` lifecycle commands. Runtime probing accepts no arguments and may
+run only `codex --version` plus a bounded local app-server
 initialize/`model/list` exchange. Authentication accepts only a closed
 browser/device method; browser opening takes no frontend URL and uses the
-validated native-held handoff. No arbitrary filesystem, shell, process,
-project, thread, turn, configuration, or integration command is exposed. The
+validated native-held handoff. Project directory paths can enter only through
+the native folder picker; later actions accept opaque project IDs, and no
+source-deletion or general filesystem command is exposed. No arbitrary shell,
+process, thread, turn, configuration, or integration command is exposed. The
 main window retains an empty direct plugin-permission list.
 
 ## Refresh the reviewed Codex schemas

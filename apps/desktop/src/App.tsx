@@ -1,13 +1,22 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
+import { ProjectWorkspace } from "./ProjectWorkspace";
 import {
+  archiveProject,
   cancelCodexAuth,
+  cancelProjectAttachment,
+  confirmProjectAttachment,
+  detachProject,
   loadCodexAuth,
   loadCodexRuntime,
   loadDesktopBootstrap,
+  loadProjectWorkspace,
   logoutCodexAuth,
   openCodexAuthBrowser,
+  pickProjectDirectory,
+  pickProjectRelink,
+  preflightProject,
   refreshCodexAuth,
   startCodexAuth,
 } from "./lib/bridge";
@@ -18,6 +27,11 @@ import {
 } from "./lib/auth";
 import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
 import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
+import {
+  scaffoldProjectWorkspace,
+  type ProjectPreflightSnapshot,
+  type ProjectWorkspaceSnapshot,
+} from "./lib/project";
 
 import "./styles.css";
 
@@ -25,6 +39,7 @@ type BridgeState = "connecting" | "native" | "preview";
 type RuntimeState =
   "checking" | "ready" | "degraded" | "unavailable" | "preview";
 type AuthViewState = CodexAuthSnapshot["state"] | "checking" | "preview";
+type ProjectViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -36,6 +51,20 @@ interface AppProps {
   cancelAuth?: () => Promise<CodexAuthSnapshot>;
   logoutAuth?: () => Promise<CodexAuthSnapshot>;
   openAuthBrowser?: () => Promise<void>;
+  loadProjects?: () => Promise<ProjectWorkspaceSnapshot>;
+  pickProject?: () => Promise<ProjectWorkspaceSnapshot>;
+  pickRelink?: (projectId: string) => Promise<ProjectWorkspaceSnapshot>;
+  confirmProject?: () => Promise<ProjectWorkspaceSnapshot>;
+  cancelProject?: () => Promise<ProjectWorkspaceSnapshot>;
+  detachProjectDirectory?: (
+    projectId: string,
+  ) => Promise<ProjectWorkspaceSnapshot>;
+  archiveProjectMetadata?: (
+    projectId: string,
+  ) => Promise<ProjectWorkspaceSnapshot>;
+  preflightProjectDirectory?: (
+    projectId: string,
+  ) => Promise<ProjectPreflightSnapshot>;
 }
 
 const navigation = [
@@ -138,6 +167,14 @@ export default function App({
   cancelAuth = cancelCodexAuth,
   logoutAuth = logoutCodexAuth,
   openAuthBrowser = openCodexAuthBrowser,
+  loadProjects = loadProjectWorkspace,
+  pickProject = pickProjectDirectory,
+  pickRelink = pickProjectRelink,
+  confirmProject = confirmProjectAttachment,
+  cancelProject = cancelProjectAttachment,
+  detachProjectDirectory = detachProject,
+  archiveProjectMetadata = archiveProject,
+  preflightProjectDirectory = preflightProject,
 }: AppProps) {
   const [bootstrap, setBootstrap] =
     useState<DesktopBootstrap>(scaffoldBootstrap);
@@ -150,6 +187,16 @@ export default function App({
   const [authBusy, setAuthBusy] = useState(false);
   const [authActionError, setAuthActionError] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [projects, setProjects] = useState<ProjectWorkspaceSnapshot>(
+    scaffoldProjectWorkspace,
+  );
+  const [projectState, setProjectState] =
+    useState<ProjectViewState>("checking");
+  const [projectBusy, setProjectBusy] = useState(false);
+  const [projectActionError, setProjectActionError] = useState(false);
+  const [projectPreflights, setProjectPreflights] = useState<
+    Record<string, ProjectPreflightSnapshot>
+  >({});
   const [theme, setTheme] = useState<Theme>(initialTheme);
 
   useEffect(() => {
@@ -202,6 +249,23 @@ export default function App({
       active = false;
     };
   }, [loadAuth]);
+
+  useEffect(() => {
+    let active = true;
+    void loadProjects()
+      .then((result) => {
+        if (!active) return;
+        setProjects(result);
+        setProjectState("native");
+      })
+      .catch(() => {
+        if (active) setProjectState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadProjects]);
 
   useEffect(() => {
     if (authState !== "login-pending") return;
@@ -277,6 +341,39 @@ export default function App({
     void applyAuthAction(() => startAuth(method), true);
   }
 
+  async function applyProjectAction(
+    action: () => Promise<ProjectWorkspaceSnapshot>,
+  ) {
+    setProjectBusy(true);
+    setProjectActionError(false);
+    try {
+      const result = await action();
+      setProjects(result);
+      setProjectPreflights({});
+    } catch {
+      setProjectActionError(true);
+    } finally {
+      setProjectBusy(false);
+    }
+  }
+
+  async function verifyProject(projectId: string) {
+    setProjectBusy(true);
+    setProjectActionError(false);
+    try {
+      const result = await preflightProjectDirectory(projectId);
+      setProjectPreflights((current) => ({ ...current, [projectId]: result }));
+    } catch {
+      setProjectActionError(true);
+    } finally {
+      setProjectBusy(false);
+    }
+  }
+
+  const currentProject =
+    projects.projects.find((project) => !project.archived) ??
+    projects.projects[0];
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -318,8 +415,15 @@ export default function App({
             <Glyph name="folder" />
           </div>
           <div>
-            <strong>No project attached</strong>
-            <span>Direct local directories arrive in Milestone 6.</span>
+            <strong>
+              {currentProject?.displayName ?? "No project attached"}
+            </strong>
+            <span>
+              {currentProject?.directory?.displayPath ??
+                (projectState === "preview"
+                  ? "Native project access unavailable in browser preview."
+                  : "Attach an original local directory in place.")}
+            </span>
           </div>
         </div>
 
@@ -342,7 +446,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 5 authentication
+              Milestone 6 local projects
             </span>
             <button
               className="theme-toggle"
@@ -365,15 +469,24 @@ export default function App({
               </p>
               <h1 id="workspace-title">A quiet place for ambitious work.</h1>
               <p className="hero-description">
-                QuireForge now reads normalized Codex account state and hands
-                sign-in back to Codex-managed browser or device flows. It never
-                asks for, copies, or stores your credentials.
+                Attach an original directory without copying it into QuireForge.
+                Selected and resolved paths are reviewed before app-owned
+                metadata is saved.
               </p>
               <div className="hero-actions">
-                <button className="secondary-action" type="button" disabled>
+                <button
+                  className="secondary-action"
+                  type="button"
+                  disabled={
+                    projectState !== "native" ||
+                    projects.state === "unavailable" ||
+                    projectBusy
+                  }
+                  onClick={() => void applyProjectAction(pickProject)}
+                >
                   <Glyph name="folder" />
                   Attach a local project
-                  <span>M6</span>
+                  <span>Native picker</span>
                 </button>
                 <a className="text-link" href="#foundation">
                   Inspect foundation
@@ -439,6 +552,27 @@ export default function App({
               </div>
             </div>
           </section>
+
+          <ProjectWorkspace
+            availability={projectState}
+            snapshot={projects}
+            busy={projectBusy}
+            actionError={projectActionError}
+            preflights={projectPreflights}
+            onPick={() => applyProjectAction(pickProject)}
+            onPickRelink={(projectId) =>
+              applyProjectAction(() => pickRelink(projectId))
+            }
+            onConfirm={() => applyProjectAction(confirmProject)}
+            onCancel={() => applyProjectAction(cancelProject)}
+            onDetach={(projectId) =>
+              applyProjectAction(() => detachProjectDirectory(projectId))
+            }
+            onArchive={(projectId) =>
+              applyProjectAction(() => archiveProjectMetadata(projectId))
+            }
+            onPreflight={verifyProject}
+          />
 
           <section className="auth-onboarding" aria-labelledby="auth-title">
             <div className="auth-onboarding__intro">
@@ -659,8 +793,7 @@ export default function App({
               </div>
               <p>
                 Each surface reports what exists now and what remains planned.
-                Nothing here fabricates a Codex session, integration, or
-                project.
+                Nothing here fabricates a Codex session or integration.
               </p>
             </div>
 
@@ -685,9 +818,11 @@ export default function App({
                       ? "Version probing, supervised stdio, normalized models, and bounded failure states."
                       : capability.id === "codex-auth"
                         ? "Codex-owned browser and device login with bounded state, cancellation, and redaction."
-                        : capability.state === "ready"
-                          ? "Tauri, React, strict TypeScript, and a validated native contract."
-                          : "Explicit directory selection, identity verification, and in-place local work."}
+                        : capability.id === "project-attachments"
+                          ? "Native selection, explicit confirmation, durable identity, and fail-closed cwd preflight."
+                          : capability.state === "ready"
+                            ? "Tauri, React, strict TypeScript, and a validated native contract."
+                            : "Explicit directory selection, identity verification, and in-place local work."}
                   </p>
                   <footer>
                     <span>Milestone {capability.milestone}</span>

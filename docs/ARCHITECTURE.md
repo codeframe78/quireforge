@@ -231,11 +231,15 @@ offers only one primary root.
 ```text
 Native picker
   → lexical + resolved path validation
-  → access, mount, symlink, Git/worktree, AGENTS.md, .codex, marketplace/MCP scan
+  → access, mount, symlink, Git/worktree, AGENTS.md, and .codex detection
   → confirmation preview
   → transactional association save
   → project workspace
 ```
+
+Marketplace, MCP, plugin, and connector discovery is deliberately deferred to
+the supply-chain-sensitive integration milestones; attaching a directory does
+not install or authorize anything it references.
 
 Before every Codex turn or terminal launch:
 

@@ -32,7 +32,6 @@ pub struct CapabilitySummary {
 #[serde(rename_all = "kebab-case")]
 pub enum CapabilityState {
     Ready,
-    Planned,
 }
 
 impl DesktopBootstrap {
@@ -69,7 +68,7 @@ impl DesktopBootstrap {
                 CapabilitySummary {
                     id: "project-attachments",
                     label: "Local project attachments",
-                    state: CapabilityState::Planned,
+                    state: CapabilityState::Ready,
                     milestone: 6,
                 },
             ],

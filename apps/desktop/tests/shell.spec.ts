@@ -8,7 +8,16 @@ test("desktop preview renders the honest semantic shell", async ({ page }) => {
   await expect(
     page.getByRole("heading", { name: "A quiet place for ambitious work." }),
   ).toBeVisible();
-  await expect(page.getByText("No project attached")).toBeAttached();
+  await expect(page.getByText("No project attached").first()).toBeAttached();
+  await expect(
+    page.getByRole("heading", { name: "Work where your files already live." }),
+  ).toBeVisible();
+  await expect(
+    page.getByText(/cannot open a native folder picker/u),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Attach local project" }),
+  ).toBeDisabled();
   await expect(
     page.getByText("Browser preview", { exact: true }),
   ).toBeAttached();

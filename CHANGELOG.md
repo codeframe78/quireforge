@@ -64,6 +64,18 @@ released a usable application.
   lifecycle/failure tests.
 - An accessible Milestone 5 onboarding panel that never displays or persists
   email, account IDs, tokens, raw errors, or completed sign-in URLs.
+- A native Milestone 6 project core with app-owned migrated SQLite metadata,
+  UUIDv7 identities, selected/resolved directory evidence, Git/worktree and
+  project-instruction detection, explicit attach/relink/detach/archive
+  lifecycle operations, and fail-closed cwd preflight.
+- Deterministic project security tests for symlink and configuration changes,
+  duplicate roots, linked worktrees, invalid Git pointers, read-only and
+  missing directories, malformed IDs, schema ownership, metadata permissions,
+  and the no-source-deletion boundary.
+- A strict normalized project-workspace contract, fixed-command TypeScript
+  bridge, and accessible responsive project UI for native selection,
+  confirmation, missing/read-only states, preflight, relink, and two-step
+  detach/archive actions.
 
 ### Changed
 
@@ -109,6 +121,10 @@ released a usable application.
   live `account/read` probe verified normalized state and exact child cleanup;
   no login, browser authorization, logout, model turn, push, package, or
   deployment was performed by Codex.
+- Completed Milestone 6 project attachment locally, including its native
+  storage/identity core, strict frontend boundary, accessible workspace, browser
+  verification, unbundled release build, and isolated native launch. No source
+  directory, Codex state, package, deployment, or release was changed.
 
 ### Migration note
 
@@ -124,8 +140,8 @@ released a usable application.
 
 ### Known limitations
 
-- The desktop adapter, Codex-owned authentication workflow, and website are
-  locally verified, but no project, conversation, installable package, website
-  deployment, or release workflow exists.
+- The desktop adapter, Codex-owned authentication workflow, project attachment,
+  and website are locally verified, but no conversation workflow, installable
+  package, website deployment, or release workflow exists.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

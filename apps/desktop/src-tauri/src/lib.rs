@@ -1,11 +1,18 @@
 mod codex;
 mod contract;
+mod project;
 
 use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
     CodexRuntimeService,
 };
 use contract::DesktopBootstrap;
+use project::{
+    types::{ProjectPreflightSnapshot, ProjectWorkspaceSnapshot},
+    ProjectService,
+};
+use tauri::Manager;
+use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
 
 #[tauri::command]
@@ -65,12 +72,104 @@ async fn codex_auth_open_browser(
     app.opener().open_url(url, None::<&str>).map_err(|_| ())
 }
 
+#[tauri::command]
+fn project_workspace_status(service: tauri::State<'_, ProjectService>) -> ProjectWorkspaceSnapshot {
+    service.status()
+}
+
+#[tauri::command]
+async fn project_pick_directory(
+    app: tauri::AppHandle,
+    service: tauri::State<'_, ProjectService>,
+) -> Result<ProjectWorkspaceSnapshot, ()> {
+    let selection = app
+        .dialog()
+        .file()
+        .set_title("Attach a local project")
+        .blocking_pick_folder();
+    Ok(match selection {
+        Some(path) => match path.into_path() {
+            Ok(path) => service.prepare_attachment(path),
+            Err(_) => service.picker_unavailable(),
+        },
+        None => service.cancel_pending(),
+    })
+}
+
+#[tauri::command]
+async fn project_pick_relink(
+    project_id: String,
+    app: tauri::AppHandle,
+    service: tauri::State<'_, ProjectService>,
+) -> Result<ProjectWorkspaceSnapshot, ()> {
+    let selection = app
+        .dialog()
+        .file()
+        .set_title("Relink the local project")
+        .blocking_pick_folder();
+    Ok(match selection {
+        Some(path) => match path.into_path() {
+            Ok(path) => service.prepare_relink(project_id, path),
+            Err(_) => service.picker_unavailable(),
+        },
+        None => service.cancel_pending(),
+    })
+}
+
+#[tauri::command]
+fn project_confirm_attachment(
+    service: tauri::State<'_, ProjectService>,
+) -> ProjectWorkspaceSnapshot {
+    service.confirm_pending()
+}
+
+#[tauri::command]
+fn project_cancel_attachment(
+    service: tauri::State<'_, ProjectService>,
+) -> ProjectWorkspaceSnapshot {
+    service.cancel_pending()
+}
+
+#[tauri::command]
+fn project_detach(
+    project_id: String,
+    service: tauri::State<'_, ProjectService>,
+) -> ProjectWorkspaceSnapshot {
+    service.detach(project_id)
+}
+
+#[tauri::command]
+fn project_archive(
+    project_id: String,
+    service: tauri::State<'_, ProjectService>,
+) -> ProjectWorkspaceSnapshot {
+    service.archive(project_id)
+}
+
+#[tauri::command]
+fn project_preflight(
+    project_id: String,
+    service: tauri::State<'_, ProjectService>,
+) -> ProjectPreflightSnapshot {
+    service.preflight(project_id)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
+        .setup(|app| {
+            let service = app
+                .path()
+                .app_data_dir()
+                .map(|directory| ProjectService::open(&directory.join("metadata.sqlite3")))
+                .unwrap_or_else(|_| ProjectService::unavailable());
+            app.manage(service);
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             desktop_bootstrap,
             codex_runtime_probe,
@@ -79,7 +178,15 @@ pub fn run() {
             codex_auth_start,
             codex_auth_cancel,
             codex_auth_logout,
-            codex_auth_open_browser
+            codex_auth_open_browser,
+            project_workspace_status,
+            project_pick_directory,
+            project_pick_relink,
+            project_confirm_attachment,
+            project_cancel_attachment,
+            project_detach,
+            project_archive,
+            project_preflight
         ])
         .run(tauri::generate_context!())
         .expect("failed to run QuireForge");

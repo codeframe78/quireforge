@@ -1,9 +1,9 @@
 # Threat Model
 
 Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary,
-Milestone 4 Codex process adapter, and Milestone 5 authentication controls
-applied. It must be revisited before directory attachment, integrations,
-packaging, and release milestones.
+Milestone 4 Codex process adapter, Milestone 5 authentication controls, and
+Milestone 6 native directory-attachment controls applied. It must be revisited
+before integrations, packaging, and release milestones.
 
 ## Assets
 
@@ -64,6 +64,10 @@ Controls:
 - Exact thread/project/cwd correlation.
 - Fail closed; never select a recent or home directory automatically.
 - Explicit relink workflow with confirmation.
+- Native-only picker input; later lifecycle commands accept opaque IDs rather
+  than frontend-supplied paths.
+- Confirmation-time reinspection detects symlink, mount, Git/worktree,
+  `AGENTS.md`, and `.codex` changes before metadata is committed.
 
 ### Filesystem scope escalation
 
@@ -78,6 +82,9 @@ Controls:
 - Separate detach/remove/archive/delete actions.
 - No filesystem deletion as part of project removal.
 - Apply Codex sandbox and managed requirements as independent enforcement.
+- Store only QuireForge-owned project metadata in a `0700` application-data
+  directory and `0600` SQLite file; do not persist Codex credentials, sessions,
+  connector authorization, or project-file content.
 
 ### Command and PTY abuse
 

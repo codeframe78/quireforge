@@ -1,0 +1,691 @@
+use std::{
+    fs,
+    os::unix::fs::PermissionsExt,
+    path::Path,
+    time::{Duration, SystemTime, UNIX_EPOCH},
+};
+
+use rusqlite::{params, Connection, OptionalExtension, Transaction, TransactionBehavior};
+use thiserror::Error;
+use uuid::Uuid;
+
+use super::{
+    identity::DirectoryIdentity,
+    types::{DirectoryAccessibilityState, ExpectedAccess},
+};
+
+const INITIAL_MIGRATION: &str = r#"
+CREATE TABLE projects (
+    id TEXT PRIMARY KEY NOT NULL,
+    display_name TEXT NOT NULL CHECK(length(display_name) BETWEEN 1 AND 120),
+    active_directory_association_id TEXT,
+    archived_at_ms INTEGER,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    FOREIGN KEY(active_directory_association_id)
+        REFERENCES directory_associations(id)
+        DEFERRABLE INITIALLY DEFERRED
+);
+
+CREATE TABLE directory_associations (
+    id TEXT PRIMARY KEY NOT NULL,
+    project_id TEXT NOT NULL,
+    selected_path TEXT NOT NULL,
+    resolved_path TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('primary', 'additional-writable', 'read-only-context')),
+    is_primary INTEGER NOT NULL CHECK(is_primary IN (0, 1)),
+    expected_access TEXT NOT NULL CHECK(expected_access IN ('read-write')),
+    device_id TEXT,
+    inode TEXT,
+    filesystem_type TEXT,
+    mount_id TEXT,
+    git_common_dir TEXT,
+    git_worktree_root TEXT,
+    git_is_linked_worktree INTEGER NOT NULL CHECK(git_is_linked_worktree IN (0, 1)),
+    has_agents_guidance INTEGER NOT NULL CHECK(has_agents_guidance IN (0, 1)),
+    has_codex_config INTEGER NOT NULL CHECK(has_codex_config IN (0, 1)),
+    accessibility_state TEXT NOT NULL,
+    last_verified_at_ms INTEGER NOT NULL,
+    detached_at_ms INTEGER,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE RESTRICT
+);
+
+CREATE UNIQUE INDEX active_directory_resolved_path
+    ON directory_associations(resolved_path)
+    WHERE detached_at_ms IS NULL;
+CREATE INDEX directory_associations_project
+    ON directory_associations(project_id, is_primary, detached_at_ms);
+CREATE INDEX projects_archive_state ON projects(archived_at_ms, updated_at_ms);
+"#;
+
+const MIGRATIONS: &[(i64, &str, &str)] =
+    &[(1, "projects-and-directory-associations", INITIAL_MIGRATION)];
+
+#[derive(Debug, Error)]
+pub(crate) enum StorageError {
+    #[error("metadata database is unavailable")]
+    Sqlite(#[from] rusqlite::Error),
+    #[error("metadata directory is unavailable")]
+    Filesystem,
+    #[error("metadata schema is newer than this application")]
+    FutureSchema,
+    #[error("stored metadata is invalid")]
+    InvalidStoredValue,
+    #[error("directory is already attached")]
+    DuplicateDirectory,
+    #[error("project was not found")]
+    ProjectNotFound,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct StoredProject {
+    pub id: String,
+    pub display_name: String,
+    pub archived: bool,
+    pub association: Option<StoredAssociation>,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct StoredAssociation {
+    pub id: String,
+    pub selected_path: String,
+    pub resolved_path: String,
+    pub expected_access: ExpectedAccess,
+    pub device_id: Option<u64>,
+    pub inode: Option<u64>,
+    pub filesystem_type: Option<String>,
+    pub mount_id: Option<u64>,
+    pub git_common_dir: Option<String>,
+    pub git_worktree_root: Option<String>,
+    pub git_is_linked_worktree: bool,
+    pub has_agents_guidance: bool,
+    pub has_codex_config: bool,
+}
+
+pub(crate) struct ProjectRepository {
+    connection: Connection,
+}
+
+impl ProjectRepository {
+    pub(crate) fn open(path: &Path) -> Result<Self, StorageError> {
+        let parent = path.parent().ok_or(StorageError::Filesystem)?;
+        fs::create_dir_all(parent).map_err(|_| StorageError::Filesystem)?;
+        fs::set_permissions(parent, fs::Permissions::from_mode(0o700))
+            .map_err(|_| StorageError::Filesystem)?;
+
+        let connection = Connection::open(path)?;
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600))
+            .map_err(|_| StorageError::Filesystem)?;
+        Self::from_connection(connection)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn in_memory() -> Result<Self, StorageError> {
+        Self::from_connection(Connection::open_in_memory()?)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_test_connection(connection: Connection) -> Result<Self, StorageError> {
+        Self::from_connection(connection)
+    }
+
+    fn from_connection(mut connection: Connection) -> Result<Self, StorageError> {
+        connection.pragma_update(None, "foreign_keys", true)?;
+        connection.pragma_update(None, "trusted_schema", false)?;
+        connection.busy_timeout(Duration::from_secs(5))?;
+        apply_migrations(&mut connection)?;
+        verify_schema(&connection)?;
+        Ok(Self { connection })
+    }
+
+    pub(crate) fn list_projects(&self) -> Result<Vec<StoredProject>, StorageError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id, display_name, archived_at_ms, active_directory_association_id
+             FROM projects
+             ORDER BY archived_at_ms IS NOT NULL, updated_at_ms DESC, id",
+        )?;
+        let rows = statement.query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Option<i64>>(2)?.is_some(),
+                row.get::<_, Option<String>>(3)?,
+            ))
+        })?;
+
+        let mut projects = Vec::new();
+        for row in rows {
+            let (id, display_name, archived, association_id) = row?;
+            let association = association_id
+                .as_deref()
+                .map(|association_id| self.load_association(association_id))
+                .transpose()?;
+            projects.push(StoredProject {
+                id,
+                display_name,
+                archived,
+                association,
+            });
+        }
+        Ok(projects)
+    }
+
+    pub(crate) fn project(&self, project_id: &str) -> Result<StoredProject, StorageError> {
+        self.list_projects()?
+            .into_iter()
+            .find(|project| project.id == project_id)
+            .ok_or(StorageError::ProjectNotFound)
+    }
+
+    pub(crate) fn ensure_directory_available(
+        &self,
+        identity: &DirectoryIdentity,
+        excluding_association_id: Option<&str>,
+    ) -> Result<(), StorageError> {
+        ensure_directory_available(&self.connection, identity, excluding_association_id)
+    }
+
+    pub(crate) fn insert_project(
+        &mut self,
+        display_name: &str,
+        identity: &DirectoryIdentity,
+    ) -> Result<String, StorageError> {
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        ensure_directory_available(&transaction, identity, None)?;
+
+        let project_id = Uuid::now_v7().to_string();
+        let association_id = Uuid::now_v7().to_string();
+        let timestamp = now_millis();
+        transaction.execute(
+            "INSERT INTO projects
+             (id, display_name, active_directory_association_id, archived_at_ms,
+              created_at_ms, updated_at_ms)
+             VALUES (?1, ?2, NULL, NULL, ?3, ?3)",
+            params![project_id, display_name, timestamp],
+        )?;
+        insert_association(
+            &transaction,
+            &association_id,
+            &project_id,
+            identity,
+            timestamp,
+        )?;
+        transaction.execute(
+            "UPDATE projects SET active_directory_association_id = ?1 WHERE id = ?2",
+            params![association_id, project_id],
+        )?;
+        transaction.commit()?;
+        Ok(project_id)
+    }
+
+    pub(crate) fn relink_project(
+        &mut self,
+        project_id: &str,
+        identity: &DirectoryIdentity,
+    ) -> Result<(), StorageError> {
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let project_exists = transaction
+            .query_row("SELECT 1 FROM projects WHERE id = ?1", [project_id], |_| {
+                Ok(())
+            })
+            .optional()?
+            .is_some();
+        if !project_exists {
+            return Err(StorageError::ProjectNotFound);
+        }
+
+        let association_id = transaction
+            .query_row(
+                "SELECT id FROM directory_associations
+                 WHERE project_id = ?1 AND is_primary = 1
+                 ORDER BY detached_at_ms IS NULL DESC, updated_at_ms DESC LIMIT 1",
+                [project_id],
+                |row| row.get::<_, String>(0),
+            )
+            .optional()?
+            .unwrap_or_else(|| Uuid::now_v7().to_string());
+        ensure_directory_available(&transaction, identity, Some(&association_id))?;
+        let timestamp = now_millis();
+        let association_exists = transaction
+            .query_row(
+                "SELECT 1 FROM directory_associations WHERE id = ?1",
+                [&association_id],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if association_exists {
+            update_association(&transaction, &association_id, identity, timestamp)?;
+        } else {
+            insert_association(
+                &transaction,
+                &association_id,
+                project_id,
+                identity,
+                timestamp,
+            )?;
+        }
+        transaction.execute(
+            "UPDATE projects
+             SET active_directory_association_id = ?1, archived_at_ms = NULL,
+                 updated_at_ms = ?2
+             WHERE id = ?3",
+            params![association_id, timestamp, project_id],
+        )?;
+        transaction.commit()?;
+        Ok(())
+    }
+
+    pub(crate) fn detach_project(&mut self, project_id: &str) -> Result<(), StorageError> {
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let association_id = transaction
+            .query_row(
+                "SELECT active_directory_association_id FROM projects WHERE id = ?1",
+                [project_id],
+                |row| row.get::<_, Option<String>>(0),
+            )
+            .optional()?
+            .ok_or(StorageError::ProjectNotFound)?;
+        let timestamp = now_millis();
+        if let Some(association_id) = association_id {
+            transaction.execute(
+                "UPDATE directory_associations
+                 SET detached_at_ms = ?1, updated_at_ms = ?1 WHERE id = ?2",
+                params![timestamp, association_id],
+            )?;
+        }
+        transaction.execute(
+            "UPDATE projects
+             SET active_directory_association_id = NULL, updated_at_ms = ?1
+             WHERE id = ?2",
+            params![timestamp, project_id],
+        )?;
+        transaction.commit()?;
+        Ok(())
+    }
+
+    pub(crate) fn archive_project(&mut self, project_id: &str) -> Result<(), StorageError> {
+        let timestamp = now_millis();
+        let updated = self.connection.execute(
+            "UPDATE projects SET archived_at_ms = ?1, updated_at_ms = ?1 WHERE id = ?2",
+            params![timestamp, project_id],
+        )?;
+        if updated == 0 {
+            return Err(StorageError::ProjectNotFound);
+        }
+        Ok(())
+    }
+
+    fn load_association(&self, association_id: &str) -> Result<StoredAssociation, StorageError> {
+        self.connection
+            .query_row(
+                "SELECT id, selected_path, resolved_path, expected_access,
+                        device_id, inode, filesystem_type, mount_id,
+                        git_common_dir, git_worktree_root, git_is_linked_worktree,
+                        has_agents_guidance, has_codex_config, accessibility_state
+                 FROM directory_associations WHERE id = ?1 AND detached_at_ms IS NULL",
+                [association_id],
+                |row| {
+                    let expected_access = row.get::<_, String>(3)?;
+                    let accessibility = row.get::<_, String>(13)?;
+                    Ok((
+                        row.get::<_, String>(0)?,
+                        row.get::<_, String>(1)?,
+                        row.get::<_, String>(2)?,
+                        expected_access,
+                        row.get::<_, Option<String>>(4)?,
+                        row.get::<_, Option<String>>(5)?,
+                        row.get::<_, Option<String>>(6)?,
+                        row.get::<_, Option<String>>(7)?,
+                        row.get::<_, Option<String>>(8)?,
+                        row.get::<_, Option<String>>(9)?,
+                        row.get::<_, bool>(10)?,
+                        row.get::<_, bool>(11)?,
+                        row.get::<_, bool>(12)?,
+                        accessibility,
+                    ))
+                },
+            )
+            .optional()?
+            .map(|row| {
+                DirectoryAccessibilityState::from_storage_value(&row.13)
+                    .ok_or(StorageError::InvalidStoredValue)?;
+                Ok::<StoredAssociation, StorageError>(StoredAssociation {
+                    id: row.0,
+                    selected_path: row.1,
+                    resolved_path: row.2,
+                    expected_access: ExpectedAccess::from_storage_value(&row.3)
+                        .ok_or(StorageError::InvalidStoredValue)?,
+                    device_id: parse_optional_u64(row.4)?,
+                    inode: parse_optional_u64(row.5)?,
+                    filesystem_type: row.6,
+                    mount_id: parse_optional_u64(row.7)?,
+                    git_common_dir: row.8,
+                    git_worktree_root: row.9,
+                    git_is_linked_worktree: row.10,
+                    has_agents_guidance: row.11,
+                    has_codex_config: row.12,
+                })
+            })
+            .transpose()?
+            .ok_or(StorageError::InvalidStoredValue)
+    }
+}
+
+fn apply_migrations(connection: &mut Connection) -> Result<(), StorageError> {
+    let transaction = connection.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    transaction.execute_batch(
+        "CREATE TABLE IF NOT EXISTS schema_migrations (
+            version INTEGER PRIMARY KEY NOT NULL,
+            name TEXT NOT NULL,
+            applied_at_ms INTEGER NOT NULL
+        );",
+    )?;
+    let applied: Vec<(i64, String)> = {
+        let mut statement =
+            transaction.prepare("SELECT version, name FROM schema_migrations ORDER BY version")?;
+        let rows = statement
+            .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+            .collect::<Result<_, _>>()?;
+        rows
+    };
+    if applied
+        .iter()
+        .any(|(version, _)| *version > MIGRATIONS.len() as i64)
+    {
+        return Err(StorageError::FutureSchema);
+    }
+    for (index, (version, name)) in applied.iter().enumerate() {
+        let expected = MIGRATIONS.get(index).ok_or(StorageError::FutureSchema)?;
+        if *version != expected.0 || name != expected.1 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+    }
+
+    for (version, name, sql) in MIGRATIONS.iter().skip(applied.len()) {
+        transaction.execute_batch(sql)?;
+        transaction.execute(
+            "INSERT INTO schema_migrations(version, name, applied_at_ms)
+             VALUES (?1, ?2, ?3)",
+            params![version, name, now_millis()],
+        )?;
+    }
+    transaction.commit()?;
+    Ok(())
+}
+
+fn verify_schema(connection: &Connection) -> Result<(), StorageError> {
+    for table in ["schema_migrations", "projects", "directory_associations"] {
+        let exists = connection
+            .query_row(
+                "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1",
+                [table],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if !exists {
+            return Err(StorageError::InvalidStoredValue);
+        }
+    }
+    Ok(())
+}
+
+fn ensure_directory_available(
+    connection: &Connection,
+    identity: &DirectoryIdentity,
+    excluding_association_id: Option<&str>,
+) -> Result<(), StorageError> {
+    let resolved_path = path_text(&identity.resolved_path)?;
+    let duplicate = connection
+        .query_row(
+            "SELECT id FROM directory_associations
+             WHERE resolved_path = ?1 AND detached_at_ms IS NULL
+               AND (?2 IS NULL OR id <> ?2)
+             LIMIT 1",
+            params![resolved_path, excluding_association_id],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()?;
+    if duplicate.is_some() {
+        return Err(StorageError::DuplicateDirectory);
+    }
+    Ok(())
+}
+
+fn insert_association(
+    transaction: &Transaction<'_>,
+    association_id: &str,
+    project_id: &str,
+    identity: &DirectoryIdentity,
+    timestamp: i64,
+) -> Result<(), StorageError> {
+    let git_common_dir = identity
+        .git
+        .as_ref()
+        .map(|git| path_text(&git.common_dir))
+        .transpose()?;
+    let git_worktree_root = identity
+        .git
+        .as_ref()
+        .map(|git| path_text(&git.worktree_root))
+        .transpose()?;
+    transaction.execute(
+        "INSERT INTO directory_associations (
+            id, project_id, selected_path, resolved_path, role, is_primary,
+            expected_access, device_id, inode, filesystem_type, mount_id,
+            git_common_dir, git_worktree_root, git_is_linked_worktree,
+            has_agents_guidance, has_codex_config, accessibility_state,
+            last_verified_at_ms, detached_at_ms, created_at_ms, updated_at_ms
+         ) VALUES (
+            ?1, ?2, ?3, ?4, 'primary', 1, ?5, ?6, ?7, ?8, ?9, ?10, ?11,
+            ?12, ?13, ?14, ?15, ?16, NULL, ?16, ?16
+         )",
+        params![
+            association_id,
+            project_id,
+            path_text(&identity.selected_path)?,
+            path_text(&identity.resolved_path)?,
+            ExpectedAccess::ReadWrite.as_storage_value(),
+            identity.device_id.to_string(),
+            identity.inode.to_string(),
+            identity.filesystem_type,
+            identity.mount_id.map(|value| value.to_string()),
+            git_common_dir,
+            git_worktree_root,
+            identity
+                .git
+                .as_ref()
+                .is_some_and(|git| git.is_linked_worktree),
+            identity.has_agents_guidance,
+            identity.has_codex_config,
+            identity.accessibility.as_storage_value(),
+            timestamp,
+        ],
+    )?;
+    Ok(())
+}
+
+fn update_association(
+    transaction: &Transaction<'_>,
+    association_id: &str,
+    identity: &DirectoryIdentity,
+    timestamp: i64,
+) -> Result<(), StorageError> {
+    let git_common_dir = identity
+        .git
+        .as_ref()
+        .map(|git| path_text(&git.common_dir))
+        .transpose()?;
+    let git_worktree_root = identity
+        .git
+        .as_ref()
+        .map(|git| path_text(&git.worktree_root))
+        .transpose()?;
+    transaction.execute(
+        "UPDATE directory_associations SET
+            selected_path = ?1, resolved_path = ?2, device_id = ?3, inode = ?4,
+            filesystem_type = ?5, mount_id = ?6, git_common_dir = ?7,
+            git_worktree_root = ?8, git_is_linked_worktree = ?9,
+            has_agents_guidance = ?10, has_codex_config = ?11,
+            accessibility_state = ?12, last_verified_at_ms = ?13,
+            detached_at_ms = NULL, updated_at_ms = ?13
+         WHERE id = ?14",
+        params![
+            path_text(&identity.selected_path)?,
+            path_text(&identity.resolved_path)?,
+            identity.device_id.to_string(),
+            identity.inode.to_string(),
+            identity.filesystem_type,
+            identity.mount_id.map(|value| value.to_string()),
+            git_common_dir,
+            git_worktree_root,
+            identity
+                .git
+                .as_ref()
+                .is_some_and(|git| git.is_linked_worktree),
+            identity.has_agents_guidance,
+            identity.has_codex_config,
+            identity.accessibility.as_storage_value(),
+            timestamp,
+            association_id,
+        ],
+    )?;
+    Ok(())
+}
+
+fn path_text(path: &Path) -> Result<&str, StorageError> {
+    path.to_str().ok_or(StorageError::InvalidStoredValue)
+}
+
+fn parse_optional_u64(value: Option<String>) -> Result<Option<u64>, StorageError> {
+    value
+        .map(|value| value.parse().map_err(|_| StorageError::InvalidStoredValue))
+        .transpose()
+}
+
+fn now_millis() -> i64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+        .min(i64::MAX as u128) as i64
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{fs, os::unix::fs::PermissionsExt};
+
+    use rusqlite::Connection;
+    use uuid::Uuid;
+
+    use super::{ProjectRepository, StorageError};
+
+    #[test]
+    fn rejects_a_database_from_a_newer_application() {
+        let connection = Connection::open_in_memory().expect("database must open");
+        connection
+            .execute_batch(
+                "CREATE TABLE schema_migrations (
+                    version INTEGER PRIMARY KEY NOT NULL,
+                    name TEXT NOT NULL,
+                    applied_at_ms INTEGER NOT NULL
+                 );
+                 INSERT INTO schema_migrations VALUES (999, 'future', 0);",
+            )
+            .expect("future schema fixture must be created");
+
+        assert!(matches!(
+            ProjectRepository::from_test_connection(connection),
+            Err(StorageError::FutureSchema)
+        ));
+    }
+
+    #[test]
+    fn creates_only_the_app_owned_metadata_schema() {
+        let repository = ProjectRepository::in_memory().expect("schema must migrate");
+        let mut statement = repository
+            .connection
+            .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
+            .expect("schema must be queryable");
+        let tables: Vec<String> = statement
+            .query_map([], |row| row.get(0))
+            .expect("tables must be queryable")
+            .collect::<Result<_, _>>()
+            .expect("table rows must be valid");
+
+        assert_eq!(
+            tables,
+            vec![
+                "directory_associations".to_owned(),
+                "projects".to_owned(),
+                "schema_migrations".to_owned(),
+            ]
+        );
+
+        let foreign_keys: bool = repository
+            .connection
+            .query_row("PRAGMA foreign_keys", [], |row| row.get(0))
+            .expect("foreign-key state must be queryable");
+        assert!(foreign_keys);
+
+        let mut columns = Vec::new();
+        for table in ["projects", "directory_associations"] {
+            let mut statement = repository
+                .connection
+                .prepare(&format!("PRAGMA table_info({table})"))
+                .expect("table metadata must be queryable");
+            columns.extend(
+                statement
+                    .query_map([], |row| row.get::<_, String>(1))
+                    .expect("columns must be queryable")
+                    .collect::<Result<Vec<_>, _>>()
+                    .expect("column rows must be valid"),
+            );
+        }
+        assert!(columns.iter().all(|column| {
+            !["token", "secret", "credential", "auth", "session"]
+                .iter()
+                .any(|term| column.contains(term))
+        }));
+    }
+
+    #[test]
+    fn protects_the_metadata_directory_and_database_file() {
+        let directory = std::env::temp_dir().join(format!(
+            "quireforge-metadata-permissions-{}",
+            Uuid::now_v7()
+        ));
+        fs::create_dir(&directory).expect("metadata directory must be created");
+        let database = directory.join("metadata.sqlite3");
+
+        let repository = ProjectRepository::open(&database).expect("database must open");
+
+        assert_eq!(
+            fs::metadata(&directory)
+                .expect("directory metadata must be readable")
+                .permissions()
+                .mode()
+                & 0o777,
+            0o700
+        );
+        assert_eq!(
+            fs::metadata(&database)
+                .expect("database metadata must be readable")
+                .permissions()
+                .mode()
+                & 0o777,
+            0o600
+        );
+        drop(repository);
+        fs::remove_dir_all(directory).expect("temporary metadata must be removed");
+    }
+}

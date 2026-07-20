@@ -1,8 +1,8 @@
 # Compatibility
 
-Status: Milestone 0 discovery with the Milestones 3–5 desktop scaffold,
-versioned Codex runtime-probe adapter, and authentication boundary implemented
-and verified on the discovery host.
+Status: Milestone 0 discovery with the Milestones 3–6 desktop scaffold,
+versioned Codex runtime-probe adapter, authentication boundary, and native
+project-attachment workflow implemented and verified on the discovery host.
 
 ## Identity compatibility contract
 
@@ -16,7 +16,7 @@ the real toolchain rather than inferred from documentation alone:
 | Desktop entry filename | `io.github.codeframe78.QuireForge.desktop` | Reverse-DNS contract retained; installed package output not yet validated |
 | AppImage release basename | `QuireForge` | Project release policy; verify the final workflow-renamed artifact |
 | Application identifier | `io.github.codeframe78.QuireForge` | Verified as the running GTK/D-Bus application identity on Wayland |
-| XDG directory leaf | `quireforge` | Reserved; no persistent application data exists yet |
+| XDG directory leaf | `quireforge` | Verified with isolated temporary XDG data; no personal persistent application data created |
 | GitHub repository | `codeframe78/quireforge` | Connected and renamed in place |
 | Production website | `https://quireforge.jamesjennison.net` | Confirmed target; DNS/TLS present, site not deployed |
 | Website host | Cloudflare Pages | Public and owner-mediated account capabilities reviewed; project setup pending |
@@ -70,8 +70,9 @@ identity.
 | XDG desktop portal / GTK portal | Installed | Native picker feasible |
 
 The portal executables live under the distribution's libexec directory rather
-than the interactive shell `PATH`. The current shell does not request a
-directory or invoke a portal yet.
+than the interactive shell `PATH`. The native dialog dependency and fixed
+picker command compile into the verified release executable; interactive
+portal selection remains a manual host check rather than an automated test.
 
 The host is newer than the intended packaging baseline. Tauri recommends
 building AppImages on the oldest supported compatible distribution to avoid
@@ -161,10 +162,10 @@ verified on only one development host and no installation package exists.
 
 ## Native directory picker
 
-Tauri 2's dialog plugin supports native directory selection. XDG desktop portal
-and the GTK portal are installed on the discovery host. The application will
-request a directory path without using copy/import behavior and pass the result
-to the Rust attachment service for validation.
+Tauri 2's dialog plugin provides native directory selection. XDG desktop portal
+and the GTK portal are installed on the discovery host. The application requests
+a directory without using copy/import behavior and passes the result directly
+to the Rust attachment service for validation; the frontend supplies no path.
 
 Portal availability does not establish filesystem access. The service must
 still check metadata, read/write expectations, mount state, Git state, and the
@@ -189,5 +190,6 @@ GitHub Pages remains disabled and is not a production fallback.
   public compatibility list.
 - Public HTTP inspection is blocked by the host's current 403 behavior; no
   existing document-root or website-platform conclusion is possible.
-- Rust/Tauri builds cannot run until the missing toolchain and system packages
-  are installed in a later approved milestone.
+- Unbundled Rust/Tauri release builds and the GTK/D-Bus runtime are verified on
+  the discovery host; package installation and older-distribution compatibility
+  remain unverified until the packaging milestone.

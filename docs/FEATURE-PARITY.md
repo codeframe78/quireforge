@@ -9,9 +9,9 @@ Codex commands, protocol types, integration IDs, or compatibility boundaries.
 
 | Product capability | Public desktop behavior | Supported official interface | Local project responsibility | Milestone/status |
 |---|---|---|---|---|
-| Projects linked to local folders | Local project gives chats one or more folders | Absolute `cwd`, `--cd`, sandbox roots | Project DB, native picker, identity checks | M6 / feasible |
-| Original directory used in place | Project folder is working directory | App-server/CLI cwd | Never copy/import; relink and detach UX | M6 / feasible |
-| Multiple folder roots | Public project docs say one or more folders | Writable roots / `--add-dir` | Persistent association model and approvals | M6 / schema-first |
+| Projects linked to local folders | Local project gives chats one or more folders | Absolute `cwd`, `--cd`, sandbox roots | Project DB, native picker, identity checks | M6 / complete locally |
+| Original directory used in place | Project folder is working directory | App-server/CLI cwd | Never copy/import; relink and detach UX | M6 / complete locally |
+| Multiple folder roots | Public project docs say one or more folders | Writable roots / `--add-dir` | Persistent association schema; additional-root UI follows task requirements | M6 schema complete / UI later |
 | Codex account onboarding | Browser/device login, status, cancel, and logout | Stable account app-server methods | Bounded native state, redaction, explicit handoff/logout | M5 / complete locally |
 | Model and reasoning picker | Desktop exposes available choices | `model/list` | Discovery normalized in M4; controls remain M7 | M4 adapter complete / M7 UI planned |
 | Streaming conversation | Rich item and event stream | App-server v2 | Base event contract in M4; turn normalization/rendering remains M7 | M4 boundary complete / M7 planned |

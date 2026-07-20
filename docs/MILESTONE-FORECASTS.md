@@ -156,14 +156,80 @@ intentionally excluded because they mutate external authentication state.
 
 ## Milestone 6 — Workspace Attachment and QuireForge Metadata
 
-Preliminary planning range: approximately 3–6 active hours and 3.5–7 total
-elapsed hours across one or two sessions, excluding approval waiting;
-low-to-medium confidence. Expected work includes attachment boundaries,
-canonical path and duplicate handling, migrated QuireForge-owned SQLite state,
-detach/archive semantics, typed IPC, deterministic tests, and honest UI states.
-The main uncertainties are migration design, filesystem identity across Linux
-mounts and symlinks, concurrency, and separation from Codex-owned data.
+| Field | Record |
+|---|---|
+| Forecast date | 2026-07-19 |
+| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed for Milestone 6A |
+| Preliminary forecast | 3–6 active hours; about 3.5–7 total elapsed hours across 1–2 sessions; low-to-medium confidence |
+| Calibrated complete-milestone forecast | 2.5–5 active hours; 15–35 minutes of local commands; about 3–6 total elapsed hours; medium confidence |
+| Calibrated Milestone 6A forecast | 1.5–3 active hours; 8–20 minutes of local commands; about 1.75–3.5 total elapsed hours; medium confidence |
+| Observed Milestone 6A execution | Approximately 45–70 active minutes through implementation, security review, expanded native tests, documentation, final validation, and checkpoint publication; approval delay excluded |
+| Observed local command time | Approximately 3–5 minutes across dependency-expanded checking, targeted/full Rust gates, and repeated full repository validation after correcting stale expectations; file reads excluded |
+| User approval/waiting time | Manual model, reasoning, audit, and start confirmations occurred before implementation; waiting time was excluded |
+| Sessions | Two gated checkpoints: native core followed by frontend/integration |
+| Usage intensity | High model/tool activity; moderate CPU and low memory pressure |
+| Milestone 6B selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
+| Preliminary Milestone 6B forecast | 1–2.25 active hours; 5–15 minutes of local commands; about 1.25–2.75 total elapsed hours; medium confidence |
+| Calibrated Milestone 6B forecast | 1–2 active hours; 5–12 minutes of local commands; about 1.25–2.5 total elapsed hours; medium confidence |
+| Observed Milestone 6B execution | Approximately 35–55 active minutes through strict contract/UI implementation, tests, visual review, release/native verification, documentation, and final gates; approval delay excluded |
+| Milestone 6B command observations | Full non-browser gate 30.0 seconds at about 1.23 GiB peak RSS; combined browser gate 8.3 seconds at about 251 MiB; unbundled release build 67.0 seconds at about 1.36 GiB |
+| Completion status | Milestone 6 complete locally; publication and merge pending |
 
-This is only a preliminary range. Milestone 6 requires a fresh repository and
-system check, current model/reasoning-strength gate, calibrated breakdown, and
-explicit start approval. No Milestone 6 work has begun.
+The Milestone 6A forecast overestimated implementation and command time. The
+accepted architecture, fast bundled-SQLite compilation, warm Tauri caches,
+small transaction surface, and deterministic temporary-directory fixtures
+compressed the critical path without reducing scope. XHigh reasoning was
+useful for migration invariants, path identity, TOCTOU handling, permission
+boundaries, and fail-closed diagnostics. The planned frontend/integration
+checkpoint should be reevaluated at High reasoning rather than automatically
+retaining XHigh.
+
+Milestone 6B also completed below its forecast. The native contract was already
+stable, frontend caches were warm, and deterministic fixtures kept debugging
+short. High reasoning was sufficient for the strict schema invariants,
+confirmation state machine, path-boundary review, and accessible destructive-
+action confirmations; XHigh would not have provided a material advantage for
+the predominantly integration and verification work. Across both checkpoints,
+Milestone 6 took approximately 80–125 active minutes plus roughly 6–11 minutes
+of local command time, excluding approval waits.
+
+### Milestone 6A required observations and lessons
+
+- The first dependency-expanded `cargo check` took about 14.2 seconds at about
+  718 MiB peak RSS and locked 22 packages, including bundled SQLite and the
+  native dialog plugin.
+- The warm corrected `cargo check` took about 1.5 seconds at about 452 MiB peak
+  RSS.
+- The final 20-test project suite took about 5.0 seconds at about 1.24 GiB peak
+  RSS; all tests passed.
+- Warm Clippy with warnings denied took about 2.0 seconds at about 495 MiB peak
+  RSS. The final full non-browser repository gate took about 25.8 seconds at
+  about 605 MiB peak RSS and included 40 passing Rust tests with two deliberate
+  live probes ignored.
+- No swap activity, OOM, thermal concern, GPU workload, cache deletion, or
+  source-directory mutation occurred.
+- Confirmation must bind not only path/device/mount/Git identity but also the
+  detected `AGENTS.md` and `.codex` state; a deterministic test now prevents a
+  configuration-change TOCTOU regression.
+- Read-only state needs both directory mode and mount-option evidence. Mount ID
+  and filesystem type remain advisory signals and preflight fails closed if
+  they cannot be verified.
+
+### Milestone 6B required observations and lessons
+
+- The strict TypeScript fixture is serialized by Rust and parsed by the
+  frontend, preventing silent drift at the native/webview boundary.
+- The warm desktop production build took about 2.1 seconds at about 300 MiB
+  peak RSS. The desktop-only Playwright suite took about 5.7 seconds at about
+  236 MiB peak RSS.
+- The unbundled release build took about 67.0 seconds at about 1.36 GiB peak
+  RSS. An isolated native launch owned the exact D-Bus identity and created its
+  temporary app-data directory and SQLite file with owner-only permissions.
+- The final non-browser repository gate took about 30.0 seconds at about
+  1.23 GiB peak RSS, including 27 desktop tests, 3 website tests, and 41 passing
+  Rust tests with two deliberate live probes ignored.
+- The final combined desktop/website browser gate passed 14 tests in about
+  8.3 seconds at about 251 MiB peak RSS.
+- No swap growth, OOM, thermal concern, GPU-compute workload, cache deletion,
+  Codex-owned state change, source-directory mutation, or package/deployment
+  operation occurred.
