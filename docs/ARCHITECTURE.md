@@ -185,7 +185,7 @@ IDs. Browser preview cannot simulate a session operation. Detailed real-time
 command/tool/process disclosure remains Milestone 9 and requires its own
 redacted normalized event contract.
 
-### Milestone 9A approval and activity boundary
+### Milestone 9 approval and activity boundary
 
 The serialized conversation owner now handles only three reviewed stable
 server-request methods: command execution, file change, and permissions. It
@@ -212,9 +212,16 @@ and final unterminated tails are omitted.
 
 The pending approval and output buffer are ephemeral. SQLite continues to store
 only the active reference/status, so restart recovery marks the lost turn
-interrupted instead of persisting or replaying consent. Milestone 9B consumes
-this contract in selectable expanded activity rows and the complete approval
-interface.
+interrupted instead of persisting or replaying consent.
+
+The frontend derives a bounded view of at most 64 activities from the already
+bounded event stream and retains at most 32 KiB of display output per activity.
+A semantic button expands each activity in place while keeping raw protocol
+data out of React. The approval card renders only advertised choices and sends
+the exact app conversation/approval IDs through the fixed decision command.
+Decision submission is single-flight, and App pauses its poll loop while any
+conversation action is in progress so a stale response cannot overwrite the
+decision result.
 
 ## Application layers
 

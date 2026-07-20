@@ -504,3 +504,63 @@ handling, and the final native/webview security review.
   explicit user consent. It requires a fresh model/reasoning gate; a preliminary
   range is approximately 2–4 active hours, 5–15 minutes of local commands, and
   2.5–5 total elapsed hours in one session, medium confidence.
+
+### Milestone 9B — Selectable Activity and Approval Interface
+
+| Field | Record |
+|---|---|
+| Forecast date | 2026-07-20 |
+| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
+| Preliminary forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence |
+| Calibrated forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence |
+| Calibration basis | Clean merged Milestone 9A `main`, 44 GiB available RAM, low host load, 726 GiB free NVMe, warm Cargo/pnpm/Playwright caches, existing schema-v2 activity and decision bridge, four Cargo workers, and two Playwright workers |
+| Observed active execution | Approximately 20–35 minutes through contract review, implementation, deterministic tests, documentation, complete gates, rendered-state inspection, security/diff review, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 3–5 minutes across iterative checks, the 36.70-second full gate, 9.99-second browser gate, 30.73-second release build, focused visual trace, and isolated launch check |
+| User approval/waiting time | Manual model/reasoning and milestone-start confirmations occurred before branch creation and were excluded; hosted-runner queue time is tracked separately |
+| Sessions | One logical implementation session with recoverable contract, UI, test, documentation, and publication checkpoints |
+| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
+| Completion status | Complete and verified locally; publication recorded in repository history |
+
+The forecast overestimated active implementation time. Milestone 9A had already
+established strict schemas, native redaction, exact approval correlation, and a
+fixed decision bridge, so 9B stayed within a React-derived view, App polling
+coordination, styling, deterministic fixtures, and documentation. High
+reasoning remained appropriate for the user-consent surface, duplicate-submit
+guard, stale-poll race, event aggregation bounds, and final trust-boundary
+review. A lower setting would have increased the risk of presenting an
+unadvertised decision or allowing an older waiting snapshot to overwrite a
+completed approval.
+
+### Milestone 9B required observations and lessons
+
+- Activity lifecycle and output events can be grouped entirely in React by the
+  app-owned activity ID without widening IPC or persisting output. The derived
+  view caps history at 64 activities and each output tail at 32 KiB.
+- Expansion state is keyed by the stable app activity ID, so a row remains open
+  as polling replaces its normalized status and adds output.
+- The approval card renders only the snapshot's advertised decision enum.
+  A synchronous single-flight ref prevents double submission before React can
+  disable the controls, while App suspends polling for the entire decision.
+- The complete repository gate passed in 36.70 seconds at about 1.25 GiB peak
+  RSS: 61 desktop JavaScript tests, 3 website tests, and 68 Rust tests passed;
+  2 deliberate live probes remained ignored.
+- The combined desktop/website browser gate passed all 18 desktop/mobile checks
+  in 9.99 seconds at about 283 MiB peak RSS. Axe found no violations, no
+  horizontal overflow occurred, and the fixture completed the exact approval
+  transition.
+- Visual trace inspection confirmed that the waiting card, three advertised
+  decisions, expanded command detail/output, and completed activity state are
+  readable in place. The isolated native launch created schema migrations 1–3
+  with `0700`/`0600` metadata permissions and no child remained after exit.
+- The first aggregate gate stopped at formatting because the transient command
+  environment omitted the already-installed Cargo directory from `PATH`.
+  Explicitly preserving that path fixed the harness; no repository or system
+  configuration changed.
+- Available RAM remained about 44 GiB, swap stayed near 175 MiB, measured
+  commands reported zero swaps, and there was no OOM, throttling, dependency
+  download, cache deletion, clean build, live model turn, real approval,
+  deployment, or GPU workload.
+- Milestone 10 requires a fresh gate. It adds native Git status/diff and
+  mutation-sensitive workflows, so its reasoning and forecast must be based on
+  the exact Git architecture and approval boundaries rather than reusing 9B's
+  presentation-oriented setting.

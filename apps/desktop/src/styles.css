@@ -1436,7 +1436,6 @@ button:disabled {
   text-decoration: line-through;
 }
 
-.conversation-event__activity,
 .conversation-event__approval,
 .conversation-event__lifecycle,
 .conversation-event__error {
@@ -1447,28 +1446,105 @@ button:disabled {
   text-transform: uppercase;
 }
 
-.conversation-event__activity {
+.conversation-activity {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface-soft) 76%, transparent);
+}
+
+.conversation-activity__toggle {
   display: grid;
-  gap: 7px;
-}
-
-.conversation-event__activity p {
-  display: flex;
+  width: 100%;
+  min-height: 43px;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 9px;
   align-items: center;
-  gap: 7px;
+  padding: 9px 11px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
 }
 
-.conversation-event__activity span {
+.conversation-activity__toggle:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: -2px;
+}
+
+.conversation-activity__toggle strong {
+  overflow: hidden;
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation-activity__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-subtle);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conversation-activity__status > span {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--green);
+  background: var(--accent-bright);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
-.conversation-event__activity pre,
-.conversation-event__output {
+.conversation-activity__status[data-status="completed"] > span {
+  background: var(--green);
+  box-shadow: none;
+}
+
+.conversation-activity__chevron {
+  color: var(--text-subtle);
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 150ms ease;
+}
+
+.conversation-activity__toggle[aria-expanded="true"]
+  .conversation-activity__chevron {
+  transform: rotate(90deg);
+}
+
+.conversation-activity__panel {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-raised) 68%, transparent);
+}
+
+.conversation-activity__panel > div {
+  min-width: 0;
+}
+
+.conversation-activity__panel strong,
+.conversation-activity__kind {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text-subtle);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.conversation-activity__panel pre {
+  max-height: 190px;
   min-width: 0;
   margin: 0;
+  overflow: auto;
+  min-width: 0;
   overflow-wrap: anywhere;
   color: var(--text-muted);
   font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
@@ -1480,11 +1556,122 @@ button:disabled {
   white-space: pre-wrap;
 }
 
-.conversation-event__activity small {
+.conversation-activity__panel small,
+.conversation-activity__panel p {
+  margin: 0;
   color: var(--text-muted);
   font-size: 8px;
-  letter-spacing: normal;
-  text-transform: none;
+  line-height: 1.5;
+}
+
+.conversation-approval {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--accent-bright) 58%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 9%, var(--surface-raised));
+  box-shadow: inset 3px 0 0 var(--accent-bright);
+}
+
+.conversation-approval .eyebrow,
+.conversation-approval h3,
+.conversation-approval p,
+.conversation-approval dl {
+  margin: 0;
+}
+
+.conversation-approval h3 {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.conversation-approval__kind {
+  color: var(--text-subtle);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.conversation-approval > p:not(.eyebrow),
+.conversation-approval > small {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.55;
+}
+
+.conversation-approval dl {
+  display: grid;
+  gap: 7px;
+}
+
+.conversation-approval dl > div {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(70px, 0.3fr) minmax(0, 1fr);
+  gap: 9px;
+}
+
+.conversation-approval dt {
+  color: var(--text-subtle);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.conversation-approval dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--text);
+  font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+  font-size: 8px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.conversation-approval__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.conversation-approval__actions button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.conversation-approval__actions button[data-decision="approve"] {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--border));
+  background: var(--accent);
+  color: #20150b;
+}
+
+.conversation-approval__actions button[data-decision="cancel"] {
+  color: #dc8e86;
+}
+
+:root[data-theme="light"]
+  .conversation-approval__actions
+  button[data-decision="cancel"] {
+  color: #9d3027;
+}
+
+.conversation-approval__actions button:focus-visible {
+  outline: 2px solid var(--accent-bright);
+  outline-offset: 2px;
+}
+
+.conversation-approval__actions button:disabled {
+  opacity: 0.55;
 }
 
 .conversation-event__error,

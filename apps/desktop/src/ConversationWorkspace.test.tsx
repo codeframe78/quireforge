@@ -59,6 +59,7 @@ function renderWorkspace(
     state: "interrupted",
     events: [{ type: "lifecycle", sequence: 2, phase: "interrupted" }],
   });
+  const onDecideApproval = vi.fn().mockResolvedValue(runningConversation);
   render(
     <ConversationWorkspace
       availability="native"
@@ -70,10 +71,11 @@ function renderWorkspace(
       actionError={false}
       onStart={onStart}
       onInterrupt={onInterrupt}
+      onDecideApproval={onDecideApproval}
       {...overrides}
     />,
   );
-  return { onStart, onInterrupt };
+  return { onStart, onInterrupt, onDecideApproval };
 }
 
 describe("ConversationWorkspace", () => {
@@ -154,14 +156,18 @@ describe("ConversationWorkspace", () => {
     });
 
     expect(screen.getByText("The UI is ready for review.")).toBeInTheDocument();
-    expect(screen.getByText("Run command completed")).toBeInTheDocument();
+    const activity = screen.getByRole("button", { name: /Run command/u });
+    expect(activity).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("pnpm check")).not.toBeInTheDocument();
+    fireEvent.click(activity);
+    expect(activity).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByText("pnpm check")).toBeInTheDocument();
     expect(screen.getByText("Checks passed.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Stop task" }));
     expect(onInterrupt).toHaveBeenCalledWith(conversationId);
   });
 
-  it("keeps a pending approval active and allows safe task cancellation", () => {
+  it("submits only the exact pending approval decision", async () => {
     const approvalId = "018f0000-0000-7000-8000-000000000011";
     const activityId = "018f0000-0000-7000-8000-000000000012";
     const waiting = conversationSnapshotSchema.parse({
@@ -186,7 +192,7 @@ describe("ConversationWorkspace", () => {
         },
       ],
     });
-    const { onInterrupt } = renderWorkspace({
+    const { onInterrupt, onDecideApproval } = renderWorkspace({
       snapshot: waiting,
       events: waiting.events,
     });
@@ -197,8 +203,61 @@ describe("ConversationWorkspace", () => {
     expect(
       screen.getByText("Approval requested for command execution."),
     ).toBeInTheDocument();
+    expect(screen.getByText("The check needs permission.")).toBeInTheDocument();
+    expect(screen.getByText("pnpm check")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Approve once" }));
+    await waitFor(() =>
+      expect(onDecideApproval).toHaveBeenCalledWith({
+        conversationId,
+        approvalId,
+        decision: "approve",
+      }),
+    );
     fireEvent.click(screen.getByRole("button", { name: "Stop task" }));
     expect(onInterrupt).toHaveBeenCalledWith(conversationId);
+  });
+
+  it("renders only advertised decisions and prevents duplicate submission", async () => {
+    const approvalId = "018f0000-0000-7000-8000-000000000021";
+    const activityId = "018f0000-0000-7000-8000-000000000022";
+    const waiting = conversationSnapshotSchema.parse({
+      ...runningConversation,
+      state: "waiting-for-approval",
+      pendingApproval: {
+        approvalId,
+        activityId,
+        kind: "command-execution",
+        title: "Allow this command?",
+        reason: null,
+        details: [],
+        decisions: ["decline"],
+      },
+      events: [],
+    });
+    let resolveDecision:
+      ((value: typeof runningConversation) => void) | undefined;
+    const onDecideApproval = vi.fn(
+      () =>
+        new Promise<typeof runningConversation>((resolve) => {
+          resolveDecision = resolve;
+        }),
+    );
+    renderWorkspace({
+      snapshot: waiting,
+      onDecideApproval,
+    });
+
+    expect(screen.queryByRole("button", { name: "Approve once" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cancel task" })).toBeNull();
+    const decline = screen.getByRole("button", { name: "Decline" });
+    fireEvent.click(decline);
+    fireEvent.click(decline);
+    expect(onDecideApproval).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Decline…" })).toBeDisabled();
+    resolveDecision?.(runningConversation);
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Decline" })).toBeEnabled(),
+    );
   });
 
   it("keeps browser preview honest and non-interactive", () => {

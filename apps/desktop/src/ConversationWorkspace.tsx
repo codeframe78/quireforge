@@ -1,12 +1,17 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { CodexRuntimeSnapshot } from "./lib/codex";
 import {
   conversationStartRequestSchema,
+  type ConversationApprovalDecisionRequest,
   type ConversationEvent,
   type ConversationSnapshot,
   type ConversationStartRequest,
 } from "./lib/conversation";
+import {
+  buildConversationActivityViews,
+  type ConversationActivityView,
+} from "./lib/conversationView";
 import type { ProjectWorkspaceSnapshot } from "./lib/project";
 
 type ConversationAvailability = "checking" | "native" | "preview";
@@ -22,6 +27,9 @@ interface ConversationWorkspaceProps {
   actionError: boolean;
   onStart: (request: ConversationStartRequest) => Promise<ConversationSnapshot>;
   onInterrupt: (conversationId: string) => Promise<ConversationSnapshot>;
+  onDecideApproval: (
+    request: ConversationApprovalDecisionRequest,
+  ) => Promise<ConversationSnapshot>;
 }
 
 const sandboxOptions = [
@@ -92,6 +100,78 @@ const activityLabels: Record<
   other: "Activity",
 };
 
+const decisionLabels: Record<
+  ConversationApprovalDecisionRequest["decision"],
+  string
+> = {
+  approve: "Approve once",
+  decline: "Decline",
+  cancel: "Cancel task",
+};
+
+function ActivityCard({
+  activity,
+  expanded,
+  onToggle,
+}: {
+  activity: ConversationActivityView;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const panelId = `conversation-activity-${activity.activityId}`;
+  const label = activity.title || activityLabels[activity.kind];
+  return (
+    <article className="conversation-activity">
+      <button
+        className="conversation-activity__toggle"
+        type="button"
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <span
+          className="conversation-activity__status"
+          data-status={activity.status}
+        >
+          <span aria-hidden="true" />
+          {activity.status}
+        </span>
+        <strong>{label}</strong>
+        <span className="conversation-activity__chevron" aria-hidden="true">
+          ›
+        </span>
+      </button>
+      {expanded && (
+        <div className="conversation-activity__panel" id={panelId}>
+          <span className="conversation-activity__kind">
+            {activityLabels[activity.kind]}
+          </span>
+          {activity.detail && (
+            <div>
+              <strong>Details</strong>
+              <pre>{activity.detail}</pre>
+            </div>
+          )}
+          {activity.output && (
+            <div>
+              <strong>Live output</strong>
+              <pre aria-label={`${label} live output`}>{activity.output}</pre>
+            </div>
+          )}
+          {activity.exitCode !== null && (
+            <small>Exit code {activity.exitCode}</small>
+          )}
+          {!activity.detail &&
+            !activity.output &&
+            activity.exitCode === null && (
+              <p>No additional normalized detail is available yet.</p>
+            )}
+        </div>
+      )}
+    </article>
+  );
+}
+
 function EventCard({ event }: { event: ConversationEvent }) {
   if (event.type === "agent-message-delta") {
     return <p className="conversation-event__message">{event.delta}</p>;
@@ -119,21 +199,8 @@ function EventCard({ event }: { event: ConversationEvent }) {
       </div>
     );
   }
-  if (event.type === "activity") {
-    return (
-      <div className="conversation-event__activity">
-        <p>
-          <span aria-hidden="true" />
-          {event.title || activityLabels[event.kind]} {event.status}
-        </p>
-        {event.detail && <pre>{event.detail}</pre>}
-        {event.exitCode !== null && <small>Exit code {event.exitCode}</small>}
-      </div>
-    );
-  }
-  if (event.type === "activity-output-delta") {
-    return <pre className="conversation-event__output">{event.delta}</pre>;
-  }
+  if (event.type === "activity" || event.type === "activity-output-delta")
+    return null;
   if (event.type === "approval-requested") {
     return (
       <p className="conversation-event__approval">
@@ -175,6 +242,7 @@ export function ConversationWorkspace({
   actionError,
   onStart,
   onInterrupt,
+  onDecideApproval,
 }: ConversationWorkspaceProps) {
   const defaultModel =
     runtime.models.find((model) => model.isDefault) ?? runtime.models[0];
@@ -187,6 +255,23 @@ export function ConversationWorkspace({
     useState<ConversationStartRequest["sandboxMode"]>("workspace-write");
   const [approvalPolicy, setApprovalPolicy] =
     useState<ConversationStartRequest["approvalPolicy"]>("on-request");
+  const [expandedActivities, setExpandedActivities] = useState<Set<string>>(
+    new Set(),
+  );
+  const [pendingDecision, setPendingDecision] = useState<
+    ConversationApprovalDecisionRequest["decision"] | null
+  >(null);
+  const decisionInFlight = useRef(false);
+
+  const activities = useMemo(
+    () => buildConversationActivityViews(events),
+    [events],
+  );
+  const activitiesByFirstSequence = useMemo(
+    () =>
+      new Map(activities.map((activity) => [activity.firstSequence, activity])),
+    [activities],
+  );
 
   const selectedModel =
     runtime.models.find((model) => model.id === modelId) ?? defaultModel;
@@ -264,6 +349,44 @@ export function ConversationWorkspace({
     } catch {
       // The bounded action message is owned by App state.
     }
+  }
+
+  async function decideApproval(
+    decision: ConversationApprovalDecisionRequest["decision"],
+  ) {
+    const approval = snapshot.pendingApproval;
+    if (
+      decisionInFlight.current ||
+      busy ||
+      !snapshot.conversationId ||
+      !approval ||
+      !approval.decisions.includes(decision)
+    )
+      return;
+
+    decisionInFlight.current = true;
+    setPendingDecision(decision);
+    try {
+      await onDecideApproval({
+        conversationId: snapshot.conversationId,
+        approvalId: approval.approvalId,
+        decision,
+      });
+    } catch {
+      // The bounded action message is owned by App state.
+    } finally {
+      decisionInFlight.current = false;
+      setPendingDecision(null);
+    }
+  }
+
+  function toggleActivity(activityId: string) {
+    setExpandedActivities((current) => {
+      const next = new Set(current);
+      if (next.has(activityId)) next.delete(activityId);
+      else next.add(activityId);
+      return next;
+    });
   }
 
   return (
@@ -450,20 +573,85 @@ export function ConversationWorkspace({
             aria-live="polite"
             aria-relevant="additions"
           >
+            {snapshot.pendingApproval && (
+              <section
+                className="conversation-approval"
+                aria-labelledby={`approval-${snapshot.pendingApproval.approvalId}`}
+              >
+                <p className="eyebrow">Action required</p>
+                <h3 id={`approval-${snapshot.pendingApproval.approvalId}`}>
+                  {snapshot.pendingApproval.title}
+                </h3>
+                <span className="conversation-approval__kind">
+                  {snapshot.pendingApproval.kind.split("-").join(" ")} approval
+                </span>
+                {snapshot.pendingApproval.reason && (
+                  <p>{snapshot.pendingApproval.reason}</p>
+                )}
+                {snapshot.pendingApproval.details.length > 0 && (
+                  <dl>
+                    {snapshot.pendingApproval.details.map((detail) => (
+                      <div key={detail.label}>
+                        <dt>{detail.label}</dt>
+                        <dd>{detail.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                <div className="conversation-approval__actions">
+                  {snapshot.pendingApproval.decisions.map((decision) => (
+                    <button
+                      key={decision}
+                      type="button"
+                      data-decision={decision}
+                      disabled={busy || pendingDecision !== null}
+                      onClick={() => void decideApproval(decision)}
+                    >
+                      {pendingDecision === decision
+                        ? `${decisionLabels[decision]}…`
+                        : decisionLabels[decision]}
+                    </button>
+                  ))}
+                </div>
+                <small>
+                  Approval applies only to this requested action. Declining
+                  keeps broader access unchanged.
+                </small>
+              </section>
+            )}
             {events.length === 0 ? (
               <div className="conversation-empty">
                 <span aria-hidden="true">›</span>
                 <p>Normalized progress and response text will appear here.</p>
               </div>
             ) : (
-              events.map((event) => (
-                <article
-                  className={`conversation-event conversation-event--${event.type}`}
-                  key={event.sequence}
-                >
-                  <EventCard event={event} />
-                </article>
-              ))
+              events.map((event) => {
+                if (
+                  event.type === "activity" ||
+                  event.type === "activity-output-delta"
+                ) {
+                  const activity = activitiesByFirstSequence.get(
+                    event.sequence,
+                  );
+                  if (!activity) return null;
+                  return (
+                    <ActivityCard
+                      key={activity.activityId}
+                      activity={activity}
+                      expanded={expandedActivities.has(activity.activityId)}
+                      onToggle={() => toggleActivity(activity.activityId)}
+                    />
+                  );
+                }
+                return (
+                  <article
+                    className={`conversation-event conversation-event--${event.type}`}
+                    key={event.sequence}
+                  >
+                    <EventCard event={event} />
+                  </article>
+                );
+              })
             )}
           </div>
 

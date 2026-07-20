@@ -215,6 +215,32 @@ const approvalConversation = {
   diagnosticCode: null,
 } as const;
 
+const approvedConversation = {
+  ...approvalConversation,
+  state: "completed",
+  pendingApproval: null,
+  events: [
+    ...approvalConversation.events,
+    {
+      type: "approval-resolved",
+      sequence: 4,
+      approvalId: "018f0000-0000-7000-8000-000000000021",
+      resolution: "approved",
+    },
+    {
+      type: "activity",
+      sequence: 5,
+      activityId: "018f0000-0000-7000-8000-000000000022",
+      kind: "command-execution",
+      status: "completed",
+      title: "Run command",
+      detail: "pnpm check",
+      exitCode: 0,
+    },
+    { type: "lifecycle", sequence: 6, phase: "completed" },
+  ],
+} as const;
+
 test("desktop preview renders the honest semantic shell", async ({ page }) => {
   const response = await page.goto("/");
 
@@ -301,16 +327,33 @@ test("native activity fixture renders bounded real-time approval detail", async 
     ...nativeResponses,
     conversation_status: approvalConversation,
     conversation_poll: approvalConversation,
+    conversation_approval_decide: approvedConversation,
   });
   await page.goto("/");
 
   await expect(page.getByText("Codex is waiting for approval")).toBeVisible();
-  await expect(page.getByText("pnpm check")).toBeVisible();
+  await expect(
+    page.getByText("The project check needs permission."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve once" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Decline" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Cancel task" })).toBeVisible();
+  const activity = page.getByRole("button", { name: /Run command/u });
+  await expect(activity).toHaveAttribute("aria-expanded", "false");
+  await activity.click();
+  await expect(activity).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText("Checking the desktop contract…")).toBeVisible();
   await expect(
     page.getByText("Approval requested for command execution."),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Stop task" })).toBeEnabled();
+
+  await page.getByRole("button", { name: "Approve once" }).click();
+  await expect(page.getByText("Task completed")).toBeVisible();
+  await expect(page.getByText("Approval approved.")).toBeVisible();
+  await expect(page.getByText("Run this command?")).toHaveCount(0);
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);

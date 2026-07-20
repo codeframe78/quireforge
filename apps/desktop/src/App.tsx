@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
 import { ConversationWorkspace } from "./ConversationWorkspace";
@@ -10,6 +10,7 @@ import {
   cancelCodexAuth,
   cancelProjectAttachment,
   confirmProjectAttachment,
+  decideConversationApproval,
   detachProject,
   interruptConversation,
   loadCodexAuth,
@@ -40,6 +41,7 @@ import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
 import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
 import {
   scaffoldConversation,
+  type ConversationApprovalDecisionRequest,
   type ConversationEvent,
   type ConversationSnapshot,
   type ConversationStartRequest,
@@ -100,6 +102,9 @@ interface AppProps {
   ) => Promise<ConversationSnapshot>;
   interruptConversationTask?: (
     conversationId: string,
+  ) => Promise<ConversationSnapshot>;
+  decideConversationApprovalTask?: (
+    request: ConversationApprovalDecisionRequest,
   ) => Promise<ConversationSnapshot>;
   loadSessions?: (
     request?: SessionListRequest,
@@ -248,6 +253,7 @@ export default function App({
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
   interruptConversationTask = interruptConversation,
+  decideConversationApprovalTask = decideConversationApproval,
   loadSessions = loadConversationSessions,
   resumeConversationTask = resumeConversation,
   forkConversationTask = forkConversation,
@@ -284,6 +290,7 @@ export default function App({
     useState<ConversationViewState>("checking");
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationActionError, setConversationActionError] = useState(false);
+  const conversationActionGeneration = useRef(0);
   const [sessions, setSessions] = useState<SessionLifecycleSnapshot>(
     scaffoldSessionLifecycle,
   );
@@ -425,6 +432,7 @@ export default function App({
 
   useEffect(() => {
     if (
+      conversationBusy ||
       !conversation.conversationId ||
       !["running", "waiting-for-approval", "stopping"].includes(
         conversation.state,
@@ -436,11 +444,16 @@ export default function App({
     let active = true;
     let timer: number | undefined;
     const conversationId = conversation.conversationId;
+    const actionGeneration = conversationActionGeneration.current;
 
     async function poll() {
       try {
         const result = await pollConversationTask(conversationId);
-        if (!active) return;
+        if (
+          !active ||
+          actionGeneration !== conversationActionGeneration.current
+        )
+          return;
         setConversation(result);
         setConversationEvents((current) =>
           mergeConversationEvents(current, result.events),
@@ -470,6 +483,7 @@ export default function App({
   }, [
     conversation.conversationId,
     conversation.state,
+    conversationBusy,
     loadSessions,
     pollConversationTask,
     sessionSearchTerm,
@@ -582,6 +596,27 @@ export default function App({
     setConversationActionError(false);
     try {
       const result = await interruptConversationTask(conversationId);
+      setConversation(result);
+      setConversationEvents((current) =>
+        mergeConversationEvents(current, result.events),
+      );
+      return result;
+    } catch (error) {
+      setConversationActionError(true);
+      throw error;
+    } finally {
+      setConversationBusy(false);
+    }
+  }
+
+  async function applyConversationApproval(
+    request: ConversationApprovalDecisionRequest,
+  ): Promise<ConversationSnapshot> {
+    conversationActionGeneration.current += 1;
+    setConversationBusy(true);
+    setConversationActionError(false);
+    try {
+      const result = await decideConversationApprovalTask(request);
       setConversation(result);
       setConversationEvents((current) =>
         mergeConversationEvents(current, result.events),
@@ -930,6 +965,7 @@ export default function App({
             actionError={conversationActionError}
             onStart={beginConversation}
             onInterrupt={stopConversation}
+            onDecideApproval={applyConversationApproval}
           />
 
           <section className="auth-onboarding" aria-labelledby="auth-title">
