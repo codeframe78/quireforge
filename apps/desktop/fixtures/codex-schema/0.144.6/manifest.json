@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "codexCliVersion": "0.144.6",
   "generator": "codex app-server generate-json-schema --experimental",
-  "selection": "initialize, model/list, and stable account lifecycle only",
+  "selection": "initialize, model/list, stable account lifecycle, and the Milestone 7 conversation start/interrupt/event subset only",
   "files": [
     {
       "path": "v1/InitializeParams.json",
@@ -55,6 +55,66 @@
     {
       "path": "v2/ModelListResponse.json",
       "sha256": "24baefddffde93794981495043ad6f7cd74b8220055e8b372ad58c075c856d9b"
+    },
+    {
+      "path": "v2/ThreadStartParams.json",
+      "sha256": "f8868ae0c6ba32fba1e8c2ba346beda4edb9522e04308c4b4654ff8edd9ddabd"
+    },
+    {
+      "path": "v2/ThreadStartResponse.json",
+      "sha256": "c26a977dcc345aaf25de95f6d3943337c4ae6aa6af2eac8ff25f1ee944a752fc"
+    },
+    {
+      "path": "v2/TurnStartParams.json",
+      "sha256": "cfad73eea4dcea2632e6c892eb20266b58a8848157fb001da3710d2a453750f6"
+    },
+    {
+      "path": "v2/TurnStartResponse.json",
+      "sha256": "3861cfdc4a3f0af2ba8602ac38ea5878111066cb23ed5553a6cd56a676efa198"
+    },
+    {
+      "path": "v2/TurnInterruptParams.json",
+      "sha256": "9fe2d4fc5b6a821899cce4b8b5c754093e7c58b558544a0c8cf0e37821678b8d"
+    },
+    {
+      "path": "v2/TurnInterruptResponse.json",
+      "sha256": "bf7c7e4c125a0d8a20e73143486ec1c60c5ad9c9746fe261e8d2d00a285b8293"
+    },
+    {
+      "path": "v2/ThreadStartedNotification.json",
+      "sha256": "ce9623d8b69c81536b9c77496ec68ad484ab93966227c14c3138b95b026ca653"
+    },
+    {
+      "path": "v2/TurnStartedNotification.json",
+      "sha256": "288c0a8885a662a603a879cc9283c89338b69d1d6e5ef946d2fdd9135d6ad21b"
+    },
+    {
+      "path": "v2/TurnCompletedNotification.json",
+      "sha256": "06735aae3a28bb3b74f22c5c15a2e977d990faf7909e177d849c4b26e8621465"
+    },
+    {
+      "path": "v2/AgentMessageDeltaNotification.json",
+      "sha256": "c150383123eff697e031e295083b744935e2d37cc23ece5b77ae01843e337e3d"
+    },
+    {
+      "path": "v2/ReasoningSummaryTextDeltaNotification.json",
+      "sha256": "33a81e14ee7cf218c6b1c61b06bcb7c18448747b158e5a9375a030218d1773c6"
+    },
+    {
+      "path": "v2/TurnPlanUpdatedNotification.json",
+      "sha256": "ac8e4056e9fc7f01bf6ccab2a03420aba1466d08bf981517ea47620f9d4cebed"
+    },
+    {
+      "path": "v2/ItemStartedNotification.json",
+      "sha256": "547aeb24da784ff070122b25610ee26fd4caeabaf1511f24ebf0c1f773041173"
+    },
+    {
+      "path": "v2/ItemCompletedNotification.json",
+      "sha256": "6d8d1e6156976c30c545fd1df5fe7b3f9431dd763503064260530cee9925af98"
+    },
+    {
+      "path": "v2/ErrorNotification.json",
+      "sha256": "9ef01f89b3c580f45e8923a1d660913692337c3c72924f5a91a4804e59d58af4"
     }
   ]
 }

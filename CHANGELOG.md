@@ -76,6 +76,14 @@ released a usable application.
   bridge, and accessible responsive project UI for native selection,
   confirmation, missing/read-only states, preflight, relink, and two-step
   detach/archive actions.
+- A serialized native Milestone 7A conversation service that revalidates the
+  attached cwd, starts a supported Codex thread and turn with explicit model,
+  reasoning, sandbox, and approval controls, normalizes bounded stream events,
+  and interrupts the exact owned turn.
+- Reference-only conversation persistence, active-project execution
+  reservation, reviewed Codex 0.144.6 thread/turn schemas, strict Rust and
+  TypeScript contracts, and deterministic lifecycle, cancellation, policy,
+  mismatch, path-boundary, and redaction tests.
 
 ### Changed
 
@@ -125,6 +133,10 @@ released a usable application.
   storage/identity core, strict frontend boundary, accessible workspace, browser
   verification, unbundled release build, and isolated native launch. No source
   directory, Codex state, package, deployment, or release was changed.
+- Completed the Milestone 7A native conversation-runtime checkpoint locally.
+  No live model turn, approval decision, Codex-owned session mutation, package,
+  deployment, or release was performed; the user-facing conversation UI remains
+  Milestone 7B.
 
 ### Migration note
 
@@ -141,7 +153,8 @@ released a usable application.
 ### Known limitations
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
-  and website are locally verified, but no conversation workflow, installable
-  package, website deployment, or release workflow exists.
+  native conversation runtime, and website are locally verified, but no
+  user-facing conversation workflow, installable package, website deployment,
+  or release workflow exists.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

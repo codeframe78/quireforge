@@ -71,6 +71,12 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 6,
                 },
+                CapabilitySummary {
+                    id: "conversation-runtime",
+                    label: "Native conversation runtime",
+                    state: CapabilityState::Ready,
+                    milestone: 7,
+                },
             ],
         }
     }

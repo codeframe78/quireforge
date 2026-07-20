@@ -22,12 +22,13 @@ foundation are complete. The Tauri desktop foundation also builds and launches
 locally, and its versioned Rust adapter detects the installed Codex CLI and
 normalizes the supported app-server model catalog and Codex-owned account
 state. Browser/device onboarding, cancellation, logout, and redacted recovery
-are implemented locally without storing credentials. Milestone 6's native
-project-metadata, directory-identity, attachment lifecycle, cwd preflight, and
-accessible project workspace are implemented and verified on its working
-branch. Conversation workflows remain later milestones. Cloudflare Pages is the
-selected production host, but the site has not been deployed. There is no
-application package to install yet.
+are implemented locally without storing credentials. Milestone 6's project
+metadata, directory attachment, cwd preflight, and accessible workspace are
+merged. Milestone 7A's native conversation runtime now starts a verified
+thread/turn, normalizes its bounded stream, interrupts the exact active turn,
+and stores reference-only metadata; the conversation UI remains Milestone 7B.
+Cloudflare Pages is the selected production host, but the site has not been
+deployed. There is no application package to install yet.
 
 ## Project status
 
@@ -40,15 +41,15 @@ application package to install yet.
   while integration workflows remain planned.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
-  account-status probe, and a verified native project-attachment workflow;
-  conversation workflows are not complete.
+  account-status probe, a verified native project-attachment workflow, and a
+  strict native conversation runtime; the conversation UI is not complete.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Completed milestone: Milestone 6 — projects and direct local-directory
-  attachment (verified locally and merged to `main`).
-- Next gated milestone: Milestone 7 — conversation MVP.
-- Known limitations: no conversation execution, installable packages, releases,
-  public deployment, or production Lighthouse evidence exists yet.
+- Current milestone: Milestone 7 — the 7A native conversation-runtime
+  checkpoint is implemented and verified; 7B UI and integration remain gated.
+- Known limitations: no user-facing conversation workflow, installable
+  packages, releases, public deployment, or production Lighthouse evidence
+  exists yet.
 
 ## Discovery documents
 

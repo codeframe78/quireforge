@@ -2,8 +2,9 @@
 
 Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary,
 Milestone 4 Codex process adapter, Milestone 5 authentication controls, and
-Milestone 6 native directory-attachment controls applied. It must be revisited
-before integrations, packaging, and release milestones.
+Milestone 6 native directory-attachment controls, and Milestone 7A native
+conversation-runtime controls applied. It must be revisited before approvals,
+integrations, packaging, and release milestones.
 
 ## Assets
 
@@ -35,8 +36,8 @@ lines, catalog size, strings, waits, and CLI output are bounded; numeric request
 IDs are correlated; server requests fail closed; notification and error
 payloads are not retained; and owned children are killed and waited on when
 necessary. The React schema is strict and accepts only normalized capability,
-model, version, backend, and diagnostic fields. No command currently accepts a
-path, prompt, arbitrary process, credential, configuration value, or other user
+model, version, backend, and diagnostic fields. This probe accepts no path,
+prompt, arbitrary process, credential, configuration value, or other user
 input.
 
 Milestone 5 adds a closed login-method enum and otherwise argument-free account
@@ -48,6 +49,15 @@ login is pending. A single owner task serializes completion/cancellation and
 reaps its app-server child; logout requires an explicit confirmation step. The
 native opener plugin is not granted direct webview permission, so React cannot
 submit an arbitrary URL to it.
+
+Milestone 7A adds a serialized native conversation owner. The webview submits
+only an opaque project ID, bounded prompt, and closed control enums; native code
+revalidates and reserves the project, owns cwd and Codex IDs, correlates every
+stream event, and interrupts only the exact active turn. Protocol text and
+event batches are bounded, raw reasoning and coarse item details are excluded,
+and unexpected approval requests block and close the task without a fabricated
+decision. Conversation SQLite rows contain references and lifecycle metadata,
+not prompts, transcripts, outputs, diffs, or credentials.
 
 ## Principal threats and controls
 
@@ -68,6 +78,8 @@ Controls:
   than frontend-supplied paths.
 - Confirmation-time reinspection detects symlink, mount, Git/worktree,
   `AGENTS.md`, and `.codex` changes before metadata is committed.
+- Reserve an active project's metadata lifecycle so detach, archive, and relink
+  cannot race a running task; release the reservation on every terminal path.
 
 ### Filesystem scope escalation
 
@@ -85,6 +97,8 @@ Controls:
 - Store only QuireForge-owned project metadata in a `0700` application-data
   directory and `0600` SQLite file; do not persist Codex credentials, sessions,
   connector authorization, or project-file content.
+- Construct conversation writable roots from the one reverified resolved cwd;
+  never accept a cwd or writable root from the webview.
 
 ### Command and PTY abuse
 
@@ -101,6 +115,10 @@ Controls:
 - Correlate approvals to exact command/cwd/turn.
 - Keep integrated terminals separate from Codex approval semantics.
 - Never offer bypass modes as an innocuous default.
+- Reject the `danger-full-access` plus `never` approval combination and validate
+  model/reasoning choices against the live supported catalog.
+- Keep native thread/turn IDs out of IPC and use them as the sole source for
+  exact interruption.
 
 ### Authentication and secret leakage
 
@@ -171,6 +189,9 @@ Controls:
 - Explicit unsupported/degraded states.
 - Never interpret process exit alone as successful integration installation;
   parse and verify supported result state.
+- Require UUIDv7 identity correlation on conversation responses and
+  notifications; mismatch, unexpected server requests, oversized content, or
+  control characters fail closed with stable diagnostics.
 
 ### Git and worktree data loss
 
@@ -270,6 +291,9 @@ Controls:
 - MCP OAuth state, reauthentication, destructive annotation, and startup failure
   mocks.
 - SQLite migration and secret-absence tests.
+- Conversation ID correlation, exact interruption, project-reservation,
+  reference-only persistence, approval-block, event-bound, and child-reaping
+  tests using deterministic mock processes.
 - Tauri capability/CSP review and preview fuzzing.
 - Git fixture tests protecting dirty worktrees.
 - Workflow-permission and release-artifact verification.

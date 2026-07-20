@@ -32,6 +32,12 @@
       "label": "Local project attachments",
       "state": "ready",
       "milestone": 6
+    },
+    {
+      "id": "conversation-runtime",
+      "label": "Native conversation runtime",
+      "state": "ready",
+      "milestone": 7
     }
   ]
 }

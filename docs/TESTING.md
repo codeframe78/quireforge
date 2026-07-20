@@ -1,9 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2–6 establish repository, website, desktop frontend, native
-contract, Codex adapter, authentication, project attachment, and Tauri build
-checks. PTY, broader Git fixtures, and conversation suites arrive with the
-milestones that introduce those systems.
+Status: Milestones 2–7A establish repository, website, desktop frontend, native
+contract, Codex adapter, authentication, project attachment, native
+conversation-runtime, and Tauri build checks. PTY, broader Git fixtures, and
+conversation UI suites arrive with the milestones that introduce those systems.
 
 ## Repository, website, and desktop checks
 
@@ -42,6 +42,12 @@ changes, relink/detach/archive behavior, and fail-closed cwd preflight.
 Frontend project tests share a normalized fixture with Rust, reject unknown or
 path-bearing bridge input, and cover confirmation, missing/read-only states,
 relink, preflight, and two-step detach/archive controls.
+Conversation tests cover verified-cwd start, live catalog validation, strict
+control combinations, UUIDv7 correlation, bounded normalized events, exact
+interrupt, project reservation, approval-blocked shutdown, protocol mismatch,
+child reaping, and reference-only persistence. TypeScript tests reject cwd,
+Codex thread/turn IDs, unknown fields, raw protocol payloads, and path-bearing
+bridge input before native invocation.
 
 ## Responsive browser and accessibility checks
 
@@ -111,6 +117,28 @@ cargo test --locked --workspace \
 Confirm either test leaves no additional `codex app-server` process. It must
 not start a thread or turn, write configuration, inspect session content, or
 print the account-visible catalog.
+
+## Manual Milestone 7A checklist
+
+- Use deterministic mock app-server fixtures only; do not start a live or
+  billable model turn as routine validation.
+- Confirm conversation start revalidates the active association and passes the
+  exact resolved cwd only inside the native app-server request.
+- Confirm the webview cannot submit or receive cwd, native Codex thread/turn
+  IDs, commands, environment, raw reasoning, command output, diffs, or paths.
+- Confirm model and reasoning choices must be advertised by the live catalog,
+  and unsafe sandbox/approval combinations fail before a task starts.
+- Confirm the project cannot be detached, archived, or relinked while its task
+  is active and becomes available after every terminal path.
+- Confirm interruption targets only the native-owned exact thread and turn and
+  every terminal/failure path closes and waits for the child.
+- Inspect the migrated SQLite schema and confirm conversation records contain
+  references, selected controls, status, and timestamps only—never prompt or
+  transcript content.
+- Confirm an approval server request becomes a stable blocked state and no
+  approval response is fabricated.
+- Verify the unbundled release starts under isolated XDG directories, performs
+  no conversation work without user action, and leaves no app-server child.
 
 ## Manual Milestone 6 checklist
 

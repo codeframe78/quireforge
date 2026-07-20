@@ -12,6 +12,7 @@ use tokio::{
     process::{Child, ChildStdin, ChildStdout, Command},
     time::timeout,
 };
+use uuid::Uuid;
 
 use super::{
     error::CodexAdapterError,
@@ -65,6 +66,101 @@ pub(crate) enum AppServerNotification {
         success: bool,
     },
     AccountUpdated,
+    Conversation(ConversationNotification),
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationNotification {
+    ThreadStarted {
+        thread_id: String,
+    },
+    TurnStarted {
+        thread_id: String,
+        turn_id: String,
+    },
+    AgentMessageDelta {
+        thread_id: String,
+        turn_id: String,
+        delta: String,
+    },
+    ReasoningSummaryDelta {
+        thread_id: String,
+        turn_id: String,
+        delta: String,
+    },
+    PlanUpdated {
+        thread_id: String,
+        turn_id: String,
+        explanation: Option<String>,
+        steps: Vec<ConversationPlanStep>,
+    },
+    ItemLifecycle {
+        thread_id: String,
+        turn_id: String,
+        kind: ConversationItemKind,
+        status: ConversationItemStatus,
+    },
+    TurnCompleted {
+        thread_id: String,
+        turn_id: String,
+        status: ConversationTurnStatus,
+    },
+    Error {
+        thread_id: String,
+        turn_id: String,
+        code: ConversationErrorCode,
+        will_retry: bool,
+    },
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ConversationPlanStep {
+    pub step: String,
+    pub status: ConversationPlanStepStatus,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationPlanStepStatus {
+    Pending,
+    InProgress,
+    Completed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationItemStatus {
+    Started,
+    Completed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationItemKind {
+    UserMessage,
+    AgentMessage,
+    Plan,
+    Reasoning,
+    CommandExecution,
+    FileChange,
+    ToolCall,
+    WebSearch,
+    Image,
+    Other,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationTurnStatus {
+    Completed,
+    Interrupted,
+    Failed,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ConversationErrorCode {
+    ContextWindowExceeded,
+    UsageLimitExceeded,
+    Unauthorized,
+    Sandbox,
+    Server,
+    Other,
 }
 
 impl AppServerProcess {
@@ -257,6 +353,19 @@ impl AppServerProcess {
         }
     }
 
+    pub(crate) async fn next_notification_with_timeout(
+        &mut self,
+        wait: Duration,
+    ) -> Result<Option<AppServerNotification>, CodexAdapterError> {
+        if let Some(notification) = self.take_notification() {
+            return Ok(Some(notification));
+        }
+        match timeout(wait, self.next_notification()).await {
+            Ok(result) => result.map(Some),
+            Err(_) => Ok(None),
+        }
+    }
+
     pub(crate) async fn shutdown(&mut self) -> Result<(), CodexAdapterError> {
         self.stdin.take();
 
@@ -323,8 +432,280 @@ fn parse_notification(message: &Value) -> Result<Option<AppServerNotification>, 
             }))
         }
         "account/updated" => Ok(Some(AppServerNotification::AccountUpdated)),
+        "thread/started" => {
+            #[derive(Deserialize)]
+            struct Thread {
+                id: String,
+            }
+            #[derive(Deserialize)]
+            struct Params {
+                thread: Thread,
+            }
+            let params: Params = notification_params(message)?;
+            validate_uuid_v7(&params.thread.id)?;
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::ThreadStarted {
+                    thread_id: params.thread.id,
+                },
+            )))
+        }
+        "turn/started" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Turn {
+                id: String,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn: Turn,
+            }
+            let params: Params = notification_params(message)?;
+            validate_uuid_v7(&params.thread_id)?;
+            validate_uuid_v7(&params.turn.id)?;
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::TurnStarted {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn.id,
+                },
+            )))
+        }
+        "item/agentMessage/delta" | "item/reasoning/summaryTextDelta" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn_id: String,
+                delta: String,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn_id)?;
+            validate_stream_text(&params.delta, 64 * 1024)?;
+            let notification = if method == "item/agentMessage/delta" {
+                ConversationNotification::AgentMessageDelta {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn_id,
+                    delta: params.delta,
+                }
+            } else {
+                ConversationNotification::ReasoningSummaryDelta {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn_id,
+                    delta: params.delta,
+                }
+            };
+            Ok(Some(AppServerNotification::Conversation(notification)))
+        }
+        "turn/plan/updated" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct WireStep {
+                step: String,
+                status: String,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn_id: String,
+                explanation: Option<String>,
+                plan: Vec<WireStep>,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn_id)?;
+            if params.plan.len() > 128 {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            if let Some(explanation) = params.explanation.as_deref() {
+                validate_stream_text(explanation, 4096)?;
+            }
+            let steps = params
+                .plan
+                .into_iter()
+                .map(|step| {
+                    validate_stream_text(&step.step, 4096)?;
+                    let status = match step.status.as_str() {
+                        "pending" => ConversationPlanStepStatus::Pending,
+                        "inProgress" => ConversationPlanStepStatus::InProgress,
+                        "completed" => ConversationPlanStepStatus::Completed,
+                        _ => return Err(CodexAdapterError::InvalidProtocolMessage),
+                    };
+                    Ok(ConversationPlanStep {
+                        step: step.step,
+                        status,
+                    })
+                })
+                .collect::<Result<Vec<_>, CodexAdapterError>>()?;
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::PlanUpdated {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn_id,
+                    explanation: params.explanation,
+                    steps,
+                },
+            )))
+        }
+        "item/started" | "item/completed" => {
+            #[derive(Deserialize)]
+            struct Item {
+                #[serde(rename = "id")]
+                _id: String,
+                #[serde(rename = "type")]
+                kind: String,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn_id: String,
+                item: Item,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn_id)?;
+            validate_protocol_identifier(&params.item._id, 128)?;
+            let kind = match params.item.kind.as_str() {
+                "userMessage" => ConversationItemKind::UserMessage,
+                "agentMessage" => ConversationItemKind::AgentMessage,
+                "plan" => ConversationItemKind::Plan,
+                "reasoning" => ConversationItemKind::Reasoning,
+                "commandExecution" => ConversationItemKind::CommandExecution,
+                "fileChange" => ConversationItemKind::FileChange,
+                "mcpToolCall" | "dynamicToolCall" | "collabAgentToolCall" | "subAgentActivity" => {
+                    ConversationItemKind::ToolCall
+                }
+                "webSearch" => ConversationItemKind::WebSearch,
+                "imageView" | "imageGeneration" => ConversationItemKind::Image,
+                _ => ConversationItemKind::Other,
+            };
+            let status = if method == "item/started" {
+                ConversationItemStatus::Started
+            } else {
+                ConversationItemStatus::Completed
+            };
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::ItemLifecycle {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn_id,
+                    kind,
+                    status,
+                },
+            )))
+        }
+        "turn/completed" => {
+            #[derive(Deserialize)]
+            struct Turn {
+                id: String,
+                status: String,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn: Turn,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn.id)?;
+            let status = match params.turn.status.as_str() {
+                "completed" => ConversationTurnStatus::Completed,
+                "interrupted" => ConversationTurnStatus::Interrupted,
+                "failed" => ConversationTurnStatus::Failed,
+                _ => return Err(CodexAdapterError::InvalidProtocolMessage),
+            };
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::TurnCompleted {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn.id,
+                    status,
+                },
+            )))
+        }
+        "error" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct WireError {
+                codex_error_info: Option<Value>,
+            }
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+                turn_id: String,
+                error: WireError,
+                will_retry: bool,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn_id)?;
+            let code = match params
+                .error
+                .codex_error_info
+                .as_ref()
+                .and_then(Value::as_str)
+            {
+                Some("contextWindowExceeded") => ConversationErrorCode::ContextWindowExceeded,
+                Some("sessionBudgetExceeded" | "usageLimitExceeded") => {
+                    ConversationErrorCode::UsageLimitExceeded
+                }
+                Some("unauthorized") => ConversationErrorCode::Unauthorized,
+                Some("sandboxError") => ConversationErrorCode::Sandbox,
+                Some("serverOverloaded" | "internalServerError") => ConversationErrorCode::Server,
+                _ => ConversationErrorCode::Other,
+            };
+            Ok(Some(AppServerNotification::Conversation(
+                ConversationNotification::Error {
+                    thread_id: params.thread_id,
+                    turn_id: params.turn_id,
+                    code,
+                    will_retry: params.will_retry,
+                },
+            )))
+        }
         _ => Ok(None),
     }
+}
+
+fn notification_params<T: for<'de> Deserialize<'de>>(
+    message: &Value,
+) -> Result<T, CodexAdapterError> {
+    serde_json::from_value(
+        message
+            .get("params")
+            .cloned()
+            .ok_or(CodexAdapterError::InvalidProtocolMessage)?,
+    )
+    .map_err(|_| CodexAdapterError::InvalidProtocolMessage)
+}
+
+fn validate_conversation_ids(thread_id: &str, turn_id: &str) -> Result<(), CodexAdapterError> {
+    validate_uuid_v7(thread_id)?;
+    validate_uuid_v7(turn_id)
+}
+
+pub(crate) fn validate_uuid_v7(value: &str) -> Result<(), CodexAdapterError> {
+    let parsed = Uuid::parse_str(value).map_err(|_| CodexAdapterError::InvalidProtocolMessage)?;
+    if parsed.get_version_num() != 7 || parsed.to_string() != value {
+        return Err(CodexAdapterError::InvalidProtocolMessage);
+    }
+    Ok(())
+}
+
+fn validate_stream_text(value: &str, max_bytes: usize) -> Result<(), CodexAdapterError> {
+    if value.is_empty()
+        || value.len() > max_bytes
+        || value.chars().any(|character| {
+            (character.is_control() && !matches!(character, '\n' | '\r' | '\t'))
+                || matches!(
+                    character,
+                    '\u{200B}'..='\u{200F}'
+                        | '\u{202A}'..='\u{202E}'
+                        | '\u{2060}'..='\u{206F}'
+                        | '\u{FEFF}'
+                )
+        })
+    {
+        return Err(CodexAdapterError::InvalidProtocolMessage);
+    }
+    Ok(())
 }
 
 pub(crate) fn validate_protocol_identifier(
@@ -556,6 +937,32 @@ mod tests {
         });
 
         assert!(parse_model_catalog(fixture).is_err());
+    }
+
+    #[test]
+    fn rejects_unsafe_or_uncorrelatable_conversation_notifications() {
+        let unsafe_delta = json!({
+            "method": "item/agentMessage/delta",
+            "params": {
+                "threadId": "018f0000-0000-7000-8000-000000000020",
+                "turnId": "018f0000-0000-7000-8000-000000000030",
+                "itemId": "item-1",
+                "delta": "safe\u{202e}spoofed"
+            }
+        });
+        let invalid_thread = json!({
+            "method": "turn/completed",
+            "params": {
+                "threadId": "not-a-thread-id",
+                "turn": {
+                    "id": "018f0000-0000-7000-8000-000000000030",
+                    "status": "completed"
+                }
+            }
+        });
+
+        assert!(parse_notification(&unsafe_delta).is_err());
+        assert!(parse_notification(&invalid_thread).is_err());
     }
 
     #[tokio::test]

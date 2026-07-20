@@ -99,7 +99,7 @@ describe("QuireForge desktop shell", () => {
     expect(
       await screen.findByRole("button", { name: "Continue in browser" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(4);
+    expect(screen.getAllByText("ready")).toHaveLength(5);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(

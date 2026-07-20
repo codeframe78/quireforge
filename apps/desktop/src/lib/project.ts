@@ -32,6 +32,7 @@ const projectDiagnosticCodeSchema = z.enum([
   "directory-unavailable",
   "duplicate-directory",
   "project-not-found",
+  "project-busy",
   "attachment-not-pending",
   "identity-changed",
 ]);

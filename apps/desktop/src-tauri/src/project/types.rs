@@ -94,6 +94,7 @@ pub enum ProjectDiagnosticCode {
     DirectoryUnavailable,
     DuplicateDirectory,
     ProjectNotFound,
+    ProjectBusy,
     AttachmentNotPending,
     IdentityChanged,
 }

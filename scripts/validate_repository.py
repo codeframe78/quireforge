@@ -45,6 +45,7 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/codex-model-list-response.json",
     "apps/desktop/fixtures/codex-runtime.json",
     "apps/desktop/fixtures/codex-auth.json",
+    "apps/desktop/fixtures/conversation.json",
     "apps/desktop/fixtures/project-workspace.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/manifest.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeParams.json",
@@ -60,12 +61,28 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/LoginAccountParams.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/LoginAccountResponse.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/LogoutAccountResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ThreadStartParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ThreadStartResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnStartParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnStartResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnInterruptParams.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnInterruptResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ThreadStartedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnStartedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnCompletedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/AgentMessageDeltaNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ReasoningSummaryTextDeltaNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/TurnPlanUpdatedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ItemStartedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ItemCompletedNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.144.6/v2/ErrorNotification.json",
     "apps/desktop/package.json",
     "apps/desktop/src/App.tsx",
     "apps/desktop/src/ProjectWorkspace.tsx",
     "apps/desktop/src/lib/bridge.ts",
     "apps/desktop/src/lib/auth.ts",
     "apps/desktop/src/lib/codex.ts",
+    "apps/desktop/src/lib/conversation.ts",
     "apps/desktop/src/lib/project.ts",
     "apps/desktop/src-tauri/Cargo.toml",
     "apps/desktop/src-tauri/capabilities/main.json",
@@ -74,6 +91,8 @@ REQUIRED_PATHS = (
     "apps/desktop/src-tauri/src/codex/auth/mod.rs",
     "apps/desktop/src-tauri/src/codex/auth/types.rs",
     "apps/desktop/src-tauri/src/codex/backend.rs",
+    "apps/desktop/src-tauri/src/codex/conversation/mod.rs",
+    "apps/desktop/src-tauri/src/codex/conversation/types.rs",
     "apps/desktop/src-tauri/src/codex/probe.rs",
     "apps/desktop/src-tauri/src/project/identity.rs",
     "apps/desktop/src-tauri/src/project/mod.rs",
@@ -88,6 +107,7 @@ REQUIRED_PATHS = (
     "docs/THREAT-MODEL.md",
     "docs/WEBSITE.md",
     "docs/DECISIONS/0007-quireforge-metadata-sqlite.md",
+    "docs/DECISIONS/0008-native-conversation-runtime.md",
     "scripts/generate_codex_schema_fixtures.py",
 )
 
@@ -119,6 +139,7 @@ IDENTITY_EXPECTATIONS = {
         '"identifier": "io.github.codeframe78.QuireForge"',
         '"id": "project-attachments"',
         '"state": "ready"',
+        '"id": "conversation-runtime"',
     ),
     "apps/desktop/fixtures/codex-runtime.json": (
         '"schemaVersion": 1',
@@ -130,6 +151,12 @@ IDENTITY_EXPECTATIONS = {
         '"schemaVersion": 1',
         '"state": "empty"',
         '"pendingAttachment": null',
+    ),
+    "apps/desktop/fixtures/conversation.json": (
+        '"schemaVersion": 1',
+        '"state": "empty"',
+        '"conversationId": null',
+        '"events": []',
     ),
     "apps/desktop/src-tauri/src/lib.rs": (
         "codex_runtime_probe",
@@ -143,6 +170,11 @@ IDENTITY_EXPECTATIONS = {
         "project_pick_directory",
         "project_preflight",
         "ProjectService::open",
+        "conversation_status",
+        "conversation_start",
+        "conversation_poll",
+        "conversation_interrupt",
+        "ConversationService::default()",
     ),
 }
 
@@ -285,6 +317,21 @@ def validate() -> list[str]:
             "v2/LogoutAccountResponse.json",
             "v2/ModelListParams.json",
             "v2/ModelListResponse.json",
+            "v2/ThreadStartParams.json",
+            "v2/ThreadStartResponse.json",
+            "v2/TurnStartParams.json",
+            "v2/TurnStartResponse.json",
+            "v2/TurnInterruptParams.json",
+            "v2/TurnInterruptResponse.json",
+            "v2/ThreadStartedNotification.json",
+            "v2/TurnStartedNotification.json",
+            "v2/TurnCompletedNotification.json",
+            "v2/AgentMessageDeltaNotification.json",
+            "v2/ReasoningSummaryTextDeltaNotification.json",
+            "v2/TurnPlanUpdatedNotification.json",
+            "v2/ItemStartedNotification.json",
+            "v2/ItemCompletedNotification.json",
+            "v2/ErrorNotification.json",
         }
         manifest_files = manifest.get("files", [])
         recorded_paths = {
@@ -331,6 +378,25 @@ def validate() -> list[str]:
         ):
             if forbidden_field in serialized_fixture:
                 errors.append(f"Codex auth fixture contains raw field: {forbidden_field}")
+
+    conversation_fixture_path = ROOT / "apps/desktop/fixtures/conversation.json"
+    if conversation_fixture_path.is_file():
+        conversation_fixture = json.loads(
+            conversation_fixture_path.read_text(encoding="utf-8")
+        )
+        serialized_fixture = json.dumps(conversation_fixture)
+        for forbidden_field in (
+            "threadId",
+            "turnId",
+            "cwd",
+            "selectedPath",
+            "resolvedPath",
+            "rawMessage",
+        ):
+            if forbidden_field in serialized_fixture:
+                errors.append(
+                    f"Conversation fixture contains raw field: {forbidden_field}"
+                )
 
     return errors
 

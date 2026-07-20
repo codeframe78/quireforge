@@ -86,7 +86,7 @@ export const sitePages: SitePage[] = [
     title: "A Linux workspace built around the repository you already have.",
     description:
       "QuireForge is being designed for direct local-directory work, observable Codex tasks, deliberate approvals, and native Linux workflows.",
-    status: "Project attachment implemented locally · conversations pending",
+    status: "Native conversation runtime implemented locally · UI pending",
     sections: [
       {
         heading: "Projects stay where they are",
@@ -299,7 +299,7 @@ export const sitePages: SitePage[] = [
     title: "Twenty-one gated milestones, one reviewable step at a time.",
     description:
       "QuireForge is built milestone by milestone, with model selection, acceptance criteria, tests, documentation, review, and explicit approval for external actions.",
-    status: "Milestone 6 complete locally · Milestone 7 next",
+    status: "Milestone 7A native runtime complete locally · Milestone 7B next",
     sections: [
       {
         heading: "Completed locally",
@@ -311,12 +311,13 @@ export const sitePages: SitePage[] = [
           "Milestone 4: supervised Codex app-server probe, normalized runtime contracts, deterministic mocks, and bounded failure recovery",
           "Milestone 5: Codex-owned browser/device authentication, normalized account state, cancellation, logout confirmation, and redacted recovery",
           "Milestone 6: native local-directory attachment, app-owned metadata, identity-aware preflight, and accessible project controls",
+          "Milestone 7A: verified-cwd conversation start, bounded normalized streaming, exact-turn interruption, and reference-only metadata",
         ],
       },
       {
         heading: "Next gated milestone",
         items: [
-          "Milestone 7: conversation MVP in the verified attached directory",
+          "Milestone 7B: user-facing conversation composer, stream, controls, and accessible task states",
         ],
       },
       {

@@ -112,11 +112,11 @@ compatibility slice:
 - explicit ready, degraded, and unavailable capability states;
 - deterministic mock/failure processes and a hashed generated-schema subset.
 
-The process receives no user path, prompt, arbitrary argument, or frontend
-input. Raw notifications, user-agent, Codex-home, account, installation,
-remote-control, and RPC error payloads are discarded. Authentication, thread,
-turn, approval, command, filesystem, integration, and configuration methods
-remain unavailable through QuireForge until their milestones.
+The Milestone 4 probe receives no user path, prompt, arbitrary argument, or
+frontend input. Raw notifications, user-agent, Codex-home, account,
+installation, remote-control, and RPC error payloads are discarded. Later
+milestones extend the adapter through separate fixed-purpose services rather
+than broadening this probe.
 
 ### Implemented Milestone 5 subset
 
@@ -139,6 +139,29 @@ Authentication extends the same adapter without exposing raw account protocol:
 The external-token and API-key login variants are deliberately not offered. A
 live validation invoked only `account/read`; real login, browser handoff, and
 logout remain user-driven and were not exercised by Codex.
+
+### Implemented Milestone 7A subset
+
+The native conversation checkpoint adds only the reviewed start, stream, and
+interrupt lifecycle needed for the MVP:
+
+- live model/reasoning validation and fixed `thread/start` plus `turn/start`
+  requests against the exact reverified project cwd;
+- explicit closed sandbox and approval enums, including rejection of the
+  `danger-full-access` plus `never` combination;
+- native ownership and UUIDv7 correlation of the active thread and turn;
+- bounded normalized lifecycle, agent-message, reasoning-summary, plan,
+  coarse-activity, completion, and stable-error events;
+- exact `turn/interrupt` using native-held IDs; and
+- reference-only QuireForge metadata with no prompt, transcript, raw reasoning,
+  command output, file change, diff, path, credential, or Codex-owned session
+  content.
+
+The frontend supplies neither cwd nor Codex IDs. Unexpected server requests,
+including approval requests, fail closed; an approval request produces a stable
+blocked state and child shutdown rather than an inferred decision. All routine
+tests use deterministic app-server fixtures. No live model turn was run while
+implementing or verifying this checkpoint.
 
 ## Local working-directory behavior
 
@@ -231,6 +254,10 @@ Supported lifecycle building blocks include:
 
 Codex remains authoritative for these threads. Application SQLite stores only
 references, grouping, view state, and project association metadata.
+
+Milestone 7A implements new-thread/new-turn start, a reviewed normalized stream,
+and exact interruption. Resume, fork, list, archive/restore, and crash recovery
+remain Milestone 8; approval presentation and decisions remain Milestone 9.
 
 ## Authentication boundary
 

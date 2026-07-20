@@ -820,9 +820,11 @@ export default function App({
                         ? "Codex-owned browser and device login with bounded state, cancellation, and redaction."
                         : capability.id === "project-attachments"
                           ? "Native selection, explicit confirmation, durable identity, and fail-closed cwd preflight."
-                          : capability.state === "ready"
-                            ? "Tauri, React, strict TypeScript, and a validated native contract."
-                            : "Explicit directory selection, identity verification, and in-place local work."}
+                          : capability.id === "conversation-runtime"
+                            ? "Verified-cwd thread startup, normalized streaming, exact interruption, and reference-only persistence."
+                            : capability.state === "ready"
+                              ? "Tauri, React, strict TypeScript, and a validated native contract."
+                              : "Explicit directory selection, identity verification, and in-place local work."}
                   </p>
                   <footer>
                     <span>Milestone {capability.milestone}</span>
