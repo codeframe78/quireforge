@@ -12,6 +12,6 @@ pub use auth::types::{AuthLoginMethod, CodexAuthSnapshot};
 pub use auth::CodexAuthService;
 pub use conversation::types::{ConversationSnapshot, ConversationStartRequest};
 pub use conversation::{
-    ConversationContinueRequest, ConversationService, SessionLifecycleSnapshot,
+    ConversationContinueRequest, ConversationService, SessionLifecycleSnapshot, SessionListRequest,
 };
 pub use probe::CodexRuntimeService;

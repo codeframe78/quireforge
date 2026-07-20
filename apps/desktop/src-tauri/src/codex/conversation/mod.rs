@@ -1,7 +1,7 @@
 mod lifecycle;
 pub mod types;
 
-pub use lifecycle::{ConversationContinueRequest, SessionLifecycleSnapshot};
+pub use lifecycle::{ConversationContinueRequest, SessionLifecycleSnapshot, SessionListRequest};
 
 use std::{path::Path, time::Duration};
 

@@ -166,7 +166,24 @@ lineage and an archive timestamp in addition to the existing reference fields.
 Database open converts stale starting/running/stopping rows to interrupted and
 clears active-turn IDs because subprocess ownership cannot survive a restart.
 No lifecycle command deletes source content, Codex history, or a QuireForge
-reference. The history/search/tabs presentation remains Milestone 8B.
+reference.
+
+### Milestone 8B presentation boundary
+
+Title search cannot replace complete reconciliation. Native code first obtains
+the bounded current/archived authoritative set for exact verified cwds, then
+runs an optional bounded `searchTerm` projection on the same supervised
+process. Filtered IDs must exist in the complete set and are intersected with
+QuireForge-owned references. Only a normalized optional title of at most 256
+characters crosses IPC; it is never stored in SQLite. Previews, transcripts,
+paths, Codex IDs, and raw thread records remain native-only.
+
+React groups summaries with app-owned project and parent references. Open tabs,
+selection, and unsent continuation prompts are temporary UI state. Resume,
+fork, archive, and restore continue to use fixed IPC commands and exact app
+IDs. Browser preview cannot simulate a session operation. Detailed real-time
+command/tool/process disclosure remains Milestone 9 and requires its own
+redacted normalized event contract.
 
 ## Application layers
 

@@ -17,11 +17,39 @@ export const conversationContinueRequestSchema = z
   })
   .strict();
 
+export const sessionSearchTermSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(256)
+  .refine(
+    (value) =>
+      ![...value].some((character) => {
+        const codePoint = character.codePointAt(0) ?? 0;
+        return (
+          codePoint <= 0x1f ||
+          (codePoint >= 0x7f && codePoint <= 0x9f) ||
+          (codePoint >= 0x200b && codePoint <= 0x200f) ||
+          (codePoint >= 0x202a && codePoint <= 0x202e) ||
+          (codePoint >= 0x2060 && codePoint <= 0x206f) ||
+          codePoint === 0xfeff
+        );
+      }),
+  );
+
+export const sessionListRequestSchema = z
+  .object({
+    projectId: conversationIdSchema.nullable(),
+    searchTerm: sessionSearchTermSchema.nullable(),
+  })
+  .strict();
+
 const sessionReferenceSchema = z
   .object({
     conversationId: conversationIdSchema,
     projectId: conversationIdSchema,
     parentConversationId: conversationIdSchema.nullable(),
+    title: sessionSearchTermSchema.nullable(),
     modelId: conversationProtocolChoiceSchema,
     reasoningEffort: conversationProtocolChoiceSchema.max(32),
     sandboxMode: conversationSandboxModeSchema,
@@ -67,7 +95,7 @@ const sessionReferenceSchema = z
 
 export const sessionLifecycleSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     state: z.enum(["empty", "ready", "unavailable"]),
     sessions: z.array(sessionReferenceSchema).max(256),
     diagnosticCode: conversationDiagnosticSchema.nullable(),
@@ -104,6 +132,7 @@ export const sessionLifecycleSchema = z
 export type ConversationContinueRequest = z.infer<
   typeof conversationContinueRequestSchema
 >;
+export type SessionListRequest = z.infer<typeof sessionListRequestSchema>;
 export type SessionLifecycleSnapshot = z.infer<typeof sessionLifecycleSchema>;
 
 export const scaffoldSessionLifecycle = sessionLifecycleSchema.parse(

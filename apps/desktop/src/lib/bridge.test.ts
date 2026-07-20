@@ -217,14 +217,20 @@ describe("desktop bridge", () => {
       .mockResolvedValueOnce(scaffoldSessionLifecycle)
       .mockResolvedValueOnce(scaffoldSessionLifecycle);
 
-    await loadConversationSessions(projectId, invoke);
+    await loadConversationSessions(
+      { projectId, searchTerm: "lifecycle" },
+      invoke,
+    );
     await resumeConversation(request, invoke);
     await forkConversation(request, invoke);
     await archiveConversation(conversationId, invoke);
     await restoreConversation(conversationId, invoke);
 
     expect(invoke.mock.calls).toEqual([
-      [CONVERSATION_SESSIONS_COMMAND, { projectId }],
+      [
+        CONVERSATION_SESSIONS_COMMAND,
+        { request: { projectId, searchTerm: "lifecycle" } },
+      ],
       [CONVERSATION_RESUME_COMMAND, { request }],
       [CONVERSATION_FORK_COMMAND, { request }],
       [CONVERSATION_ARCHIVE_COMMAND, { conversationId }],

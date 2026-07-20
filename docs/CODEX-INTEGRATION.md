@@ -263,9 +263,13 @@ reference, revalidates its exact attached cwd, and keeps Codex IDs, paths,
 previews, transcripts, and raw status objects out of React. Listing is bounded,
 uses exact cwd filters, and matches only already-owned references rather than
 importing unrelated Codex threads. Startup marks stale active references
-interrupted because process ownership does not survive a crash. Title search,
-tabs, and grouping presentation remain Milestone 8B; approval presentation and
-decisions remain Milestone 9.
+interrupted because process ownership does not survive a crash. Milestone 8B
+keeps complete reconciliation separate from an optional bounded `searchTerm`
+projection, accepts only matching IDs already present in the complete result,
+and exposes trimmed transient titles without persisting them. Project/fork
+grouping, keyboard-accessible tabs, and lifecycle controls use app-owned IDs.
+Approval presentation, decisions, and expandable real-time process details
+remain Milestone 9.
 
 ## Authentication boundary
 

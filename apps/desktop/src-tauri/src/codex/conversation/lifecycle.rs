@@ -24,16 +24,24 @@ use crate::codex::{
     },
 };
 
-pub const SESSION_LIFECYCLE_SCHEMA_VERSION: u16 = 1;
+pub const SESSION_LIFECYCLE_SCHEMA_VERSION: u16 = 2;
 const MAX_SESSION_REFERENCES: usize = 256;
 const MAX_LIST_PAGES: usize = 8;
 const LIST_PAGE_SIZE: u32 = 256;
+const MAX_SESSION_TITLE_CHARS: usize = 256;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ConversationContinueRequest {
     pub conversation_id: String,
     pub prompt: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct SessionListRequest {
+    pub project_id: Option<String>,
+    pub search_term: Option<String>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -62,6 +70,7 @@ pub struct SessionReferenceSummary {
     pub conversation_id: String,
     pub project_id: String,
     pub parent_conversation_id: Option<String>,
+    pub title: Option<String>,
     pub model_id: String,
     pub reasoning_effort: String,
     pub sandbox_mode: ConversationSandboxMode,
@@ -108,12 +117,15 @@ enum ContinueMode {
 impl ConversationService {
     pub async fn sessions(
         &self,
-        project_id: Option<String>,
+        request: SessionListRequest,
         projects: &ProjectService,
     ) -> SessionLifecycleSnapshot {
-        if project_id
+        let search_term = request.search_term.as_deref().map(str::trim);
+        if request
+            .project_id
             .as_deref()
             .is_some_and(|value| validate_uuid_v7(value).is_err())
+            || search_term.is_some_and(|value| !valid_session_text(value))
         {
             return SessionLifecycleSnapshot::unavailable(
                 ConversationDiagnosticCode::InvalidRequest,
@@ -121,7 +133,7 @@ impl ConversationService {
         }
 
         let state = self.state.lock().await;
-        let references = match projects.conversation_references(project_id.as_deref()) {
+        let references = match projects.conversation_references(request.project_id.as_deref()) {
             Ok(references) => references,
             Err(error) => {
                 return SessionLifecycleSnapshot::unavailable(map_project_error(error));
@@ -131,20 +143,27 @@ impl ConversationService {
             return SessionLifecycleSnapshot::empty();
         }
         if state.active.is_some() {
-            return snapshot_from_references(references, None);
+            return snapshot_from_references(references, None, None);
         }
 
-        let authoritative = match self.reconcile_references(&references, projects).await {
-            Ok(authoritative) => authoritative,
+        let reconciliation = match self
+            .reconcile_references(&references, search_term, projects)
+            .await
+        {
+            Ok(reconciliation) => reconciliation,
             Err(code) => return SessionLifecycleSnapshot::unavailable(code),
         };
-        let references = match projects.conversation_references(project_id.as_deref()) {
+        let references = match projects.conversation_references(request.project_id.as_deref()) {
             Ok(references) => references,
             Err(error) => {
                 return SessionLifecycleSnapshot::unavailable(map_project_error(error));
             }
         };
-        snapshot_from_references(references, Some(&authoritative))
+        snapshot_from_references(
+            references,
+            Some(&reconciliation.authoritative),
+            reconciliation.matches.as_ref(),
+        )
     }
 
     pub async fn resume(
@@ -315,7 +334,7 @@ impl ConversationService {
             Err(error) => return SessionLifecycleSnapshot::unavailable(map_reference_error(error)),
         };
         if reference.archived == archived {
-            return snapshot_from_references(vec![reference], None);
+            return snapshot_from_references(vec![reference], None, None);
         }
         let _reservation =
             match ScopedProjectReservation::acquire(projects, reference.project_id.clone()) {
@@ -345,7 +364,7 @@ impl ConversationService {
             );
         }
         match projects.conversation_reference(&conversation_id) {
-            Ok(reference) => snapshot_from_references(vec![reference], None),
+            Ok(reference) => snapshot_from_references(vec![reference], None, None),
             Err(error) => SessionLifecycleSnapshot::unavailable(map_reference_error(error)),
         }
     }
@@ -396,8 +415,9 @@ impl ConversationService {
     async fn reconcile_references(
         &self,
         references: &[StoredConversationReference],
+        search_term: Option<&str>,
         projects: &ProjectService,
-    ) -> Result<HashMap<String, bool>, ConversationDiagnosticCode> {
+    ) -> Result<SessionReconciliation, ConversationDiagnosticCode> {
         if references.len() > MAX_SESSION_REFERENCES {
             return Err(ConversationDiagnosticCode::ProtocolInvalid);
         }
@@ -432,29 +452,68 @@ impl ConversationService {
             let mut authoritative = HashMap::new();
             let cwds = project_cwds.values().cloned().collect::<Vec<_>>();
             for archived in [false, true] {
-                for thread_id in list_threads(&mut process, &cwds, archived).await? {
-                    if authoritative.insert(thread_id, archived).is_some() {
+                for thread in list_threads(&mut process, &cwds, archived, None).await? {
+                    if authoritative
+                        .insert(
+                            thread.id,
+                            AuthoritativeSession {
+                                archived,
+                                title: thread.title,
+                            },
+                        )
+                        .is_some()
+                    {
                         return Err(ConversationDiagnosticCode::ProtocolInvalid);
                     }
                 }
             }
-            Ok(authoritative)
+            let matches = if let Some(search_term) = search_term {
+                let mut matches = BTreeSet::new();
+                for archived in [false, true] {
+                    for thread in
+                        list_threads(&mut process, &cwds, archived, Some(search_term)).await?
+                    {
+                        if !authoritative.contains_key(&thread.id) || !matches.insert(thread.id) {
+                            return Err(ConversationDiagnosticCode::ProtocolInvalid);
+                        }
+                    }
+                }
+                Some(matches)
+            } else {
+                None
+            };
+            Ok(SessionReconciliation {
+                authoritative,
+                matches,
+            })
         }
         .await;
         let _ = process.shutdown().await;
-        let authoritative = result?;
+        let reconciliation = result?;
 
         for reference in references {
-            if let Some(archived) = authoritative.get(&reference.codex_thread_id) {
-                if *archived != reference.archived {
+            if let Some(authoritative) =
+                reconciliation.authoritative.get(&reference.codex_thread_id)
+            {
+                if authoritative.archived != reference.archived {
                     projects
-                        .record_conversation_archived(&reference.id, *archived)
+                        .record_conversation_archived(&reference.id, authoritative.archived)
                         .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
                 }
             }
         }
-        Ok(authoritative)
+        Ok(reconciliation)
     }
+}
+
+struct AuthoritativeSession {
+    archived: bool,
+    title: Option<String>,
+}
+
+struct SessionReconciliation {
+    authoritative: HashMap<String, AuthoritativeSession>,
+    matches: Option<BTreeSet<String>>,
 }
 
 struct ScopedProjectReservation<'a> {
@@ -644,6 +703,7 @@ struct ThreadReference {
     id: String,
     cwd: String,
     forked_from_id: Option<String>,
+    name: Option<String>,
 }
 
 fn parse_continue_response(
@@ -726,12 +786,13 @@ async fn list_threads(
     process: &mut AppServerProcess,
     cwds: &[std::path::PathBuf],
     archived: bool,
-) -> Result<Vec<String>, ConversationDiagnosticCode> {
+    search_term: Option<&str>,
+) -> Result<Vec<ListedThread>, ConversationDiagnosticCode> {
     if cwds.is_empty() || cwds.len() > MAX_SESSION_REFERENCES {
         return Err(ConversationDiagnosticCode::ProtocolInvalid);
     }
     let mut cursor: Option<String> = None;
-    let mut thread_ids = Vec::new();
+    let mut threads = Vec::new();
     for _ in 0..MAX_LIST_PAGES {
         let response = process
             .request(
@@ -741,6 +802,7 @@ async fn list_threads(
                     "cursor": cursor,
                     "cwd": cwds,
                     "limit": LIST_PAGE_SIZE,
+                    "searchTerm": search_term,
                     "useStateDbOnly": true,
                 }),
             )
@@ -755,19 +817,60 @@ async fn list_threads(
             validate_uuid_v7(&thread.id)
                 .map_err(|_| ConversationDiagnosticCode::ProtocolInvalid)?;
             if !cwds.iter().any(|cwd| Path::new(&thread.cwd) == cwd)
-                || thread_ids.contains(&thread.id)
+                || threads
+                    .iter()
+                    .any(|listed: &ListedThread| listed.id == thread.id)
             {
                 return Err(ConversationDiagnosticCode::ProtocolInvalid);
             }
-            thread_ids.push(thread.id);
+            threads.push(ListedThread {
+                id: thread.id,
+                title: normalize_session_title(thread.name)?,
+            });
         }
         match page.next_cursor {
             Some(next) if valid_cursor(&next) => cursor = Some(next),
             Some(_) => return Err(ConversationDiagnosticCode::ProtocolInvalid),
-            None => return Ok(thread_ids),
+            None => return Ok(threads),
         }
     }
     Err(ConversationDiagnosticCode::ProtocolInvalid)
+}
+
+struct ListedThread {
+    id: String,
+    title: Option<String>,
+}
+
+fn normalize_session_title(
+    title: Option<String>,
+) -> Result<Option<String>, ConversationDiagnosticCode> {
+    let Some(title) = title else {
+        return Ok(None);
+    };
+    let title = title.trim();
+    if title.is_empty() {
+        return Ok(None);
+    }
+    if !valid_session_text(title) {
+        return Err(ConversationDiagnosticCode::ProtocolInvalid);
+    }
+    Ok(Some(title.to_owned()))
+}
+
+fn valid_session_text(value: &str) -> bool {
+    !value.trim().is_empty()
+        && value.chars().count() <= MAX_SESSION_TITLE_CHARS
+        && !value.chars().any(|character| {
+            character.is_control()
+                || matches!(
+                    character,
+                    '\u{200B}'..='\u{200F}'
+                        | '\u{202A}'..='\u{202E}'
+                        | '\u{2060}'..='\u{206F}'
+                        | '\u{FEFF}'
+                )
+        })
 }
 
 fn valid_cursor(value: &str) -> bool {
@@ -825,10 +928,14 @@ fn validate_stored_reference(
 
 fn snapshot_from_references(
     references: Vec<StoredConversationReference>,
-    authoritative: Option<&HashMap<String, bool>>,
+    authoritative: Option<&HashMap<String, AuthoritativeSession>>,
+    matches: Option<&BTreeSet<String>>,
 ) -> SessionLifecycleSnapshot {
     let sessions = references
         .into_iter()
+        .filter(|reference| {
+            matches.is_none_or(|matches| matches.contains(&reference.codex_thread_id))
+        })
         .map(|reference| summary_from_reference(reference, authoritative))
         .collect::<Result<Vec<_>, _>>();
     let sessions = match sessions {
@@ -849,12 +956,14 @@ fn snapshot_from_references(
 
 fn summary_from_reference(
     reference: StoredConversationReference,
-    authoritative: Option<&HashMap<String, bool>>,
+    authoritative: Option<&HashMap<String, AuthoritativeSession>>,
 ) -> Result<SessionReferenceSummary, ConversationDiagnosticCode> {
     let controls = StoredControls::try_from(&reference)?;
-    let state = match authoritative.and_then(|threads| threads.get(&reference.codex_thread_id)) {
+    let authoritative_session =
+        authoritative.and_then(|threads| threads.get(&reference.codex_thread_id));
+    let state = match authoritative_session {
         None if authoritative.is_some() => SessionReferenceState::Missing,
-        Some(true) => SessionReferenceState::Archived,
+        Some(session) if session.archived => SessionReferenceState::Archived,
         _ if reference.archived => SessionReferenceState::Archived,
         _ => match reference.status.as_str() {
             "thread-started" | "running" | "stopping" => SessionReferenceState::Running,
@@ -869,6 +978,7 @@ fn summary_from_reference(
         conversation_id: reference.id,
         project_id: reference.project_id,
         parent_conversation_id: reference.parent_conversation_id,
+        title: authoritative_session.and_then(|session| session.title.clone()),
         model_id: reference.model_id,
         reasoning_effort: reference.reasoning_effort,
         sandbox_mode: controls.sandbox_mode,
@@ -1067,10 +1177,73 @@ printf '%s\n' '{{"id":3,"result":{{"data":[]}}}}'
         let service =
             ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
 
-        let sessions = service.sessions(Some(project_id), &projects).await;
+        let sessions = service
+            .sessions(
+                SessionListRequest {
+                    project_id: Some(project_id),
+                    search_term: None,
+                },
+                &projects,
+            )
+            .await;
         assert_eq!(sessions.state, SessionLifecycleState::Ready);
         assert_eq!(sessions.sessions.len(), 1);
         assert_eq!(sessions.sessions[0].state, SessionReferenceState::Completed);
+        let serialized = serde_json::to_string(&sessions).expect("snapshot must serialize");
+        assert!(!serialized.contains(THREAD_ID));
+        assert!(!serialized.contains(directory.to_string_lossy().as_ref()));
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
+    async fn searches_authoritative_titles_without_exposing_native_identity() {
+        let (projects, directory, project_id) = attached_project();
+        let conversation_id = stored_reference(&projects, &project_id, None);
+        projects
+            .record_conversation_status(&conversation_id, "completed")
+            .expect("fixture status must update");
+        let cwd_json = json_string(&directory);
+        let script = format!(
+            r#"
+read -r _initialize
+printf '%s\n' '{{"id":1,"result":{{}}}}'
+read -r _current
+printf '%s\n' '{{"id":2,"result":{{"data":[{{"id":"{THREAD_ID}","cwd":{cwd_json},"name":"Review lifecycle boundaries"}}]}}}}'
+read -r _archived
+printf '%s\n' '{{"id":3,"result":{{"data":[]}}}}'
+read -r filtered_current
+case "$filtered_current" in
+  *'"searchTerm":"lifecycle"'*) ;;
+  *) exit 1 ;;
+esac
+printf '%s\n' '{{"id":4,"result":{{"data":[{{"id":"{THREAD_ID}","cwd":{cwd_json},"name":"Review lifecycle boundaries"}}]}}}}'
+read -r filtered_archived
+case "$filtered_archived" in
+  *'"searchTerm":"lifecycle"'*) ;;
+  *) exit 1 ;;
+esac
+printf '%s\n' '{{"id":5,"result":{{"data":[]}}}}'
+"#
+        );
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+
+        let sessions = service
+            .sessions(
+                SessionListRequest {
+                    project_id: Some(project_id),
+                    search_term: Some("lifecycle".to_owned()),
+                },
+                &projects,
+            )
+            .await;
+
+        assert_eq!(sessions.state, SessionLifecycleState::Ready);
+        assert_eq!(sessions.sessions.len(), 1);
+        assert_eq!(
+            sessions.sessions[0].title.as_deref(),
+            Some("Review lifecycle boundaries")
+        );
         let serialized = serde_json::to_string(&sessions).expect("snapshot must serialize");
         assert!(!serialized.contains(THREAD_ID));
         assert!(!serialized.contains(directory.to_string_lossy().as_ref()));

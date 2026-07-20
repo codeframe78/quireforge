@@ -191,11 +191,11 @@ async fn conversation_interrupt(
 
 #[tauri::command]
 async fn conversation_sessions(
-    project_id: Option<String>,
+    request: codex::SessionListRequest,
     service: tauri::State<'_, ConversationService>,
     projects: tauri::State<'_, ProjectService>,
 ) -> Result<SessionLifecycleSnapshot, ()> {
-    Ok(service.sessions(project_id, &projects).await)
+    Ok(service.sessions(request, &projects).await)
 }
 
 #[tauri::command]

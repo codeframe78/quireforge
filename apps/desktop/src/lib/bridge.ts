@@ -22,8 +22,10 @@ import {
 } from "./project";
 import {
   conversationContinueRequestSchema,
+  sessionListRequestSchema,
   sessionLifecycleSchema,
   type ConversationContinueRequest,
+  type SessionListRequest,
   type SessionLifecycleSnapshot,
 } from "./session";
 
@@ -250,13 +252,12 @@ export async function interruptConversation(
 }
 
 export async function loadConversationSessions(
-  projectId: string | null = null,
+  request: SessionListRequest = { projectId: null, searchTerm: null },
   invokeFunction: InvokeFunction = invokeTauri,
 ): Promise<SessionLifecycleSnapshot> {
-  const reviewedProjectId =
-    projectId === null ? null : conversationIdSchema.parse(projectId);
+  const reviewedRequest = sessionListRequestSchema.parse(request);
   const payload = await invokeFunction(CONVERSATION_SESSIONS_COMMAND, {
-    projectId: reviewedProjectId,
+    request: reviewedRequest,
   });
   return sessionLifecycleSchema.parse(payload);
 }
