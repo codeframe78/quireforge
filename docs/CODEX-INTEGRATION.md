@@ -256,8 +256,16 @@ Codex remains authoritative for these threads. Application SQLite stores only
 references, grouping, view state, and project association metadata.
 
 Milestone 7A implements new-thread/new-turn start, a reviewed normalized stream,
-and exact interruption. Resume, fork, list, archive/restore, and crash recovery
-remain Milestone 8; approval presentation and decisions remain Milestone 9.
+and exact interruption. Milestone 8A adds native-owned `thread/list`,
+`thread/read`, `thread/resume`, `thread/fork`, `thread/archive`, and
+`thread/unarchive` use. Every operation begins from a QuireForge application
+reference, revalidates its exact attached cwd, and keeps Codex IDs, paths,
+previews, transcripts, and raw status objects out of React. Listing is bounded,
+uses exact cwd filters, and matches only already-owned references rather than
+importing unrelated Codex threads. Startup marks stale active references
+interrupted because process ownership does not survive a crash. Title search,
+tabs, and grouping presentation remain Milestone 8B; approval presentation and
+decisions remain Milestone 9.
 
 ## Authentication boundary
 

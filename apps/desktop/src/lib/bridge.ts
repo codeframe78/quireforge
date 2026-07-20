@@ -20,6 +20,12 @@ import {
   type ProjectPreflightSnapshot,
   type ProjectWorkspaceSnapshot,
 } from "./project";
+import {
+  conversationContinueRequestSchema,
+  sessionLifecycleSchema,
+  type ConversationContinueRequest,
+  type SessionLifecycleSnapshot,
+} from "./session";
 
 export const CODEX_RUNTIME_PROBE_COMMAND = "codex_runtime_probe";
 export const CODEX_AUTH_STATUS_COMMAND = "codex_auth_status";
@@ -41,6 +47,11 @@ export const CONVERSATION_STATUS_COMMAND = "conversation_status";
 export const CONVERSATION_START_COMMAND = "conversation_start";
 export const CONVERSATION_POLL_COMMAND = "conversation_poll";
 export const CONVERSATION_INTERRUPT_COMMAND = "conversation_interrupt";
+export const CONVERSATION_SESSIONS_COMMAND = "conversation_sessions";
+export const CONVERSATION_RESUME_COMMAND = "conversation_resume";
+export const CONVERSATION_FORK_COMMAND = "conversation_fork";
+export const CONVERSATION_ARCHIVE_COMMAND = "conversation_archive";
+export const CONVERSATION_RESTORE_COMMAND = "conversation_restore";
 
 export type InvokeFunction = (
   command: string,
@@ -236,4 +247,80 @@ export async function interruptConversation(
     conversationId: reviewedId,
   });
   return conversationSnapshotSchema.parse(payload);
+}
+
+export async function loadConversationSessions(
+  projectId: string | null = null,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<SessionLifecycleSnapshot> {
+  const reviewedProjectId =
+    projectId === null ? null : conversationIdSchema.parse(projectId);
+  const payload = await invokeFunction(CONVERSATION_SESSIONS_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return sessionLifecycleSchema.parse(payload);
+}
+
+async function continueConversation(
+  command: string,
+  request: ConversationContinueRequest,
+  invokeFunction: InvokeFunction,
+): Promise<ConversationSnapshot> {
+  const reviewedRequest = conversationContinueRequestSchema.parse(request);
+  const payload = await invokeFunction(command, { request: reviewedRequest });
+  return conversationSnapshotSchema.parse(payload);
+}
+
+export function resumeConversation(
+  request: ConversationContinueRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  return continueConversation(
+    CONVERSATION_RESUME_COMMAND,
+    request,
+    invokeFunction,
+  );
+}
+
+export function forkConversation(
+  request: ConversationContinueRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  return continueConversation(
+    CONVERSATION_FORK_COMMAND,
+    request,
+    invokeFunction,
+  );
+}
+
+async function setConversationArchived(
+  command: string,
+  conversationId: string,
+  invokeFunction: InvokeFunction,
+): Promise<SessionLifecycleSnapshot> {
+  const reviewedId = conversationIdSchema.parse(conversationId);
+  const payload = await invokeFunction(command, { conversationId: reviewedId });
+  return sessionLifecycleSchema.parse(payload);
+}
+
+export function archiveConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<SessionLifecycleSnapshot> {
+  return setConversationArchived(
+    CONVERSATION_ARCHIVE_COMMAND,
+    conversationId,
+    invokeFunction,
+  );
+}
+
+export function restoreConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<SessionLifecycleSnapshot> {
+  return setConversationArchived(
+    CONVERSATION_RESTORE_COMMAND,
+    conversationId,
+    invokeFunction,
+  );
 }

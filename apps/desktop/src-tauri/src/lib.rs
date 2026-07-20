@@ -4,7 +4,8 @@ mod project;
 
 use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
-    CodexRuntimeService, ConversationService, ConversationSnapshot, ConversationStartRequest,
+    CodexRuntimeService, ConversationContinueRequest, ConversationService, ConversationSnapshot,
+    ConversationStartRequest, SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
 use project::{
@@ -188,6 +189,51 @@ async fn conversation_interrupt(
     Ok(service.interrupt(conversation_id, &projects).await)
 }
 
+#[tauri::command]
+async fn conversation_sessions(
+    project_id: Option<String>,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<SessionLifecycleSnapshot, ()> {
+    Ok(service.sessions(project_id, &projects).await)
+}
+
+#[tauri::command]
+async fn conversation_resume(
+    request: ConversationContinueRequest,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<ConversationSnapshot, ()> {
+    Ok(service.resume(request, &projects).await)
+}
+
+#[tauri::command]
+async fn conversation_fork(
+    request: ConversationContinueRequest,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<ConversationSnapshot, ()> {
+    Ok(service.fork(request, &projects).await)
+}
+
+#[tauri::command]
+async fn conversation_archive(
+    conversation_id: String,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<SessionLifecycleSnapshot, ()> {
+    Ok(service.archive(conversation_id, &projects).await)
+}
+
+#[tauri::command]
+async fn conversation_restore(
+    conversation_id: String,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<SessionLifecycleSnapshot, ()> {
+    Ok(service.restore(conversation_id, &projects).await)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -225,7 +271,12 @@ pub fn run() {
             conversation_status,
             conversation_start,
             conversation_poll,
-            conversation_interrupt
+            conversation_interrupt,
+            conversation_sessions,
+            conversation_resume,
+            conversation_fork,
+            conversation_archive,
+            conversation_restore
         ])
         .run(tauri::generate_context!())
         .expect("failed to run QuireForge");

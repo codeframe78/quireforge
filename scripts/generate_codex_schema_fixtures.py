@@ -28,11 +28,25 @@ SELECTED_SCHEMAS = (
     "v2/ModelListResponse.json",
     "v2/ThreadStartParams.json",
     "v2/ThreadStartResponse.json",
+    "v2/ThreadListParams.json",
+    "v2/ThreadListResponse.json",
+    "v2/ThreadReadParams.json",
+    "v2/ThreadReadResponse.json",
+    "v2/ThreadResumeParams.json",
+    "v2/ThreadResumeResponse.json",
+    "v2/ThreadForkParams.json",
+    "v2/ThreadForkResponse.json",
+    "v2/ThreadArchiveParams.json",
+    "v2/ThreadArchiveResponse.json",
+    "v2/ThreadUnarchiveParams.json",
+    "v2/ThreadUnarchiveResponse.json",
     "v2/TurnStartParams.json",
     "v2/TurnStartResponse.json",
     "v2/TurnInterruptParams.json",
     "v2/TurnInterruptResponse.json",
     "v2/ThreadStartedNotification.json",
+    "v2/ThreadArchivedNotification.json",
+    "v2/ThreadUnarchivedNotification.json",
     "v2/TurnStartedNotification.json",
     "v2/TurnCompletedNotification.json",
     "v2/AgentMessageDeltaNotification.json",
@@ -114,7 +128,8 @@ def main() -> None:
             "generator": "codex app-server generate-json-schema --experimental",
             "selection": (
                 "initialize, model/list, stable account lifecycle, and the "
-                "Milestone 7 conversation start/interrupt/event subset only"
+                "Milestone 7 conversation runtime and Milestone 8A reviewed "
+                "thread lifecycle subset only"
             ),
             "files": manifest_files,
         }

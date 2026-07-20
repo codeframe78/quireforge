@@ -43,7 +43,10 @@ source content. Milestone 7A adds the native conversation runtime, strict
 normalized contracts, exact-turn interruption, and reference-only persistence;
 Milestone 7B adds the responsive task composer, runtime-derived controls,
 normalized progress stream, and exact stop interaction. Application packages
-and external provider settings remain milestone- and approval-gated.
+and external provider settings remain milestone- and approval-gated. Milestone
+8A adds native resume, fork, archive/restore, Codex-authoritative reference
+reconciliation, and conservative crash recovery; its history/search/tabs UI is
+the separately gated Milestone 8B checkpoint.
 
 ## Status
 
@@ -56,8 +59,8 @@ and external provider settings remain milestone- and approval-gated.
 | 4 | Codex process adapter and contracts | Very large | Complete; merged to `main` |
 | 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
 | 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
-| 7 | Conversation MVP | Very large | Complete locally; 7A runtime merged, 7B UI verified |
-| 8 | Session lifecycle and crash recovery | Large | Planned |
+| 7 | Conversation MVP | Very large | Complete; merged to `main` |
+| 8 | Session lifecycle and crash recovery | Large | 8A native lifecycle complete; 8B UI planned |
 | 9 | Approvals and command presentation | Large | Planned |
 | 10 | Git status and diff review | Large | Planned |
 | 11 | Worktrees and parallel work | Very large | Planned |
@@ -190,13 +193,27 @@ catalog, explicit filesystem and approval controls, pre-IPC rejection of the
 unsafe unrestricted/no-approval combination, an ordered bounded event view,
 stable terminal diagnostics, and exact app-owned conversation interruption.
 Browser preview remains visibly non-interactive and never simulates a native
-task. Session history, resume/fork/archive, crash recovery, approval decisions,
-command details, diffs, packaging, and deployment remain later milestones.
+task. Session lifecycle is handled by Milestone 8; approval decisions, command
+details, diffs, packaging, and deployment remain later milestones.
 
 ### 8 — Session Lifecycle
 
 Resume, fork, archive, restore, title search, tabs, app grouping, and crash
 recovery while keeping Codex authoritative.
+
+Milestone 8A implements the native lifecycle and recovery boundary. Fixed Tauri
+commands accept only app-owned UUIDv7 references and bounded prompts; Rust
+reloads reference-only metadata, revalidates the exact attached cwd, reads the
+owned thread, and invokes reviewed `thread/list`, `thread/read`,
+`thread/resume`, `thread/fork`, `thread/archive`, and `thread/unarchive`
+contracts. Fork lineage and archive timestamps are app metadata only. Startup
+conservatively converts stale active rows to interrupted and clears active-turn
+ownership. Deterministic tests prove exact-ID/cwd correlation, bounded listing,
+no transcript/path exposure, no source or thread deletion, child cleanup, and
+no live model use.
+
+Milestone 8B remains separately gated for title search, history presentation,
+tabs, grouping, and the accessible resume/fork/archive/restore interface.
 
 ### 9 — Approvals and Command Presentation
 

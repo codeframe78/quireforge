@@ -88,6 +88,16 @@ CREATE INDEX conversation_references_project
     ON conversation_references(project_id, updated_at_ms DESC);
 "#;
 
+const SESSION_LIFECYCLE_MIGRATION: &str = r#"
+ALTER TABLE conversation_references
+    ADD COLUMN parent_conversation_id TEXT
+    REFERENCES conversation_references(id) ON DELETE RESTRICT;
+ALTER TABLE conversation_references ADD COLUMN archived_at_ms INTEGER;
+
+CREATE INDEX conversation_references_parent
+    ON conversation_references(parent_conversation_id, created_at_ms);
+"#;
+
 const MIGRATIONS: &[(i64, &str, &str)] = &[
     (1, "projects-and-directory-associations", INITIAL_MIGRATION),
     (
@@ -95,6 +105,7 @@ const MIGRATIONS: &[(i64, &str, &str)] = &[
         "conversation-references",
         CONVERSATION_REFERENCES_MIGRATION,
     ),
+    (3, "session-lifecycle", SESSION_LIFECYCLE_MIGRATION),
 ];
 
 #[derive(Debug, Error)]
@@ -138,6 +149,23 @@ pub(crate) struct StoredAssociation {
     pub has_codex_config: bool,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct StoredConversationReference {
+    pub id: String,
+    pub project_id: String,
+    pub codex_thread_id: String,
+    pub active_turn_id: Option<String>,
+    pub model_id: String,
+    pub reasoning_effort: String,
+    pub sandbox_mode: String,
+    pub approval_policy: String,
+    pub status: String,
+    pub parent_conversation_id: Option<String>,
+    pub archived: bool,
+    pub created_at_ms: i64,
+    pub updated_at_ms: i64,
+}
+
 pub(crate) struct ProjectRepository {
     connection: Connection,
 }
@@ -171,6 +199,7 @@ impl ProjectRepository {
         connection.busy_timeout(Duration::from_secs(5))?;
         apply_migrations(&mut connection)?;
         verify_schema(&connection)?;
+        recover_interrupted_conversations(&connection)?;
         Ok(Self { connection })
     }
 
@@ -367,8 +396,10 @@ impl ProjectRepository {
             "INSERT INTO conversation_references (
                 id, project_id, codex_thread_id, active_turn_id, model_id,
                 reasoning_effort, sandbox_mode, approval_policy, status,
-                created_at_ms, updated_at_ms
-             ) VALUES (?1, ?2, ?3, NULL, ?4, ?5, ?6, ?7, 'thread-started', ?8, ?8)",
+                created_at_ms, updated_at_ms, parent_conversation_id, archived_at_ms
+             ) VALUES (
+                ?1, ?2, ?3, NULL, ?4, ?5, ?6, ?7, 'thread-started', ?8, ?8, ?9, NULL
+             )",
             params![
                 reference.conversation_id,
                 reference.project_id,
@@ -378,9 +409,47 @@ impl ProjectRepository {
                 reference.sandbox_mode,
                 reference.approval_policy,
                 timestamp,
+                reference.parent_conversation_id,
             ],
         )?;
         Ok(())
+    }
+
+    pub(crate) fn conversation_reference(
+        &self,
+        conversation_id: &str,
+    ) -> Result<StoredConversationReference, StorageError> {
+        self.connection
+            .query_row(
+                "SELECT id, project_id, codex_thread_id, active_turn_id, model_id,
+                        reasoning_effort, sandbox_mode, approval_policy, status,
+                        parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms
+                 FROM conversation_references WHERE id = ?1",
+                [conversation_id],
+                stored_conversation_reference,
+            )
+            .optional()?
+            .ok_or(StorageError::InvalidStoredValue)
+    }
+
+    pub(crate) fn list_conversation_references(
+        &self,
+        project_id: Option<&str>,
+    ) -> Result<Vec<StoredConversationReference>, StorageError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id, project_id, codex_thread_id, active_turn_id, model_id,
+                    reasoning_effort, sandbox_mode, approval_policy, status,
+                    parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms
+             FROM conversation_references
+             WHERE (?1 IS NULL OR project_id = ?1)
+             ORDER BY updated_at_ms DESC, id
+             LIMIT 256",
+        )?;
+        let references = statement
+            .query_map([project_id], stored_conversation_reference)?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(StorageError::from)?;
+        Ok(references)
     }
 
     pub(crate) fn update_conversation_turn(
@@ -405,10 +474,33 @@ impl ProjectRepository {
         conversation_id: &str,
         status: &str,
     ) -> Result<(), StorageError> {
+        let terminal = matches!(status, "completed" | "interrupted" | "blocked" | "failed");
         let updated = self.connection.execute(
             "UPDATE conversation_references
-             SET status = ?1, updated_at_ms = ?2 WHERE id = ?3",
-            params![status, now_millis(), conversation_id],
+             SET status = ?1,
+                 active_turn_id = CASE WHEN ?2 THEN NULL ELSE active_turn_id END,
+                 updated_at_ms = ?3
+             WHERE id = ?4",
+            params![status, terminal, now_millis(), conversation_id],
+        )?;
+        if updated == 0 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn update_conversation_archived(
+        &mut self,
+        conversation_id: &str,
+        archived: bool,
+    ) -> Result<(), StorageError> {
+        let timestamp = now_millis();
+        let updated = self.connection.execute(
+            "UPDATE conversation_references
+             SET archived_at_ms = CASE WHEN ?1 THEN ?2 ELSE NULL END,
+                 updated_at_ms = ?2
+             WHERE id = ?3 AND active_turn_id IS NULL",
+            params![archived, timestamp, conversation_id],
         )?;
         if updated == 0 {
             return Err(StorageError::InvalidStoredValue);
@@ -534,6 +626,37 @@ fn verify_schema(connection: &Connection) -> Result<(), StorageError> {
         }
     }
     Ok(())
+}
+
+fn recover_interrupted_conversations(connection: &Connection) -> Result<(), StorageError> {
+    let timestamp = now_millis();
+    connection.execute(
+        "UPDATE conversation_references
+         SET active_turn_id = NULL, status = 'interrupted', updated_at_ms = ?1
+         WHERE status IN ('thread-started', 'running', 'stopping')",
+        [timestamp],
+    )?;
+    Ok(())
+}
+
+fn stored_conversation_reference(
+    row: &rusqlite::Row<'_>,
+) -> rusqlite::Result<StoredConversationReference> {
+    Ok(StoredConversationReference {
+        id: row.get(0)?,
+        project_id: row.get(1)?,
+        codex_thread_id: row.get(2)?,
+        active_turn_id: row.get(3)?,
+        model_id: row.get(4)?,
+        reasoning_effort: row.get(5)?,
+        sandbox_mode: row.get(6)?,
+        approval_policy: row.get(7)?,
+        status: row.get(8)?,
+        parent_conversation_id: row.get(9)?,
+        archived: row.get::<_, Option<i64>>(10)?.is_some(),
+        created_at_ms: row.get(11)?,
+        updated_at_ms: row.get(12)?,
+    })
 }
 
 fn ensure_directory_available(
@@ -708,7 +831,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_an_existing_project_database_to_conversation_references() {
+    fn migrates_an_existing_project_database_through_session_lifecycle() {
         let connection = Connection::open_in_memory().expect("database must open");
         connection
             .execute_batch(
@@ -736,13 +859,24 @@ mod tests {
         let migrated: i64 = repository
             .connection
             .query_row(
-                "SELECT COUNT(*) FROM schema_migrations WHERE version = 2
-                 AND name = 'conversation-references'",
+                "SELECT COUNT(*) FROM schema_migrations
+                 WHERE (version = 2 AND name = 'conversation-references')
+                    OR (version = 3 AND name = 'session-lifecycle')",
                 [],
                 |row| row.get(0),
             )
             .expect("migration ledger must be queryable");
-        assert_eq!(migrated, 1);
+        assert_eq!(migrated, 2);
+        let lifecycle_columns: i64 = repository
+            .connection
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('conversation_references')
+                 WHERE name IN ('parent_conversation_id', 'archived_at_ms')",
+                [],
+                |row| row.get(0),
+            )
+            .expect("lifecycle columns must be queryable");
+        assert_eq!(lifecycle_columns, 2);
     }
 
     #[test]
@@ -862,6 +996,7 @@ mod tests {
                 reasoning_effort: "medium",
                 sandbox_mode: "read-only",
                 approval_policy: "untrusted",
+                parent_conversation_id: None,
             })
             .expect("conversation reference must insert");
         repository
@@ -871,7 +1006,7 @@ mod tests {
             .update_conversation_status(&conversation_id, "completed")
             .expect("conversation status must update");
 
-        let stored: (String, String, String, String) = repository
+        let stored: (String, String, Option<String>, String) = repository
             .connection
             .query_row(
                 "SELECT project_id, codex_thread_id, active_turn_id, status
@@ -882,7 +1017,52 @@ mod tests {
             .expect("conversation reference must be queryable");
         assert_eq!(
             stored,
-            (project_id, thread_id, turn_id, "completed".to_owned())
+            (project_id, thread_id, None, "completed".to_owned())
         );
+    }
+
+    #[test]
+    fn recovers_stale_active_turns_without_preserving_runtime_ownership() {
+        let mut repository = ProjectRepository::in_memory().expect("schema must migrate");
+        let project_id = Uuid::now_v7().to_string();
+        repository
+            .connection
+            .execute(
+                "INSERT INTO projects (
+                    id, display_name, active_directory_association_id, archived_at_ms,
+                    created_at_ms, updated_at_ms
+                 ) VALUES (?1, 'Fixture', NULL, NULL, 1, 1)",
+                [&project_id],
+            )
+            .expect("fixture project must insert");
+        let conversation_id = Uuid::now_v7().to_string();
+        let thread_id = Uuid::now_v7().to_string();
+        let turn_id = Uuid::now_v7().to_string();
+        repository
+            .insert_conversation_reference(&ConversationReference {
+                conversation_id: &conversation_id,
+                project_id: &project_id,
+                codex_thread_id: &thread_id,
+                model_id: "fixture-model",
+                reasoning_effort: "medium",
+                sandbox_mode: "read-only",
+                approval_policy: "untrusted",
+                parent_conversation_id: None,
+            })
+            .expect("conversation reference must insert");
+        repository
+            .update_conversation_turn(&conversation_id, &turn_id)
+            .expect("turn reference must update");
+
+        let connection = repository.connection;
+        let recovered = ProjectRepository::from_test_connection(connection)
+            .expect("reopened metadata must recover");
+        let stored = recovered
+            .conversation_reference(&conversation_id)
+            .expect("conversation reference must remain available");
+
+        assert_eq!(stored.status, "interrupted");
+        assert!(stored.active_turn_id.is_none());
+        assert_eq!(stored.codex_thread_id, thread_id);
     }
 }

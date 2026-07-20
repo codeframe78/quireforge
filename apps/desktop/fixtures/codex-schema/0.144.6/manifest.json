@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "codexCliVersion": "0.144.6",
   "generator": "codex app-server generate-json-schema --experimental",
-  "selection": "initialize, model/list, stable account lifecycle, and the Milestone 7 conversation start/interrupt/event subset only",
+  "selection": "initialize, model/list, stable account lifecycle, and the Milestone 7 conversation runtime and Milestone 8A reviewed thread lifecycle subset only",
   "files": [
     {
       "path": "v1/InitializeParams.json",
@@ -65,6 +65,54 @@
       "sha256": "c26a977dcc345aaf25de95f6d3943337c4ae6aa6af2eac8ff25f1ee944a752fc"
     },
     {
+      "path": "v2/ThreadListParams.json",
+      "sha256": "1437ae59a80bffc0c2062ec3a00bdd13075a9f81cf31e818cc2609d22729fb8d"
+    },
+    {
+      "path": "v2/ThreadListResponse.json",
+      "sha256": "ab50f213f4836c5beaebbbe577847fd6a4edb1da38ae207ffd10cb97c9870b07"
+    },
+    {
+      "path": "v2/ThreadReadParams.json",
+      "sha256": "1342a250b9e291ecfafa02c4a133187b58a1768fa22e2a6b5b34868894cbb1d9"
+    },
+    {
+      "path": "v2/ThreadReadResponse.json",
+      "sha256": "54bf5a97013f0d4231e2ce641fde9cd1d068baf3fb06cb9a9f69d404df41e42e"
+    },
+    {
+      "path": "v2/ThreadResumeParams.json",
+      "sha256": "a6d718ea6a8b34255a5fc3f157da9f208f5aeece0e60716cc75b9951c14f54c7"
+    },
+    {
+      "path": "v2/ThreadResumeResponse.json",
+      "sha256": "99be2b5cc4b550af00a96688a84761308c03296b69c455f4a110c43633d53dc3"
+    },
+    {
+      "path": "v2/ThreadForkParams.json",
+      "sha256": "9352b002e2e117ddc559a15fbe91678b5b333290cff34941b0391f5c4f300843"
+    },
+    {
+      "path": "v2/ThreadForkResponse.json",
+      "sha256": "1a6343a9e970f9f538bce4d28da07c2b8403763e780a1b2eec4fe2a1d0822247"
+    },
+    {
+      "path": "v2/ThreadArchiveParams.json",
+      "sha256": "ba817e60bd2105ba065c21bd87a3baf134c7aba3589b2fdf4745acc2196eab35"
+    },
+    {
+      "path": "v2/ThreadArchiveResponse.json",
+      "sha256": "18bf864a2ca1659364f17008dceb6d15d0a31cb485907f044c69ed97d8101ca3"
+    },
+    {
+      "path": "v2/ThreadUnarchiveParams.json",
+      "sha256": "c69b0eb47718d4ff511f561168fa75eea43d40dbacefc47d6f4036b09794bcad"
+    },
+    {
+      "path": "v2/ThreadUnarchiveResponse.json",
+      "sha256": "dbaa6106cf765604e26eb17e897bce94964abc1be768323d3bcf2199a6737dd0"
+    },
+    {
       "path": "v2/TurnStartParams.json",
       "sha256": "cfad73eea4dcea2632e6c892eb20266b58a8848157fb001da3710d2a453750f6"
     },
@@ -83,6 +131,14 @@
     {
       "path": "v2/ThreadStartedNotification.json",
       "sha256": "ce9623d8b69c81536b9c77496ec68ad484ab93966227c14c3138b95b026ca653"
+    },
+    {
+      "path": "v2/ThreadArchivedNotification.json",
+      "sha256": "850169981a7e11a06850827c47c379dce8e002f233101c1357142d0aeddb29e9"
+    },
+    {
+      "path": "v2/ThreadUnarchivedNotification.json",
+      "sha256": "78b37232664f6050ae5071c6f0f465aaa5ba671985143183c66503294c1a9473"
     },
     {
       "path": "v2/TurnStartedNotification.json",

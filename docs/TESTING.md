@@ -1,9 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2–7A establish repository, website, desktop frontend, native
+Status: Milestones 2–8A establish repository, website, desktop frontend, native
 contract, Codex adapter, authentication, project attachment, native
-conversation-runtime, and Tauri build checks. PTY, broader Git fixtures, and
-conversation UI suites arrive with the milestones that introduce those systems.
+conversation/runtime lifecycle, and Tauri build checks. PTY and broader Git
+fixtures arrive with the milestones that introduce those systems.
 
 ## Repository, website, and desktop checks
 
@@ -48,6 +48,12 @@ interrupt, project reservation, approval-blocked shutdown, protocol mismatch,
 child reaping, and reference-only persistence. TypeScript tests reject cwd,
 Codex thread/turn IDs, unknown fields, raw protocol payloads, and path-bearing
 bridge input before native invocation.
+Session-lifecycle tests cover schema migration, stale-turn crash reconciliation,
+bounded exact-cwd list matching, owned-thread reads, resume, fork lineage,
+archive/restore without deletion, mismatched-cwd rejection, project-reservation
+release, child reaping, and shared strict Rust/TypeScript fixtures. They use
+deterministic mock app-server processes and never read a personal transcript or
+start a live model turn.
 
 ## Responsive browser and accessibility checks
 
@@ -118,7 +124,31 @@ Confirm either test leaves no additional `codex app-server` process. It must
 not start a thread or turn, write configuration, inspect session content, or
 print the account-visible catalog.
 
-## Manual Milestone 7A checklist
+## Manual Milestone 8A checklist
+
+- Use deterministic mock app-server fixtures only; do not resume or fork a
+  personal thread or start a billable turn during routine validation.
+- Confirm list/read/resume/fork/archive/restore commands accept only app-owned
+  conversation IDs; resume/fork additionally accept only a bounded prompt.
+- Confirm native code revalidates the original project identity and exact cwd,
+  and never accepts a frontend cwd, Codex thread/turn ID, rollout path, history,
+  configuration object, or runtime workspace root.
+- Confirm session snapshots contain no cwd, Codex ID, preview, transcript, raw
+  thread status, command output, reasoning, diff, or protocol payload.
+- Reopen a fixture database containing starting/running/stopping rows; confirm
+  each becomes interrupted, its active-turn ID clears, and the project is not
+  left reserved.
+- Confirm reconciliation uses bounded exact-cwd current/archived lists, matches
+  only QuireForge-owned references, and reports a missing thread without
+  importing another Codex thread.
+- Confirm fork creates a distinct app reference with bounded parent-app lineage,
+  while archive and restore retain the reference and never delete project or
+  Codex content.
+- Exercise wrong IDs, wrong cwd responses, malformed cursors, process exit, RPC
+  rejection, and metadata failure; verify stable diagnostics and no child
+  process remains.
+
+## Manual Milestone 7 checklist
 
 - Use deterministic mock app-server fixtures only; do not start a live or
   billable model turn as routine validation.

@@ -2,8 +2,9 @@
 
 Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary,
 Milestone 4 Codex process adapter, Milestone 5 authentication controls, and
-Milestone 6 native directory-attachment controls, and Milestone 7A native
-conversation-runtime controls applied. It must be revisited before approvals,
+Milestone 6 native directory-attachment controls, Milestone 7 native
+conversation controls, and Milestone 8A native lifecycle/recovery controls
+applied. It must be revisited before approvals,
 integrations, packaging, and release milestones.
 
 ## Assets
@@ -59,6 +60,15 @@ and unexpected approval requests block and close the task without a fabricated
 decision. Conversation SQLite rows contain references and lifecycle metadata,
 not prompts, transcripts, outputs, diffs, or credentials.
 
+Milestone 8A keeps lifecycle operations under the same serialized native owner.
+React supplies an app reference and optional bounded prompt, never a Codex ID,
+cwd, rollout path, history, configuration object, or runtime root. Native code
+reloads the stored reference, revalidates the project cwd, reads and correlates
+the exact thread, and uses bounded exact-cwd lists that match only already-owned
+references. Startup clears obsolete active-turn ownership and records stale
+work as interrupted. Fork failure attempts to archive an otherwise unreferenced
+new thread; archive/restore never delete project files or Codex history.
+
 ## Principal threats and controls
 
 ### Wrong-directory execution
@@ -76,6 +86,9 @@ Controls:
 - Explicit relink workflow with confirmation.
 - Native-only picker input; later lifecycle commands accept opaque IDs rather
   than frontend-supplied paths.
+- Resume, fork, archive, restore, and reconciliation revalidate the original
+  app-owned project/thread binding; no recent thread or alternate cwd is
+  substituted.
 - Confirmation-time reinspection detects symlink, mount, Git/worktree,
   `AGENTS.md`, and `.codex` changes before metadata is committed.
 - Reserve an active project's metadata lifecycle so detach, archive, and relink
@@ -192,6 +205,9 @@ Controls:
 - Require UUIDv7 identity correlation on conversation responses and
   notifications; mismatch, unexpected server requests, oversized content, or
   control characters fail closed with stable diagnostics.
+- Bound current/archived list pagination, require every returned cwd to match
+  the native verified set, and discard unowned thread metadata rather than
+  importing it.
 
 ### Git and worktree data loss
 

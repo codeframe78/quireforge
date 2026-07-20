@@ -91,6 +91,16 @@ released a usable application.
 - Deterministic conversation UI tests for prerequisite gating, unsafe-policy
   rejection, start/poll/terminal transitions, event deduplication and bounds,
   browser-preview honesty, responsive layout, and accessibility.
+- A native Milestone 8A lifecycle boundary for app-reference-only session list,
+  read, resume, fork, archive, and restore operations against revalidated
+  attached directories and supervised Codex app-server processes.
+- SQLite schema version 3 with bounded parent-app lineage and archive timestamps,
+  plus startup reconciliation that marks stale active work interrupted and
+  clears obsolete active-turn ownership without deleting Codex or project data.
+- Strict Rust/TypeScript lifecycle fixtures, fixed Tauri commands, reviewed
+  Codex 0.144.6 lifecycle schemas, bounded exact-cwd reconciliation, and
+  deterministic mismatch, recovery, fork-lineage, archive/restore, child-
+  cleanup, and raw-identity/path rejection tests.
 
 ### Changed
 
@@ -145,7 +155,11 @@ released a usable application.
   deployment, or release was performed.
 - Completed the Milestone 7B conversation UI and native-shell integration
   locally. No live model call, approval decision, deployment, package, or
-  release was performed; session lifecycle remains Milestone 8.
+  release was performed.
+- Completed the Milestone 8A native session-lifecycle and crash-recovery
+  checkpoint locally. No live model call, approval decision, thread deletion,
+  project-file mutation, deployment, package, or release was performed; the
+  history/search/tabs interface remains Milestone 8B.
 
 ### Migration note
 
@@ -162,8 +176,8 @@ released a usable application.
 ### Known limitations
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
-  conversation MVP, and website are locally verified, but session
-  resume/history, installable packages, website deployment, and a release
-  workflow do not exist.
+  conversation MVP, native session lifecycle, and website are locally verified,
+  but the session history UI, installable packages, website deployment, and a
+  release workflow do not exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

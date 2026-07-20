@@ -7,7 +7,7 @@ export const conversationIdSchema = z
     /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
   );
 
-const protocolChoiceSchema = z
+export const conversationProtocolChoiceSchema = z
   .string()
   .min(1)
   .max(128)
@@ -34,6 +34,10 @@ const boundedTextSchema = (max: number) =>
     .max(max)
     .refine((value) => !containsUnsafeControl(value));
 
+export const conversationPromptSchema = boundedTextSchema(64 * 1024).refine(
+  (value) => value.trim().length > 0,
+);
+
 export const conversationSandboxModeSchema = z.enum([
   "read-only",
   "workspace-write",
@@ -48,11 +52,9 @@ export const conversationApprovalPolicySchema = z.enum([
 export const conversationStartRequestSchema = z
   .object({
     projectId: conversationIdSchema,
-    prompt: boundedTextSchema(64 * 1024).refine(
-      (value) => value.trim().length > 0,
-    ),
-    modelId: protocolChoiceSchema,
-    reasoningEffort: protocolChoiceSchema.max(32),
+    prompt: conversationPromptSchema,
+    modelId: conversationProtocolChoiceSchema,
+    reasoningEffort: conversationProtocolChoiceSchema.max(32),
     sandboxMode: conversationSandboxModeSchema,
     approvalPolicy: conversationApprovalPolicySchema,
   })
@@ -151,7 +153,7 @@ const conversationEventSchema = z.discriminatedUnion("type", [
     .strict(),
 ]);
 
-const diagnosticSchema = z.enum([
+export const conversationDiagnosticSchema = z.enum([
   "conversation-active",
   "conversation-not-found",
   "invalid-request",
@@ -185,12 +187,12 @@ export const conversationSnapshotSchema = z
     ]),
     conversationId: conversationIdSchema.nullable(),
     projectId: conversationIdSchema.nullable(),
-    modelId: protocolChoiceSchema.nullable(),
-    reasoningEffort: protocolChoiceSchema.max(32).nullable(),
+    modelId: conversationProtocolChoiceSchema.nullable(),
+    reasoningEffort: conversationProtocolChoiceSchema.max(32).nullable(),
     sandboxMode: conversationSandboxModeSchema.nullable(),
     approvalPolicy: conversationApprovalPolicySchema.nullable(),
     events: z.array(conversationEventSchema).max(64),
-    diagnosticCode: diagnosticSchema.nullable(),
+    diagnosticCode: conversationDiagnosticSchema.nullable(),
   })
   .strict()
   .superRefine((snapshot, context) => {

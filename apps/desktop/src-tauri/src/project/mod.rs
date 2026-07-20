@@ -8,6 +8,7 @@ use std::{
     sync::Mutex,
 };
 
+pub(crate) use storage::StoredConversationReference;
 use storage::{ProjectRepository, StorageError, StoredAssociation, StoredProject};
 use types::{
     DirectoryAccessibilityState, DirectorySummary, GitSummary, PendingAttachmentKind,
@@ -54,6 +55,7 @@ pub(crate) struct ConversationReference<'a> {
     pub reasoning_effort: &'a str,
     pub sandbox_mode: &'a str,
     pub approval_policy: &'a str,
+    pub parent_conversation_id: Option<&'a str>,
 }
 
 impl ProjectService {
@@ -333,6 +335,47 @@ impl ProjectService {
             .map_err(|_| ProjectExecutionError::MetadataUnavailable)
     }
 
+    pub(crate) fn conversation_reference(
+        &self,
+        conversation_id: &str,
+    ) -> Result<StoredConversationReference, ProjectExecutionError> {
+        if !valid_id(conversation_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .conversation_reference(conversation_id)
+            .map_err(|error| match error {
+                StorageError::InvalidStoredValue => ProjectExecutionError::ProjectNotFound,
+                _ => ProjectExecutionError::MetadataUnavailable,
+            })
+    }
+
+    pub(crate) fn conversation_references(
+        &self,
+        project_id: Option<&str>,
+    ) -> Result<Vec<StoredConversationReference>, ProjectExecutionError> {
+        if project_id.is_some_and(|value| !valid_id(value)) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .list_conversation_references(project_id)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
     pub(crate) fn record_conversation_turn(
         &self,
         conversation_id: &str,
@@ -370,6 +413,23 @@ impl ProjectService {
             .ok_or(ProjectExecutionError::MetadataUnavailable)?;
         repository
             .update_conversation_status(conversation_id, status)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn record_conversation_archived(
+        &self,
+        conversation_id: &str,
+        archived: bool,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .update_conversation_archived(conversation_id, archived)
             .map_err(|_| ProjectExecutionError::MetadataUnavailable)
     }
 

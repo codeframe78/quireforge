@@ -74,6 +74,12 @@ pub(crate) enum ConversationNotification {
     ThreadStarted {
         thread_id: String,
     },
+    ThreadArchived {
+        thread_id: String,
+    },
+    ThreadUnarchived {
+        thread_id: String,
+    },
     TurnStarted {
         thread_id: String,
         turn_id: String,
@@ -448,6 +454,25 @@ fn parse_notification(message: &Value) -> Result<Option<AppServerNotification>, 
                     thread_id: params.thread.id,
                 },
             )))
+        }
+        "thread/archived" | "thread/unarchived" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase")]
+            struct Params {
+                thread_id: String,
+            }
+            let params: Params = notification_params(message)?;
+            validate_uuid_v7(&params.thread_id)?;
+            let notification = if method == "thread/archived" {
+                ConversationNotification::ThreadArchived {
+                    thread_id: params.thread_id,
+                }
+            } else {
+                ConversationNotification::ThreadUnarchived {
+                    thread_id: params.thread_id,
+                }
+            };
+            Ok(Some(AppServerNotification::Conversation(notification)))
         }
         "turn/started" => {
             #[derive(Deserialize)]

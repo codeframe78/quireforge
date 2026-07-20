@@ -1,0 +1,111 @@
+import sessionLifecycleFixture from "../../fixtures/session-lifecycle.json";
+import { z } from "zod";
+
+import {
+  conversationApprovalPolicySchema,
+  conversationDiagnosticSchema,
+  conversationIdSchema,
+  conversationPromptSchema,
+  conversationProtocolChoiceSchema,
+  conversationSandboxModeSchema,
+} from "./conversation";
+
+export const conversationContinueRequestSchema = z
+  .object({
+    conversationId: conversationIdSchema,
+    prompt: conversationPromptSchema,
+  })
+  .strict();
+
+const sessionReferenceSchema = z
+  .object({
+    conversationId: conversationIdSchema,
+    projectId: conversationIdSchema,
+    parentConversationId: conversationIdSchema.nullable(),
+    modelId: conversationProtocolChoiceSchema,
+    reasoningEffort: conversationProtocolChoiceSchema.max(32),
+    sandboxMode: conversationSandboxModeSchema,
+    approvalPolicy: conversationApprovalPolicySchema,
+    state: z.enum([
+      "running",
+      "completed",
+      "interrupted",
+      "blocked",
+      "failed",
+      "archived",
+      "missing",
+    ]),
+    createdAtMs: z.number().int().nonnegative().safe(),
+    updatedAtMs: z.number().int().nonnegative().safe(),
+  })
+  .strict()
+  .superRefine((session, context) => {
+    if (session.parentConversationId === session.conversationId) {
+      context.addIssue({
+        code: "custom",
+        message: "A session cannot be its own parent",
+        path: ["parentConversationId"],
+      });
+    }
+    if (session.updatedAtMs < session.createdAtMs) {
+      context.addIssue({
+        code: "custom",
+        message: "Session timestamps are inconsistent",
+        path: ["updatedAtMs"],
+      });
+    }
+    if (
+      session.sandboxMode === "danger-full-access" &&
+      session.approvalPolicy === "never"
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Unrestricted execution cannot disable approval prompts",
+      });
+    }
+  });
+
+export const sessionLifecycleSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    state: z.enum(["empty", "ready", "unavailable"]),
+    sessions: z.array(sessionReferenceSchema).max(256),
+    diagnosticCode: conversationDiagnosticSchema.nullable(),
+  })
+  .strict()
+  .superRefine((snapshot, context) => {
+    const consistent =
+      (snapshot.state === "empty" &&
+        snapshot.sessions.length === 0 &&
+        snapshot.diagnosticCode === null) ||
+      (snapshot.state === "ready" &&
+        snapshot.sessions.length > 0 &&
+        snapshot.diagnosticCode === null) ||
+      (snapshot.state === "unavailable" &&
+        snapshot.sessions.length === 0 &&
+        snapshot.diagnosticCode !== null);
+    if (!consistent) {
+      context.addIssue({
+        code: "custom",
+        message: "Session lifecycle snapshot fields are inconsistent",
+      });
+    }
+
+    const ids = snapshot.sessions.map((session) => session.conversationId);
+    if (new Set(ids).size !== ids.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Session references must be unique",
+        path: ["sessions"],
+      });
+    }
+  });
+
+export type ConversationContinueRequest = z.infer<
+  typeof conversationContinueRequestSchema
+>;
+export type SessionLifecycleSnapshot = z.infer<typeof sessionLifecycleSchema>;
+
+export const scaffoldSessionLifecycle = sessionLifecycleSchema.parse(
+  sessionLifecycleFixture,
+);

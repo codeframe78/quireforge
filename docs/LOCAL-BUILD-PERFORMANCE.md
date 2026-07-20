@@ -195,6 +195,41 @@ disk pressure, dependency download, or competing QuireForge build was observed.
 The RTX 3050 was not used because React, TypeScript, Vite, and the ordinary
 Tauri validation path are CPU/system-memory workloads.
 
+## Milestone 8A measurements
+
+The native session-lifecycle checkpoint reused the warm Cargo target, registry,
+pnpm, Vite, Astro, and Playwright caches. The Balanced profile retained four
+Cargo workers and two Playwright workers. No dependency install, clean build,
+cache deletion, or concurrent release/browser build was required.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Reviewed Codex lifecycle schema generation | 0.48 seconds | about 45 MiB | Passed, 42 selected schemas total |
+| Focused native lifecycle suite | about 5.5 seconds | Not instrumented | Passed, 6 lifecycle tests |
+| Incremental native suite during implementation | about 10 seconds | Not instrumented | Passed, 57 tests; 2 live probes ignored |
+| Frontend type/lint/unit checkpoint | about 9.6 seconds | Not instrumented | Passed, 48 tests |
+| Full non-browser repository gate | 29.45 seconds | about 692 MiB | Passed, including 51 JavaScript and 57 Rust tests; 2 live probes ignored |
+| Combined desktop/website browser gate | 8.60 seconds | about 251 MiB | Passed, 14 tests |
+| Warm unbundled native release build | 25.13 seconds | about 1.49 GiB | Passed |
+| Isolated native release launch | under 1 second | Low runtime pressure | D-Bus identity, schema version 3, owner-only metadata, and clean child state verified |
+
+Before the full gate, approximately 44 GiB of system memory and 726 GiB of
+NVMe space were available at a load average below 1.3. Before the release build,
+approximately 43 GiB remained available. Swap stayed at about 175 MiB with no
+growth observed; the measured commands reported no swaps, OOM, throttling, or
+material disk pressure. The first aggregate format invocation lacked Cargo in
+its transient package-runner `PATH`; explicitly preserving the already-installed
+Cargo directory fixed the harness without a system or repository configuration
+change.
+
+The release smoke check used a fresh isolated XDG tree, verified schema
+migrations 1–3 and `0700`/`0600` application-data permissions, observed the
+exact `io.github.codeframe78.QuireForge` D-Bus name, and confirmed that merely
+launching the app starts no Codex app-server child. The temporary tree was then
+removed. The RTX 3050 was correctly unused because schema generation, Rust,
+SQLite, TypeScript, Vite, Astro, and Playwright are CPU/system-memory workloads
+for this milestone.
+
 ## Current execution guidance
 
 - Default to the Balanced profile and preserve desktop responsiveness.

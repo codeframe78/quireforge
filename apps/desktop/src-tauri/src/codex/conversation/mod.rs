@@ -1,4 +1,7 @@
+mod lifecycle;
 pub mod types;
+
+pub use lifecycle::{ConversationContinueRequest, SessionLifecycleSnapshot};
 
 use std::{path::Path, time::Duration};
 
@@ -369,6 +372,7 @@ async fn start_on_process(
             reasoning_effort: &request.reasoning_effort,
             sandbox_mode: request.sandbox_mode.as_protocol_value(),
             approval_policy: request.approval_policy.as_protocol_value(),
+            parent_conversation_id: None,
         })
         .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
 
@@ -478,6 +482,11 @@ fn apply_notification(
     };
     match notification {
         ConversationNotification::ThreadStarted { thread_id } => {
+            ensure_thread(active, &thread_id)?;
+            Ok((None, None))
+        }
+        ConversationNotification::ThreadArchived { thread_id }
+        | ConversationNotification::ThreadUnarchived { thread_id } => {
             ensure_thread(active, &thread_id)?;
             Ok((None, None))
         }

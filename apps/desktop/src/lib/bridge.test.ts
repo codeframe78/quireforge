@@ -3,7 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 import { scaffoldCodexAuth } from "./auth";
 import { scaffoldCodexRuntime } from "./codex";
 import { scaffoldConversation } from "./conversation";
+import { scaffoldSessionLifecycle } from "./session";
 import {
+  archiveConversation,
   archiveProject,
   cancelProjectAttachment,
   cancelCodexAuth,
@@ -14,14 +16,21 @@ import {
   CODEX_RUNTIME_PROBE_COMMAND,
   confirmProjectAttachment,
   CONVERSATION_INTERRUPT_COMMAND,
+  CONVERSATION_ARCHIVE_COMMAND,
+  CONVERSATION_FORK_COMMAND,
   CONVERSATION_POLL_COMMAND,
+  CONVERSATION_RESTORE_COMMAND,
+  CONVERSATION_RESUME_COMMAND,
+  CONVERSATION_SESSIONS_COMMAND,
   CONVERSATION_START_COMMAND,
   CONVERSATION_STATUS_COMMAND,
   DESKTOP_BOOTSTRAP_COMMAND,
   detachProject,
+  forkConversation,
   loadCodexAuth,
   loadCodexRuntime,
   loadConversationStatus,
+  loadConversationSessions,
   loadDesktopBootstrap,
   loadProjectWorkspace,
   openCodexAuthBrowser,
@@ -29,6 +38,8 @@ import {
   pickProjectRelink,
   preflightProject,
   pollConversation,
+  restoreConversation,
+  resumeConversation,
   PROJECT_ARCHIVE_COMMAND,
   PROJECT_CANCEL_ATTACHMENT_COMMAND,
   PROJECT_CONFIRM_ATTACHMENT_COMMAND,
@@ -186,6 +197,49 @@ describe("desktop bridge", () => {
           reasoningEffort: "high",
           sandboxMode: "read-only",
           approvalPolicy: "untrusted",
+          cwd: "/private/raw/path",
+        } as never,
+        invoke,
+      ),
+    ).rejects.toThrow();
+    expect(invoke).not.toHaveBeenCalled();
+  });
+
+  it("uses fixed session lifecycle commands with app-owned IDs only", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const projectId = "018f0000-0000-7000-8000-000000000001";
+    const request = { conversationId, prompt: "Continue safely." };
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce(scaffoldSessionLifecycle)
+      .mockResolvedValueOnce(scaffoldConversation)
+      .mockResolvedValueOnce(scaffoldConversation)
+      .mockResolvedValueOnce(scaffoldSessionLifecycle)
+      .mockResolvedValueOnce(scaffoldSessionLifecycle);
+
+    await loadConversationSessions(projectId, invoke);
+    await resumeConversation(request, invoke);
+    await forkConversation(request, invoke);
+    await archiveConversation(conversationId, invoke);
+    await restoreConversation(conversationId, invoke);
+
+    expect(invoke.mock.calls).toEqual([
+      [CONVERSATION_SESSIONS_COMMAND, { projectId }],
+      [CONVERSATION_RESUME_COMMAND, { request }],
+      [CONVERSATION_FORK_COMMAND, { request }],
+      [CONVERSATION_ARCHIVE_COMMAND, { conversationId }],
+      [CONVERSATION_RESTORE_COMMAND, { conversationId }],
+    ]);
+  });
+
+  it("rejects path-bearing lifecycle input before native invocation", async () => {
+    const invoke = vi.fn().mockResolvedValue(scaffoldConversation);
+
+    await expect(
+      resumeConversation(
+        {
+          conversationId: "018f0000-0000-7000-8000-000000000010",
+          prompt: "Continue.",
           cwd: "/private/raw/path",
         } as never,
         invoke,

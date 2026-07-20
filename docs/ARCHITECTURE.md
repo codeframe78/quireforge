@@ -147,6 +147,27 @@ message text, reasoning, command output, diffs, or credentials. The strict
 frontend contract can start, poll, inspect, and interrupt by an application ID;
 the user-facing conversation view remains Milestone 7B.
 
+### Milestone 8A implementation boundary
+
+The same serialized `ConversationService` owns session lifecycle mutations so
+resume, fork, archive, restore, and reconciliation cannot race an active turn.
+The frontend supplies only an app conversation UUIDv7 and, for resume/fork, a
+bounded prompt. Native code reloads the reference-only row, revalidates the
+attached directory and exact cwd, reads the owned Codex thread, and invokes the
+reviewed lifecycle method with stored controls. Rollout paths, provided history,
+configuration objects, runtime workspace roots, Codex IDs, and cwd values never
+cross the webview boundary.
+
+Codex remains authoritative. Bounded `thread/list` requests batch exact verified
+cwd filters for current and archived threads, then match only IDs already owned
+by QuireForge; unrelated threads are not imported. A missing thread becomes a
+stable normalized state. SQLite schema version 3 stores only optional parent app
+lineage and an archive timestamp in addition to the existing reference fields.
+Database open converts stale starting/running/stopping rows to interrupted and
+clears active-turn IDs because subprocess ownership cannot survive a restart.
+No lifecycle command deletes source content, Codex history, or a QuireForge
+reference. The history/search/tabs presentation remains Milestone 8B.
+
 ## Application layers
 
 ### Frontend

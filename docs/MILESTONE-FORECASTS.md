@@ -335,3 +335,53 @@ the largely frontend implementation.
   `metadata.sqlite3` only within the fresh temporary XDG root.
 - Milestone 8 adds native lifecycle/reconciliation work and should receive a new
   model and reasoning gate rather than inheriting High automatically.
+
+### Milestone 8A — Native Session Lifecycle and Recovery
+
+| Field | Record |
+|---|---|
+| Forecast date | 2026-07-19 |
+| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
+| Preliminary forecast | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence |
+| Calibrated forecast | 4–7 active hours; 15–35 minutes of local commands; about 4.5–8 total elapsed hours across up to two sessions; medium confidence |
+| Calibration basis | Clean merged Milestone 7B `main`, reviewed Codex 0.144.6 lifecycle schemas, 44 GiB available RAM, 726 GiB free NVMe space, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers |
+| Observed active execution | Approximately 60–90 minutes through protocol review, schema/storage changes, native lifecycle implementation, strict frontend contracts, deterministic tests, security review, documentation, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checks/tests, the final 29.45-second full gate, 8.60-second browser gate, final 25.13-second release build, and isolated native smoke check |
+| User approval/waiting time | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation and were excluded; GitHub-hosted queue time is tracked separately |
+| Sessions | One active implementation session with recoverable schema, storage, native boundary, frontend contract, validation, and publication checkpoints |
+| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
+| Completion status | Complete and verified locally; publication is recorded in repository history |
+
+The calibrated forecast substantially overestimated implementation time. The
+Milestone 7A serialized process owner, strict conversation types, reference-only
+SQLite repository, shared fixture pattern, and warm build graph could be
+extended without a second runtime owner or dependency change. XHigh reasoning
+was still useful for protocol-field minimization, crash semantics, exact
+identity/cwd validation, archive-versus-delete separation, fork rollback, and
+the final native/webview security review.
+
+### Milestone 8A required observations and lessons
+
+- Schema generation took 0.48 seconds at about 45 MiB peak RSS and expanded the
+  committed reviewed subset from 28 to 42 schemas without retaining the full
+  generated bundle.
+- SQLite schema version 3 needs only parent application lineage and archive
+  timestamp fields. Startup recovery can safely clear active-turn ownership and
+  mark stale starting/running/stopping rows interrupted without inspecting or
+  mutating Codex transcript content.
+- Resume, fork, archive, and restore remain serialized with active turns. Native
+  code reads and validates the stored thread before mutation, sends no rollout
+  path/history/config/runtime roots, and correlates exact UUIDv7/cwd responses.
+- Current and archived listing is batched across exact revalidated cwd filters,
+  bounded to eight 256-item pages per state, and matches only already-owned app
+  references. Unrelated Codex threads are never imported.
+- The full repository gate passed 51 JavaScript and 57 Rust tests with 2
+  deliberate live probes ignored. Browser regression passed 14 tests; the warm
+  release build and isolated native launch also passed.
+- Available RAM stayed above 43 GiB, swap did not grow, and no OOM, throttling,
+  download, cache deletion, live model call, approval decision, project-file
+  mutation, destructive thread operation, or GPU workload occurred.
+- Milestone 8B is now a bounded frontend/session-presentation checkpoint. Its
+  preliminary range is approximately 2–4 active hours, 5–15 minutes of local
+  commands, and 2.5–5 total elapsed hours in one session, medium confidence;
+  model and reasoning must still receive a separate gate before work begins.
