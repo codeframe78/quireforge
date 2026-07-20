@@ -1,11 +1,12 @@
 # QuireForge Desktop
 
-Status: Milestone 4 process adapter implemented and verified locally. This
-package establishes the native shell, a small typed Tauri command boundary, and
-a versioned Codex compatibility layer with CLI detection, supervised app-server
-stdio, normalized model metadata, bounded failures, and deterministic mocks.
-Authentication, project attachment, conversations, persistence, terminal, Git,
-and integration workflows are not implemented here yet.
+Status: desktop work through Milestone 10 is implemented and verified locally.
+This package contains the Tauri shell, typed Rust/TypeScript boundary, supported
+Codex app-server adapter, Codex-owned authentication handoff, direct local
+project attachment, conversation/session/approval presentation, and reviewed
+Git status, diff, stage, unstage, bounded revert/recovery, and commit workflows.
+Terminal, advanced worktree/remote Git operations, integrations, packaging, and
+release workflows remain separately gated.
 
 Run package checks from the repository root with `pnpm validate`. Start the
 native development window with `pnpm desktop:dev` after installing the Linux

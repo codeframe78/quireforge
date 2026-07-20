@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "state": "unavailable",
+  "projectId": "018f0000-0000-7000-8000-000000000001",
+  "operation": "stage",
+  "path": "README.md",
+  "targets": [],
+  "destructive": false,
+  "confirmationId": null,
+  "secretFindings": [],
+  "diagnosticCode": "mutation-unavailable"
+}

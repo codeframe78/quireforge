@@ -41,9 +41,11 @@ progress into selectable, in-place expanded activity rows and adds an
 accessible approval card that offers only the native-advertised decisions.
 Milestone 10A adds a read-only native Git boundary with branch/status review,
 staged and working-tree diffs, a responsive changed-file interface, and an
-explicit revalidated editor handoff. It cannot stage, revert, commit, accept Git
-arguments, or persist repository content; those mutation workflows remain the
-separately gated Milestone 10B.
+explicit revalidated editor handoff. Milestone 10B adds fixed stage, unstage,
+bounded revert/recovery, and commit workflows with native-held expiring
+confirmations, concurrency and postcondition checks, attachment-scoped staged
+paths, repository-local identity, and high-confidence secret refusal. It does
+not expose arbitrary Git arguments, branches, worktrees, or remote operations.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -62,13 +64,14 @@ deployed. There is no application package to install yet.
   strict native conversation runtime with a responsive task UI and native
   session-lifecycle/recovery boundary, accessible session history controls,
   the complete Milestone 9 native approval and detailed-activity interface, and
-  Milestone 10A read-only Git status/diff review.
+  complete Milestone 10 reviewed Git status/diff and mutation workflows.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 10A read-only Git review is complete and verified
-  locally; Milestone 10B stage/revert/commit workflows require a fresh gate.
-- Known limitations: Git mutations, installable packages, releases, public
-  deployment, and production Lighthouse evidence do not exist yet.
+- Current milestone: Milestone 10 Git review and controlled mutation workflows
+  are complete and verified locally; Milestone 11 requires a fresh gate.
+- Known limitations: advanced Git/worktree/remote operations, installable
+  packages, releases, public deployment, and production Lighthouse evidence do
+  not exist yet.
 
 ## Discovery documents
 
@@ -87,6 +90,7 @@ deployed. There is no application package to install yet.
 - [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)
+- [Reviewed Git mutation decision](docs/DECISIONS/0013-reviewed-git-mutation-boundary.md)
 - [Brand sources and usage](assets/brand/README.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)

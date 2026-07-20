@@ -386,3 +386,42 @@ throttling, dependency download, cache deletion, clean build, competing project
 build, user-repository Git mutation, or material disk pressure occurred. Git,
 Rust, React, TypeScript, Vite, Astro, and Playwright remained CPU/system-memory
 workloads; the RTX 3050 was correctly unused.
+
+## Milestone 10B measurements
+
+The reviewed Git-mutation checkpoint reused warm Cargo, Git, pnpm, Vite, Astro,
+and Playwright caches. No dependency installation, clean build, database
+migration, cache deletion, linker/tool change, or GPU workload was required.
+The Balanced profile kept four Cargo workers and two Playwright workers.
+
+| Operation                                            |                                  Observed wall time | Approximate peak RSS | Result                                                                                                                |
+| ---------------------------------------------------- | --------------------------------------------------: | -------------------: | --------------------------------------------------------------------------------------------------------------------- |
+| Focused native mutation tests                        |  about 3–5 seconds including incremental recompiles |       about 1.11 GiB | Passed strict fixtures/tokens, lock ownership, exact stage/unstage, revert/recovery, commit, scope, and secret cases   |
+| Desktop type/lint/component and bridge checkpoints   |                       about 12–15 seconds combined |     Not instrumented | Passed 70 tests across 13 files plus strict type and lint checks                                                       |
+| Desktop production build                             |        about 2–3 seconds overall; Vite phase 0.13 s |     Not instrumented | Passed, 121 modules                                                                                                   |
+| Complete non-browser repository gate                 |                                       43.16 seconds |       about 1.33 GiB | Passed 73 JavaScript and 86 Rust tests; 2 live probes ignored                                                         |
+| Combined desktop/website browser gate                |                                       12.31 seconds |        about 318 MiB | Passed all 20 desktop/mobile checks with axe and overflow analysis                                                    |
+| Warm unbundled native release build                  |                                       34.56 seconds |       about 1.77 GiB | Passed, including 30.45-second release compile/link                                                                   |
+| Isolated native release launch                       |                           3-second bounded launch | Low runtime pressure | Schema migrations 1–3, final `0700`/`0600` metadata, and no remaining QuireForge/Codex child                          |
+| Desktop/mobile rendered-state inspection             |                       Focused full-page captures | Low runtime pressure | Confirmation target and applied mutation state remained legible in two-column desktop and stacked mobile layouts      |
+
+The complete gate was 36% slower than 10A's 31.72-second baseline and crossed
+the 25% measurement threshold. The changed assumption was that the final native
+security edit forced an incremental crate/test link inside the aggregate gate;
+the 7.29-second Rust test compile accounted for much of the difference. It did
+not reveal more product scope, exceed the calibrated 20–45-minute command
+allowance, or justify changing the Balanced profile. The combined browser gate
+was about 7% slower and the release build about 11% slower than 10A, below the
+update threshold.
+
+The first full gate stopped in 0.73 seconds when the repository validator found
+an intentionally secret-shaped test literal. Building the synthetic value from
+non-secret fragments kept the scanner test effective without adding an
+exception. The rerun passed without a clean build or cache reset.
+
+Approximately 42 GiB RAM and 725 GiB NVMe remained available after the gates.
+Swap stayed near 176 MiB, all timed commands reported zero swaps, and there was
+no OOM, throttling, dependency download, cache deletion, clean build, competing
+project build, user-repository mutation, or material disk pressure. Git, Rust,
+React, TypeScript, Vite, Astro, and Playwright remained CPU/system-memory
+workloads. The RTX 3050 was correctly unused.

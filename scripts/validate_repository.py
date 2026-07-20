@@ -50,6 +50,8 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/project-workspace.json",
     "apps/desktop/fixtures/git-workspace.json",
     "apps/desktop/fixtures/git-diff.json",
+    "apps/desktop/fixtures/git-mutation-preview.json",
+    "apps/desktop/fixtures/git-mutation-result.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/manifest.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeParams.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v1/InitializeResponse.json",
@@ -215,6 +217,9 @@ IDENTITY_EXPECTATIONS = {
         "git_status",
         "git_diff",
         "git_open_file",
+        "git_mutation_preview",
+        "git_mutation_confirm",
+        "git_mutation_recover",
         "GitService",
     ),
 }

@@ -1,7 +1,7 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the website foundation and the
-desktop work through Milestone 10A implemented locally. Git mutation, worktree,
+desktop work through Milestone 10 implemented locally. Advanced Git/worktree,
 terminal, packaging, deployment, and integration interfaces remain subject to
 their separately gated implementation milestones.
 
@@ -241,8 +241,34 @@ a non-symlink regular file whose canonical path remains inside the attachment.
 React receives a strict normalized branch/status projection and bounded diff
 line records only. It cannot supply Git options or open an arbitrary file.
 Browser preview does not simulate repository data, and no status or diff content
-is stored. Stage, unstage, revert, and commit remain absent until the separately
-gated Milestone 10B. See [ADR 0012](DECISIONS/0012-read-only-git-review-boundary.md).
+is stored. See [ADR 0012](DECISIONS/0012-read-only-git-review-boundary.md).
+
+### Milestone 10B reviewed Git mutation boundary
+
+`GitService` adds fixed preview, confirm, and recover commands without exposing
+Git argv, cwd, revisions, absolute paths, object IDs, or reference names. A
+preview contains a closed operation and either one current-status path or one
+bounded commit message. Native code requires a writable revalidated attachment,
+reserves the project against an active Codex turn, builds an exact plan, and
+retains it behind an expiring process-local UUIDv7. Confirmation consumes only
+that token, reacquires project ownership, and rechecks root and Git evidence.
+
+Stage and unstage snapshot exact index entries and verify final status, with
+index-entry rollback on an unexpected postcondition. Revert accepts only a
+tracked regular-file worktree modification no larger than one MiB, snapshots
+bytes and ordinary mode, restores only the worktree from the index, and returns
+a 30-minute one-use in-memory recovery token. Recovery refuses newer worktree
+changes and atomically restores the snapshot. It is not a persistent backup.
+
+Commit requires every staged path and rename source to remain in the exact
+attachment. It rejects conflicts, submodules, active merge/cherry-pick/revert
+state, missing repository-local identity, unscannable staged blobs, and
+high-confidence secrets in staged content, sensitive filenames, or the commit
+message. Git plumbing writes the reviewed tree, locks and revalidates the index,
+creates a hookless/unsigned commit, and updates `HEAD` only from the reviewed old
+value. It checks final reference and index state and attempts expected-value
+rollback on an unexpected postcondition. See
+[ADR 0013](DECISIONS/0013-reviewed-git-mutation-boundary.md).
 
 ## Application layers
 
@@ -251,9 +277,10 @@ gated Milestone 10B. See [ADR 0012](DECISIONS/0012-read-only-git-review-boundary
 React and TypeScript render semantic, keyboard-accessible views. State is split
 between persisted application state, short-lived UI state, and normalized
 backend event streams. The frontend cannot directly open filesystem paths,
-spawn processes, mutate Git, or edit Codex configuration. Its editor action
-supplies only an app-owned project ID and normalized changed-file path for
-native revalidation.
+spawn processes, execute Git, or edit Codex configuration. Its editor action
+supplies only an app-owned project ID and normalized changed-file path. A Git
+mutation preview supplies only a closed operation and path/message; confirmation
+supplies only the native-held plan token.
 
 ### Native application core
 
@@ -295,9 +322,9 @@ contract tests.
 - `DirectoryAttachmentService`: attach, confirm, detach, and relink workflow.
 - `DirectoryIdentityService`: selected/resolved paths, stat identity, mounts,
   accessibility, and change detection.
-- `GitService`: implemented bounded status, branch, diff, and changed-file
-  editor handoff; separately gated mutation and worktree operations remain
-  later work.
+- `GitService`: implemented bounded status, branch, diff, changed-file editor
+  handoff, stage, unstage, bounded revert/recovery, and commit; branch,
+  worktree, and remote operations remain later work.
 - `TerminalService`: independent PTY sessions rooted in verified directories.
 - `ApprovalService`: request correlation, scope, decision validation, expiry.
 - `PreviewService`: bounded MIME/type-aware previews.
@@ -461,9 +488,14 @@ The Milestone 10A implementation limits status to the attached directory,
 ignores global/system Git configuration, disables optional write/performance
 features and extensible diff execution, reparses current status before each
 path-specific action, and returns only normalized bounded records. It performs
-no index, worktree, reference, configuration, or object mutation. Mutating Git
-operations remain unimplemented rather than being hidden behind the review
-bridge.
+no index, worktree, reference, configuration, or object mutation.
+
+Milestone 10B keeps mutation outside that read-only bridge. Native-held,
+single-use preview plans gate file-level stage/unstage, bounded regular-file
+revert/recovery, and an attachment-scoped commit plumbing workflow. Exact status,
+index, worktree, tree, and reference postconditions protect unrelated work.
+Hooks, signing, prompts, global/system configuration, arbitrary arguments, and
+advanced branch/worktree/remote operations remain unavailable.
 
 Codex-managed sessions and user worktrees are never removed as a side effect of
 detaching a directory or deleting app metadata.

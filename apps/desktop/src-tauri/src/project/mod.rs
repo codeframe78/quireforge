@@ -48,10 +48,13 @@ pub(crate) enum ProjectExecutionError {
     ProjectBusy,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct ProjectReviewRoot {
     pub attached_root: PathBuf,
     pub worktree_root: PathBuf,
+    pub git_dir: PathBuf,
+    pub common_dir: PathBuf,
+    pub writable: bool,
 }
 
 pub(crate) struct ConversationReference<'a> {
@@ -353,6 +356,9 @@ impl ProjectService {
         Ok(ProjectReviewRoot {
             attached_root: identity.resolved_path,
             worktree_root: git.worktree_root,
+            git_dir: git.git_dir,
+            common_dir: git.common_dir,
+            writable: identity.accessibility == DirectoryAccessibilityState::ConnectedAccessible,
         })
     }
 

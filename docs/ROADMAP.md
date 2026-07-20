@@ -53,7 +53,9 @@ Milestone 9B adds the selectable expanded activity and bounded approval
 interface over that contract.
 Milestone 10A adds a fixed native read-only Git boundary, normalized status and
 diff contracts, a responsive changed-file reviewer, and revalidated editor
-handoff. Index/worktree mutations remain the separately gated Milestone 10B.
+handoff. Milestone 10B adds fixed stage, unstage, bounded revert/recovery, and
+commit workflows behind native-held preview tokens, exact postconditions,
+project concurrency, attachment scope, and secret review.
 
 ## Status
 
@@ -69,7 +71,7 @@ handoff. Index/worktree mutations remain the separately gated Milestone 10B.
 |         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                                     |
 |         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                                     |
 |         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history              |
-|        10 | Git status and diff review                                        | Large        | In progress; 10A complete locally and verified; 10B mutation workflows pending |
+|        10 | Git status, diff review, and controlled mutations                  | Large        | Complete and verified; publication tracked by this milestone change             |
 |        11 | Worktrees and parallel work                                       | Very large   | Planned                                                                        |
 |        12 | Integrated terminal                                               | Large        | Planned                                                                        |
 |        13 | Integration discovery and compatibility                           | Very large   | Planned                                                                        |
@@ -282,12 +284,26 @@ working-tree selections, normalized line-numbered diffs, binary/truncated
 states, refresh, and an explicit revalidated default-editor handoff. Browser
 preview never simulates repository data, and no Git or diff state is persisted.
 
-Milestone 10B remains pending and requires a separate reasoning/model/start
-gate. It covers explicit stage, unstage, revert, and commit workflows with
-operation-specific previews, confirmation, concurrency/postcondition checks,
-secret review, failure recovery, and deterministic no-data-loss tests. No
-generic Git command, branch/worktree/remote mutation, push, pull, package,
-deployment, or release is authorized by 10A.
+Milestone 10B implements explicit stage, unstage, revert, and commit workflows.
+Preview accepts only a closed operation with an app-owned project ID and either
+one normalized attachment-relative path or one bounded commit message. Rust
+revalidates writable Git/worktree identity, reserves the project against Codex,
+captures exact evidence, and retains the plan behind a five-minute in-memory
+UUIDv7. Confirmation consumes only that token, revalidates the evidence, and
+checks exact postconditions; React cannot resubmit paths or messages.
+
+Stage/unstage preserve exact prior index entries for failure rollback. Revert
+is limited to reviewed tracked regular-file modifications of at most one MiB
+and offers a 30-minute single-use, process-local atomic recovery. Commit refuses
+staged paths outside the attachment, conflicts, submodules, repository
+operations in progress, missing repository-local identity, oversized content,
+and high-confidence secrets in files, filenames, or the message. Git plumbing
+creates the reviewed tree without hooks, signing, editors, prompts, or
+global/system configuration, then updates `HEAD` with expected-old evidence and
+checks the final reference/index state. Branch/worktree/remote mutation, push,
+pull, reset, checkout, stash, arbitrary Git commands, packages, deployment, and
+release remain separately gated. See
+[ADR 0013](DECISIONS/0013-reviewed-git-mutation-boundary.md).
 
 ### 11 — Worktrees and Parallel Work
 

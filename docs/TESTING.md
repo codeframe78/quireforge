@@ -1,9 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2–10A establish repository, website, desktop frontend,
+Status: Milestones 2–10 establish repository, website, desktop frontend,
 native contract, Codex adapter, authentication, project attachment,
-conversation/runtime lifecycle, approvals, and read-only Git review checks.
-PTY and mutating Git fixtures arrive with their gated milestones.
+conversation/runtime lifecycle, approvals, and reviewed Git read/write checks.
+PTY fixtures arrive with their gated milestone.
 
 ## Repository, website, and desktop checks
 
@@ -60,10 +60,15 @@ Git-review tests cover shared strict fixtures, porcelain-v2 parsing without
 object IDs, repository and read-only attachment revalidation, fixed-command
 status/diff execution in temporary repositories, binary projection, deceptive
 and escaping path refusal, control stripping, frontend path rejection, browser
-preview honesty, responsive layout, overflow, and axe-core. They never stage,
-revert, commit, alter a user repository, or invoke a model.
+preview honesty, responsive layout, overflow, and axe-core. Mutation tests use
+only per-test temporary repositories and cover strict request/token contracts,
+stale preview refusal, exact stage/unstage, project ownership, index locks,
+bounded revert and single-use recovery, unborn and existing-branch commits,
+unstaged-work preservation, hooks/signing refusal, attachment scope,
+repository-local identity, sensitive filenames/content/messages, and final
+postconditions. They never alter a user repository or invoke a model.
 
-## Manual Milestone 10A checklist
+## Manual Milestone 10 checklist
 
 - Attach repository roots and repository subdirectories; confirm status is
   limited to the exact attachment and never falls back to a parent, recent, or
@@ -81,10 +86,21 @@ revert, commit, alter a user repository, or invoke a model.
   environment values and browser preview never fabricates Git data.
 - Run component/bridge/native tests, both Playwright viewports, axe-core,
   overflow checks, the complete repository gate, unbundled native build, and an
-  isolated launch. Inspect repository status before and after to prove routine
-  validation performed no Git mutation.
-- Confirm stage, unstage, revert, commit, branch, worktree, and remote actions do
-  not exist. They remain Milestone 10B or later work.
+  isolated launch. Inspect the QuireForge working copy before and after to prove
+  routine mutation tests touched only their disposable temporary repositories.
+- In a disposable repository, confirm stage/unstage preview one exact file,
+  confirmation sends only the native token, a changed/expired preview fails,
+  and Codex ownership or an index lock prevents the write.
+- Confirm revert is limited to a bounded tracked regular-file modification,
+  preserves staged content, offers one process-local recovery, refuses recovery
+  after newer edits, and never deletes an untracked file.
+- Confirm commit refuses staged paths outside a subdirectory attachment,
+  conflicts, submodules, active repository operations, missing local identity,
+  oversized blobs, sensitive filenames, and high-confidence secrets in files
+  or the message. Confirm hooks, signing, editors, and prompts do not run and
+  unrelated unstaged changes remain intact.
+- Confirm branch, worktree, reset, checkout, stash, remote, push, pull, and
+  arbitrary Git actions do not exist. They remain later milestone work.
 
 ## Manual Milestone 9 checklist
 

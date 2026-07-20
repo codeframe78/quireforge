@@ -3,11 +3,21 @@ import { invoke } from "@tauri-apps/api/core";
 import {
   gitDiffRequestSchema,
   gitDiffSchema,
+  gitMutationConfirmRequestSchema,
+  gitMutationPreviewRequestSchema,
+  gitMutationPreviewSchema,
+  gitMutationResultSchema,
   gitOpenFileRequestSchema,
+  gitRecoveryRequestSchema,
   gitWorkspaceSchema,
   type GitDiffRequest,
   type GitDiffSnapshot,
+  type GitMutationConfirmRequest,
+  type GitMutationPreviewRequest,
+  type GitMutationPreviewSnapshot,
+  type GitMutationResultSnapshot,
   type GitOpenFileRequest,
+  type GitRecoveryRequest,
   type GitWorkspaceSnapshot,
 } from "./git";
 import {
@@ -60,6 +70,9 @@ export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
 export const GIT_STATUS_COMMAND = "git_status";
 export const GIT_DIFF_COMMAND = "git_diff";
 export const GIT_OPEN_FILE_COMMAND = "git_open_file";
+export const GIT_MUTATION_PREVIEW_COMMAND = "git_mutation_preview";
+export const GIT_MUTATION_CONFIRM_COMMAND = "git_mutation_confirm";
+export const GIT_MUTATION_RECOVER_COMMAND = "git_mutation_recover";
 export const CONVERSATION_STATUS_COMMAND = "conversation_status";
 export const CONVERSATION_START_COMMAND = "conversation_start";
 export const CONVERSATION_POLL_COMMAND = "conversation_poll";
@@ -256,6 +269,39 @@ export async function openGitFile(
 ): Promise<void> {
   const reviewedRequest = gitOpenFileRequestSchema.parse(request);
   await invokeFunction(GIT_OPEN_FILE_COMMAND, { request: reviewedRequest });
+}
+
+export async function previewGitMutation(
+  request: GitMutationPreviewRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<GitMutationPreviewSnapshot> {
+  const reviewedRequest = gitMutationPreviewRequestSchema.parse(request);
+  const payload = await invokeFunction(GIT_MUTATION_PREVIEW_COMMAND, {
+    request: reviewedRequest,
+  });
+  return gitMutationPreviewSchema.parse(payload);
+}
+
+export async function confirmGitMutation(
+  request: GitMutationConfirmRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<GitMutationResultSnapshot> {
+  const reviewedRequest = gitMutationConfirmRequestSchema.parse(request);
+  const payload = await invokeFunction(GIT_MUTATION_CONFIRM_COMMAND, {
+    request: reviewedRequest,
+  });
+  return gitMutationResultSchema.parse(payload);
+}
+
+export async function recoverGitMutation(
+  request: GitRecoveryRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<GitMutationResultSnapshot> {
+  const reviewedRequest = gitRecoveryRequestSchema.parse(request);
+  const payload = await invokeFunction(GIT_MUTATION_RECOVER_COMMAND, {
+    request: reviewedRequest,
+  });
+  return gitMutationResultSchema.parse(payload);
 }
 
 export async function loadConversationStatus(

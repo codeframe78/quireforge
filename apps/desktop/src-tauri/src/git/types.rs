@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const GIT_SCHEMA_VERSION: u16 = 1;
+pub const GIT_MUTATION_SCHEMA_VERSION: u16 = 1;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
@@ -22,6 +23,17 @@ pub enum GitDiagnosticCode {
     OutputTooLarge,
     InvalidPath,
     DiffUnavailable,
+    MutationUnavailable,
+    ReadOnly,
+    ProjectBusy,
+    StalePreview,
+    ConfirmationExpired,
+    SecretDetected,
+    UnscannableContent,
+    IdentityUnavailable,
+    OutsideAttachment,
+    PostconditionFailed,
+    RecoveryUnavailable,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -164,6 +176,149 @@ impl GitDiffSnapshot {
             kind: None,
             lines: Vec::new(),
             truncated: false,
+            diagnostic_code: Some(diagnostic_code),
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GitMutationOperation {
+    Stage,
+    Unstage,
+    Revert,
+    Commit,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GitMutationPreviewState {
+    Ready,
+    Blocked,
+    Unavailable,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GitMutationResultState {
+    Applied,
+    Unavailable,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GitSecretFindingKind {
+    ForbiddenPath,
+    PrivateKey,
+    GitHubToken,
+    OpenAiApiKey,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum GitSecretFindingLocation {
+    StagedFile,
+    CommitMessage,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GitMutationPreviewRequest {
+    pub project_id: String,
+    pub operation: GitMutationOperation,
+    pub path: Option<String>,
+    pub message: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GitMutationConfirmRequest {
+    pub confirmation_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct GitRecoveryRequest {
+    pub recovery_id: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitMutationTarget {
+    pub path: String,
+    pub staged: Option<GitChangeKind>,
+    pub worktree: Option<GitChangeKind>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitSecretFinding {
+    pub location: GitSecretFindingLocation,
+    pub path: Option<String>,
+    pub kind: GitSecretFindingKind,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitMutationPreviewSnapshot {
+    pub schema_version: u16,
+    pub state: GitMutationPreviewState,
+    pub project_id: String,
+    pub operation: GitMutationOperation,
+    pub path: Option<String>,
+    pub targets: Vec<GitMutationTarget>,
+    pub destructive: bool,
+    pub confirmation_id: Option<String>,
+    pub secret_findings: Vec<GitSecretFinding>,
+    pub diagnostic_code: Option<GitDiagnosticCode>,
+}
+
+impl GitMutationPreviewSnapshot {
+    pub fn unavailable(
+        request: &GitMutationPreviewRequest,
+        path: Option<String>,
+        diagnostic_code: GitDiagnosticCode,
+    ) -> Self {
+        Self {
+            schema_version: GIT_MUTATION_SCHEMA_VERSION,
+            state: GitMutationPreviewState::Unavailable,
+            project_id: request.project_id.clone(),
+            operation: request.operation,
+            path,
+            targets: Vec::new(),
+            destructive: request.operation == GitMutationOperation::Revert,
+            confirmation_id: None,
+            secret_findings: Vec::new(),
+            diagnostic_code: Some(diagnostic_code),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GitMutationResultSnapshot {
+    pub schema_version: u16,
+    pub state: GitMutationResultState,
+    pub project_id: Option<String>,
+    pub operation: Option<GitMutationOperation>,
+    pub recovery_id: Option<String>,
+    pub workspace: Option<GitWorkspaceSnapshot>,
+    pub diagnostic_code: Option<GitDiagnosticCode>,
+}
+
+impl GitMutationResultSnapshot {
+    pub fn unavailable(
+        project_id: Option<String>,
+        operation: Option<GitMutationOperation>,
+        diagnostic_code: GitDiagnosticCode,
+    ) -> Self {
+        Self {
+            schema_version: GIT_MUTATION_SCHEMA_VERSION,
+            state: GitMutationResultState::Unavailable,
+            project_id,
+            operation,
+            recovery_id: None,
+            workspace: None,
             diagnostic_code: Some(diagnostic_code),
         }
     }

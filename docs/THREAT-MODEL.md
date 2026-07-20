@@ -261,8 +261,25 @@ Controls:
   byte, line, change-count, and time limits.
 - Return normalized status and diff-line records only. Discard object IDs, raw
   headers, stderr, and repository configuration; persist no diff content.
-- Keep stage, unstage, revert, commit, branch, worktree, and remote mutations
-  out of the read-only bridge and behind later explicit gates.
+- Keep mutations out of the read-only bridge. Preview only one closed operation
+  and exact attachment-relative target/message, retain the plan behind an
+  expiring native token, and accept only that token for confirmation.
+- Serialize Git writes against Codex project ownership, revalidate attachment
+  and exact Git evidence at confirmation, check operation-specific
+  postconditions, and attempt narrow index/reference rollback on unexpected
+  results.
+- Limit revert to a bounded tracked regular file; snapshot bytes/mode before the
+  write and offer only an expiring, single-use, process-local atomic recovery
+  while clearly stating that it is not a durable backup.
+- Before commit, reject staged paths outside the attachment, conflicts,
+  submodules, active repository operations, missing repository-local identity,
+  unscannable blobs, sensitive filenames, and high-confidence secrets in staged
+  content or the commit message.
+- Create commits without hooks, signing, editors, prompts, or inherited/global/
+  system configuration; lock/revalidate the index and update `HEAD` only from
+  the reviewed old value.
+- Keep branch, worktree, reset, checkout, stash, remote, push, pull, and generic
+  Git mutations behind later explicit gates.
 
 ### Webview and preview content
 

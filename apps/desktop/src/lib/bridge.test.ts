@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import { scaffoldCodexAuth } from "./auth";
 import { scaffoldCodexRuntime } from "./codex";
 import { scaffoldConversation } from "./conversation";
-import { scaffoldGitDiff, scaffoldGitWorkspace } from "./git";
+import {
+  scaffoldGitDiff,
+  scaffoldGitMutationPreview,
+  scaffoldGitMutationResult,
+  scaffoldGitWorkspace,
+} from "./git";
 import { scaffoldSessionLifecycle } from "./session";
 import {
   archiveConversation,
@@ -16,6 +21,7 @@ import {
   CODEX_AUTH_STATUS_COMMAND,
   CODEX_RUNTIME_PROBE_COMMAND,
   confirmProjectAttachment,
+  confirmGitMutation,
   decideConversationApproval,
   CONVERSATION_APPROVAL_DECIDE_COMMAND,
   CONVERSATION_INTERRUPT_COMMAND,
@@ -43,6 +49,7 @@ import {
   pickProjectDirectory,
   pickProjectRelink,
   preflightProject,
+  previewGitMutation,
   pollConversation,
   restoreConversation,
   resumeConversation,
@@ -56,7 +63,11 @@ import {
   PROJECT_WORKSPACE_STATUS_COMMAND,
   GIT_DIFF_COMMAND,
   GIT_OPEN_FILE_COMMAND,
+  GIT_MUTATION_CONFIRM_COMMAND,
+  GIT_MUTATION_PREVIEW_COMMAND,
+  GIT_MUTATION_RECOVER_COMMAND,
   GIT_STATUS_COMMAND,
+  recoverGitMutation,
   startCodexAuth,
   startConversation,
   interruptConversation,
@@ -193,6 +204,43 @@ describe("desktop bridge", () => {
     ]);
     await expect(
       loadGitDiff({ ...request, path: "../outside" }, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(3);
+  });
+
+  it("confirms native-held Git mutation tokens without resubmitting paths", async () => {
+    const projectId = "018f0000-0000-7000-8000-000000000001";
+    const confirmationId = "018f0000-0000-7000-8000-000000000002";
+    const recoveryId = "018f0000-0000-7000-8000-000000000003";
+    const request = {
+      projectId,
+      operation: "stage" as const,
+      path: "README.md",
+      message: null,
+    };
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce(scaffoldGitMutationPreview)
+      .mockResolvedValueOnce(scaffoldGitMutationResult)
+      .mockResolvedValueOnce(scaffoldGitMutationResult);
+
+    await previewGitMutation(request, invoke);
+    await confirmGitMutation({ confirmationId }, invoke);
+    await recoverGitMutation({ recoveryId }, invoke);
+
+    expect(invoke.mock.calls).toEqual([
+      [GIT_MUTATION_PREVIEW_COMMAND, { request }],
+      [GIT_MUTATION_CONFIRM_COMMAND, { request: { confirmationId } }],
+      [GIT_MUTATION_RECOVER_COMMAND, { request: { recoveryId } }],
+    ]);
+    await expect(
+      previewGitMutation({ ...request, path: "../outside" }, invoke),
+    ).rejects.toThrow();
+    await expect(
+      confirmGitMutation(
+        { confirmationId: projectId.replace("7", "4") },
+        invoke,
+      ),
     ).rejects.toThrow();
     expect(invoke).toHaveBeenCalledTimes(3);
   });

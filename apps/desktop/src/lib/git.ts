@@ -1,4 +1,6 @@
 import gitDiffFixture from "../../fixtures/git-diff.json";
+import gitMutationPreviewFixture from "../../fixtures/git-mutation-preview.json";
+import gitMutationResultFixture from "../../fixtures/git-mutation-result.json";
 import gitWorkspaceFixture from "../../fixtures/git-workspace.json";
 import { z } from "zod";
 
@@ -22,7 +24,7 @@ export const gitPathSchema = safeTextSchema
       .every((part) => part !== "" && part !== "." && part !== ".."),
   );
 
-const gitDiagnosticCodeSchema = z.enum([
+export const gitDiagnosticCodeSchema = z.enum([
   "project-not-found",
   "directory-unavailable",
   "identity-changed",
@@ -32,6 +34,17 @@ const gitDiagnosticCodeSchema = z.enum([
   "output-too-large",
   "invalid-path",
   "diff-unavailable",
+  "mutation-unavailable",
+  "read-only",
+  "project-busy",
+  "stale-preview",
+  "confirmation-expired",
+  "secret-detected",
+  "unscannable-content",
+  "identity-unavailable",
+  "outside-attachment",
+  "postcondition-failed",
+  "recovery-unavailable",
 ]);
 
 export const gitChangeKindSchema = z.enum([
@@ -162,11 +175,166 @@ export const gitDiffSchema = z
     }
   });
 
+export const gitMutationOperationSchema = z.enum([
+  "stage",
+  "unstage",
+  "revert",
+  "commit",
+]);
+
+export const gitMutationPreviewRequestSchema = z
+  .object({
+    projectId: opaqueIdSchema,
+    operation: gitMutationOperationSchema,
+    path: gitPathSchema.nullable(),
+    message: safeTextSchema
+      .min(1)
+      .max(512)
+      .refine((value) => value.trim() === value)
+      .nullable(),
+  })
+  .strict()
+  .superRefine((request, context) => {
+    const commit = request.operation === "commit";
+    if (
+      (commit && (request.path !== null || request.message === null)) ||
+      (!commit && (request.path === null || request.message !== null))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Git mutation request fields are inconsistent",
+      });
+    }
+  });
+
+export const gitMutationConfirmRequestSchema = z
+  .object({ confirmationId: opaqueIdSchema })
+  .strict();
+
+export const gitRecoveryRequestSchema = z
+  .object({ recoveryId: opaqueIdSchema })
+  .strict();
+
+const gitMutationTargetSchema = z
+  .object({
+    path: gitPathSchema,
+    staged: gitChangeKindSchema.nullable(),
+    worktree: gitChangeKindSchema.nullable(),
+  })
+  .strict();
+
+const gitSecretFindingSchema = z
+  .object({
+    location: z.enum(["staged-file", "commit-message"]),
+    path: gitPathSchema.nullable(),
+    kind: z.enum([
+      "forbidden-path",
+      "private-key",
+      "git-hub-token",
+      "open-ai-api-key",
+    ]),
+  })
+  .strict()
+  .superRefine((finding, context) => {
+    if ((finding.location === "staged-file") !== (finding.path !== null)) {
+      context.addIssue({
+        code: "custom",
+        message: "Git secret finding location is inconsistent",
+      });
+    }
+  });
+
+export const gitMutationPreviewSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    state: z.enum(["ready", "blocked", "unavailable"]),
+    projectId: opaqueIdSchema,
+    operation: gitMutationOperationSchema,
+    path: gitPathSchema.nullable(),
+    targets: z.array(gitMutationTargetSchema).max(512),
+    destructive: z.boolean(),
+    confirmationId: opaqueIdSchema.nullable(),
+    secretFindings: z.array(gitSecretFindingSchema).max(64),
+    diagnosticCode: gitDiagnosticCodeSchema.nullable(),
+  })
+  .strict()
+  .superRefine((preview, context) => {
+    const ready = preview.state === "ready";
+    const commit = preview.operation === "commit";
+    if (
+      ready !== (preview.confirmationId !== null) ||
+      ready === (preview.diagnosticCode !== null) ||
+      (ready && preview.targets.length === 0) ||
+      (ready &&
+        !commit &&
+        (preview.targets.length !== 1 ||
+          preview.targets[0]?.path !== preview.path)) ||
+      preview.destructive !== (preview.operation === "revert") ||
+      commit !== (preview.path === null) ||
+      (preview.state !== "blocked" && preview.secretFindings.length !== 0)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Git mutation preview fields are inconsistent",
+      });
+    }
+  });
+
+export const gitMutationResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    state: z.enum(["applied", "unavailable"]),
+    projectId: opaqueIdSchema.nullable(),
+    operation: gitMutationOperationSchema.nullable(),
+    recoveryId: opaqueIdSchema.nullable(),
+    workspace: gitWorkspaceSchema.nullable(),
+    diagnosticCode: gitDiagnosticCodeSchema.nullable(),
+  })
+  .strict()
+  .superRefine((result, context) => {
+    const applied = result.state === "applied";
+    if (
+      applied !== (result.diagnosticCode === null) ||
+      (applied &&
+        (result.projectId === null ||
+          result.operation === null ||
+          result.workspace === null)) ||
+      (!applied && result.workspace !== null) ||
+      (!applied && result.recoveryId !== null) ||
+      (result.workspace !== null &&
+        result.workspace.projectId !== result.projectId) ||
+      (result.recoveryId !== null && result.operation !== "revert")
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Git mutation result fields are inconsistent",
+      });
+    }
+  });
+
 export type GitWorkspaceSnapshot = z.infer<typeof gitWorkspaceSchema>;
 export type GitDiffSnapshot = z.infer<typeof gitDiffSchema>;
 export type GitDiffRequest = z.infer<typeof gitDiffRequestSchema>;
 export type GitOpenFileRequest = z.infer<typeof gitOpenFileRequestSchema>;
+export type GitMutationOperation = z.infer<typeof gitMutationOperationSchema>;
+export type GitMutationPreviewRequest = z.infer<
+  typeof gitMutationPreviewRequestSchema
+>;
+export type GitMutationConfirmRequest = z.infer<
+  typeof gitMutationConfirmRequestSchema
+>;
+export type GitRecoveryRequest = z.infer<typeof gitRecoveryRequestSchema>;
+export type GitMutationPreviewSnapshot = z.infer<
+  typeof gitMutationPreviewSchema
+>;
+export type GitMutationResultSnapshot = z.infer<typeof gitMutationResultSchema>;
 
 export const scaffoldGitWorkspace =
   gitWorkspaceSchema.parse(gitWorkspaceFixture);
 export const scaffoldGitDiff = gitDiffSchema.parse(gitDiffFixture);
+export const scaffoldGitMutationPreview = gitMutationPreviewSchema.parse(
+  gitMutationPreviewFixture,
+);
+export const scaffoldGitMutationResult = gitMutationResultSchema.parse(
+  gitMutationResultFixture,
+);

@@ -637,3 +637,86 @@ have materially improved this closed read-only contract.
   Sol with XHigh reasoning is provisionally appropriate because stage, unstage,
   revert, commit, secret review, concurrency, postconditions, and failure
   recovery are mutation-sensitive.
+
+### Milestone 10B — Reviewed Stage, Unstage, Revert, and Commit
+
+| Field                       | Record                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-20                                                                                                                                                                                                                                                                                                                                                                       |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                                                                                                 |
+| Preliminary forecast        | Approximately 4–7 active hours; 15–35 minutes of local commands; about 5–8.5 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                                                                                  |
+| Calibrated forecast         | Approximately 5–8 active hours; 20–45 minutes of local commands; about 6–10 total elapsed hours across one or two sessions; medium-low confidence                                                                                                                                                                                                                                |
+| Calibration basis           | Clean synchronized Milestone 10A `main`, Git 2.53.0, about 43 GiB available RAM, low initial host load, 726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, no dependency change, four Cargo workers, two Playwright workers, and CPU/system-memory execution with no GPU workload                                                                                |
+| Observed active execution   | Approximately 50–75 minutes through Git-plumbing and recovery design, native implementation, strict contracts, React confirmation UI, disposable-repository tests, security hardening, documentation, complete gates, release/native verification, visual inspection, and commit preparation; pre-gate approval and hosted publication waiting excluded                           |
+| Observed local command time | Approximately 6–10 minutes across incremental compile/test cycles, disposable Git probes, the 43.16-second final repository gate, 12.31-second combined browser gate, 34.56-second release build, a three-second isolated launch, visual captures, formatting, and focused checks                                                                                                      |
+| User approval/waiting time  | Manual model/reasoning and milestone-start confirmations occurred before implementation and are excluded; publication and hosted-runner waiting are tracked separately                                                                                                                                                                                                         |
+| Sessions                    | One logical implementation session with native-design, contract/UI, deterministic-test, documentation, validation, and publication checkpoints                                                                                                                                                                                                                                  |
+| Usage intensity             | XHigh model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                                                                                             |
+| Completion status           | Complete and verified; implementation publication is tracked by this milestone change                                                                                                                                                                                                                                                                                           |
+
+The forecast substantially overestimated implementation time. The Milestone
+10A Git runner, status parser, attachment identity, project reservation,
+strict-fixture pattern, React source-review surface, and warm caches were all
+directly reusable. The estimate intentionally carried a large debugging and
+recovery allowance because commit/index/reference races and no-data-loss
+behavior were previously unmeasured. XHigh reasoning was appropriate for the
+commit-plumbing choice, native-held confirmation model, secret review,
+subdirectory scope, narrow rollback, recovery limitations, and final lock
+ownership audit; a lower setting would have increased the risk of using
+porcelain commit hooks or overstating recovery guarantees.
+
+### Milestone 10B required observations and lessons
+
+- `git commit --no-verify` is insufficient for this boundary because not every
+  commit hook is suppressed. The implementation uses `write-tree`,
+  `commit-tree`, and expected-old `update-ref`, with signing, hooks, prompts,
+  global/system configuration, and inherited environment disabled.
+- `write-tree` needs its own index lock. Commit therefore writes the candidate
+  tree before acquiring QuireForge's exact index lock, then revalidates all
+  evidence and verifies cached index equality with that tree under the lock.
+  Lock cleanup records device/inode identity and never removes a replacement
+  lock.
+- Confirmation does not accept paths or messages. A five-minute native UUIDv7
+  identifies one exact plan and is consumed before execution. New preview
+  attempts invalidate older pending intent for the same project.
+- Stage/unstage snapshot exact index entries. Revert is deliberately narrower:
+  one tracked regular-file modification, at most one MiB, with a 30-minute
+  one-use in-memory backup restored atomically only if indexed content remains
+  untouched. Application exit loses recovery, so it is not a durable backup.
+- Commit secret review is bounded to one MiB per staged blob and four MiB total.
+  Sensitive filenames plus high-confidence private-key, GitHub-token, and
+  OpenAI-key patterns in staged blobs or the message block the preview. This is
+  defense in depth rather than proof that staged content contains no secret.
+- Temporary-repository tests cover stale previews, exact stage/unstage,
+  replacement index locks, project ownership, existing and unborn branch
+  commits, hooks/signing, unstaged-work preservation, secret/message refusal,
+  attachment scope, revert/recovery, and single-use behavior. No user
+  repository was mutated by routine validation.
+- The final complete non-browser gate passed in 43.16 seconds at about 1.33 GiB peak
+  RSS: 73 JavaScript tests and 86 Rust tests passed; 2 deliberate live probes
+  remained ignored. This is slower than 10A because the native crate and test
+  binary were recompiled after the final security change, but remained far
+  below the forecasted local-command allowance.
+- The combined browser gate passed 20 desktop/mobile checks in 12.31 seconds at
+  about 318 MiB peak RSS. Axe found no violations and neither viewport
+  overflowed. Visual captures confirmed the modal target review and applied
+  state in the two-column desktop and stacked mobile layouts.
+- The warm unbundled release build passed in 34.56 seconds at about 1.77 GiB
+  peak RSS, including a 30.45-second release compile. A three-second isolated
+  launch created schema migrations 1–3 with final `0700`/`0600` metadata
+  permissions and left no QuireForge or Codex app-server process.
+- The first aggregate gate stopped after 0.73 seconds because an intentionally
+  secret-shaped test fixture correctly triggered the repository scanner.
+  Constructing the value from non-secret fragments preserved the test without
+  weakening validation; no cache, configuration, or repository state was
+  reset.
+- About 42 GiB RAM and 725 GiB NVMe remained available after the gates. Swap
+  stayed near 176 MiB, timed commands reported zero swaps, and there was no OOM,
+  throttling, dependency download, clean build, user-repository mutation, live
+  model call, or GPU-compute workload.
+- Milestone 11 requires a fresh gate. A preliminary range is approximately
+  8–14 active hours, 30–75 minutes of local commands, and 10–18 total elapsed
+  hours across two or three recoverable sessions, low-to-medium confidence.
+  GPT-5.6 Sol with XHigh reasoning is provisionally appropriate because managed
+  worktree lifecycle, concurrent Codex ownership, cleanup separation, branch
+  safety, and crash recovery are architecture- and data-loss-sensitive.

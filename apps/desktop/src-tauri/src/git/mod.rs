@@ -1,3 +1,4 @@
+mod mutation;
 pub mod types;
 
 use std::{
@@ -8,11 +9,14 @@ use std::{
 
 use tokio::{io::AsyncReadExt, process::Command, time::timeout};
 
-use crate::project::{ProjectExecutionError, ProjectService};
+use crate::project::{ProjectExecutionError, ProjectReviewRoot, ProjectService};
+use mutation::MutationCoordinator;
 use types::{
     GitBranchSummary, GitChangeKind, GitDiagnosticCode, GitDiffArea, GitDiffKind, GitDiffLine,
     GitDiffLineKind, GitDiffRequest, GitDiffSnapshot, GitDiffState, GitFileChange,
-    GitOpenFileRequest, GitWorkspaceSnapshot, GitWorkspaceState, GIT_SCHEMA_VERSION,
+    GitMutationConfirmRequest, GitMutationPreviewRequest, GitMutationPreviewSnapshot,
+    GitMutationResultSnapshot, GitOpenFileRequest, GitRecoveryRequest, GitWorkspaceSnapshot,
+    GitWorkspaceState, GIT_SCHEMA_VERSION,
 };
 
 const GIT_TIMEOUT: Duration = Duration::from_secs(8);
@@ -24,7 +28,9 @@ const MAX_DIFF_LINES: usize = 1_500;
 const MAX_LINE_CHARACTERS: usize = 4_096;
 
 #[derive(Default)]
-pub struct GitService;
+pub struct GitService {
+    mutations: MutationCoordinator,
+}
 
 #[derive(Debug)]
 enum GitRunError {
@@ -55,25 +61,7 @@ impl GitService {
                 );
             }
         };
-        match inspect_status(&root.attached_root, &root.worktree_root).await {
-            Ok((branch, changes, truncated)) => GitWorkspaceSnapshot {
-                schema_version: GIT_SCHEMA_VERSION,
-                state: if changes.is_empty() {
-                    GitWorkspaceState::Clean
-                } else {
-                    GitWorkspaceState::Ready
-                },
-                project_id: Some(project_id),
-                branch: Some(branch),
-                changes,
-                truncated,
-                diagnostic_code: None,
-            },
-            Err(error) => GitWorkspaceSnapshot::unavailable(
-                Some(project_id),
-                map_run_error(error, GitDiagnosticCode::GitFailed),
-            ),
-        }
+        workspace_from_root(project_id, &root).await
     }
 
     pub async fn diff(
@@ -166,6 +154,52 @@ impl GitService {
             return Err(GitDiagnosticCode::InvalidPath);
         }
         Ok(resolved)
+    }
+
+    pub async fn preview_mutation(
+        &self,
+        request: GitMutationPreviewRequest,
+        projects: &ProjectService,
+    ) -> GitMutationPreviewSnapshot {
+        self.mutations.preview(request, projects).await
+    }
+
+    pub async fn confirm_mutation(
+        &self,
+        request: GitMutationConfirmRequest,
+        projects: &ProjectService,
+    ) -> GitMutationResultSnapshot {
+        self.mutations.confirm(request, projects).await
+    }
+
+    pub async fn recover_mutation(
+        &self,
+        request: GitRecoveryRequest,
+        projects: &ProjectService,
+    ) -> GitMutationResultSnapshot {
+        self.mutations.recover(request, projects).await
+    }
+}
+
+async fn workspace_from_root(project_id: String, root: &ProjectReviewRoot) -> GitWorkspaceSnapshot {
+    match inspect_status(&root.attached_root, &root.worktree_root).await {
+        Ok((branch, changes, truncated)) => GitWorkspaceSnapshot {
+            schema_version: GIT_SCHEMA_VERSION,
+            state: if changes.is_empty() {
+                GitWorkspaceState::Clean
+            } else {
+                GitWorkspaceState::Ready
+            },
+            project_id: Some(project_id),
+            branch: Some(branch),
+            changes,
+            truncated,
+            diagnostic_code: None,
+        },
+        Err(error) => GitWorkspaceSnapshot::unavailable(
+            Some(project_id),
+            map_run_error(error, GitDiagnosticCode::GitFailed),
+        ),
     }
 }
 
@@ -664,10 +698,10 @@ fn map_project_error(error: ProjectExecutionError) -> GitDiagnosticCode {
         }
         ProjectExecutionError::IdentityChanged => GitDiagnosticCode::IdentityChanged,
         ProjectExecutionError::NotRepository => GitDiagnosticCode::NotRepository,
+        ProjectExecutionError::NotWritable => GitDiagnosticCode::ReadOnly,
+        ProjectExecutionError::ProjectBusy => GitDiagnosticCode::ProjectBusy,
         ProjectExecutionError::MetadataUnavailable
-        | ProjectExecutionError::DirectoryUnavailable
-        | ProjectExecutionError::NotWritable
-        | ProjectExecutionError::ProjectBusy => GitDiagnosticCode::DirectoryUnavailable,
+        | ProjectExecutionError::DirectoryUnavailable => GitDiagnosticCode::DirectoryUnavailable,
     }
 }
 

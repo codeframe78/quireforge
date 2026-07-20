@@ -142,6 +142,21 @@ released a usable application.
   and axe-core coverage for Git parsing, raw-field rejection, deceptive paths,
   read-only/non-repository states, fixed-command temporary-repository review,
   and honest browser-preview degradation.
+- A Milestone 10B native Git mutation coordinator with operation-specific
+  preview, expiring native-held UUIDv7 confirmation, project ownership, exact
+  evidence/postconditions, narrow rollback, and stable failure diagnostics.
+- Fixed file-level stage/unstage, bounded regular-file revert with 30-minute
+  single-use process-local recovery, and attachment-scoped commit plumbing that
+  disables hooks, signing, editors, prompts, and inherited/global/system Git
+  configuration.
+- Commit refusal for outside-attachment staged paths, conflicts, submodules,
+  repository operations in progress, missing repository-local identity,
+  oversized/unscannable staged blobs, sensitive filenames, and high-confidence
+  secrets in staged content or the commit message.
+- Strict shared mutation fixtures and an accessible responsive confirmation UI
+  with per-file controls, commit preview, destructive revert labeling, focus
+  containment, exact-token confirmation, recovery, browser-preview honesty,
+  desktop/mobile overflow checks, and axe-core coverage.
 
 ### Changed
 
@@ -216,7 +231,12 @@ released a usable application.
   performed.
 - Completed the Milestone 10A read-only Git-review checkpoint locally. Routine
   verification did not stage, revert, commit, mutate a user repository, make a
-  model call, deploy, package, or release; Git mutations remain Milestone 10B.
+  model call, deploy, package, or release; Git mutations were deferred to the
+  separately gated Milestone 10B.
+- Completed Milestone 10B locally with deterministic temporary repositories.
+  Routine verification mutated only those disposable fixtures; it did not
+  alter a user repository, run a live model call, deploy, package, publish, or
+  release.
 
 ### Migration note
 
@@ -234,8 +254,9 @@ released a usable application.
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
   conversation MVP, native session lifecycle/history, complete Milestone 9
-  approval and detailed-activity interface, Milestone 10A read-only Git review,
-  and website are locally verified, but Git mutation workflows, installable
-  packages, website deployment, and a release workflow do not exist.
+  approval and detailed-activity interface, complete Milestone 10 Git review
+  and controlled mutations, and website are locally verified, but advanced
+  Git/worktree/remote workflows, installable packages, website deployment, and
+  a release workflow do not exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

@@ -146,6 +146,57 @@ const nativeResponses = {
     truncated: false,
     diagnosticCode: null,
   },
+  git_mutation_preview: {
+    schemaVersion: 1,
+    state: "ready",
+    projectId: "018f0000-0000-7000-8000-000000000001",
+    operation: "stage",
+    path: "src/App.tsx",
+    targets: [
+      {
+        path: "src/App.tsx",
+        staged: null,
+        worktree: "modified",
+      },
+    ],
+    destructive: false,
+    confirmationId: "018f0000-0000-7000-8000-000000000030",
+    secretFindings: [],
+    diagnosticCode: null,
+  },
+  git_mutation_confirm: {
+    schemaVersion: 1,
+    state: "applied",
+    projectId: "018f0000-0000-7000-8000-000000000001",
+    operation: "stage",
+    recoveryId: null,
+    workspace: {
+      schemaVersion: 1,
+      state: "ready",
+      projectId: "018f0000-0000-7000-8000-000000000001",
+      branch: {
+        head: "feature/review",
+        upstream: "origin/feature/review",
+        ahead: 1,
+        behind: 0,
+        detached: false,
+      },
+      changes: [
+        {
+          path: "src/App.tsx",
+          previousPath: null,
+          staged: "modified",
+          worktree: null,
+          conflict: false,
+          submodule: false,
+          reviewable: true,
+        },
+      ],
+      truncated: false,
+      diagnosticCode: null,
+    },
+    diagnosticCode: null,
+  },
   conversation_status: {
     schemaVersion: 2,
     state: "empty",
@@ -365,7 +416,7 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
   expect(overflow).toBeLessThanOrEqual(1);
 });
 
-test("native Git fixture renders a bounded read-only diff", async ({
+test("native Git fixture reviews a diff and confirms a fixed mutation", async ({
   page,
 }) => {
   await installNativeFixture(page);
@@ -380,6 +431,18 @@ test("native Git fixture renders a bounded read-only diff", async ({
   await expect(
     page.getByRole("button", { name: "Open in default editor" }),
   ).toBeEnabled();
+  await page.getByRole("button", { name: "Stage" }).click();
+  const confirmation = page.getByRole("dialog", {
+    name: "Stage change",
+  });
+  await expect(confirmation).toContainText("src/App.tsx");
+  await confirmation.getByRole("button", { name: "Confirm stage" }).click();
+  await expect(
+    page.getByText("The repository was updated and revalidated."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Staged · modified" }),
+  ).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
   const overflow = await page.evaluate(

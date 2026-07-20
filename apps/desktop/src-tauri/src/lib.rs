@@ -10,7 +10,11 @@ use codex::{
 };
 use contract::DesktopBootstrap;
 use git::{
-    types::{GitDiffRequest, GitDiffSnapshot, GitOpenFileRequest, GitWorkspaceSnapshot},
+    types::{
+        GitDiffRequest, GitDiffSnapshot, GitMutationConfirmRequest, GitMutationPreviewRequest,
+        GitMutationPreviewSnapshot, GitMutationResultSnapshot, GitOpenFileRequest,
+        GitRecoveryRequest, GitWorkspaceSnapshot,
+    },
     GitService,
 };
 use project::{
@@ -195,6 +199,33 @@ async fn git_open_file(
 }
 
 #[tauri::command]
+async fn git_mutation_preview(
+    request: GitMutationPreviewRequest,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<GitMutationPreviewSnapshot, ()> {
+    Ok(service.preview_mutation(request, &projects).await)
+}
+
+#[tauri::command]
+async fn git_mutation_confirm(
+    request: GitMutationConfirmRequest,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<GitMutationResultSnapshot, ()> {
+    Ok(service.confirm_mutation(request, &projects).await)
+}
+
+#[tauri::command]
+async fn git_mutation_recover(
+    request: GitRecoveryRequest,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<GitMutationResultSnapshot, ()> {
+    Ok(service.recover_mutation(request, &projects).await)
+}
+
+#[tauri::command]
 async fn conversation_status(
     service: tauri::State<'_, ConversationService>,
 ) -> Result<ConversationSnapshot, ()> {
@@ -290,7 +321,7 @@ pub fn run() {
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
         .manage(ConversationService::default())
-        .manage(GitService)
+        .manage(GitService::default())
         .setup(|app| {
             let service = app
                 .path()
@@ -320,6 +351,9 @@ pub fn run() {
             git_status,
             git_diff,
             git_open_file,
+            git_mutation_preview,
+            git_mutation_confirm,
+            git_mutation_recover,
             conversation_status,
             conversation_start,
             conversation_poll,

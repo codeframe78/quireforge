@@ -13,6 +13,7 @@ const MAX_GIT_POINTER_BYTES: u64 = 4096;
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) struct GitIdentity {
     pub worktree_root: PathBuf,
+    pub git_dir: PathBuf,
     pub common_dir: PathBuf,
     pub is_linked_worktree: bool,
 }
@@ -161,6 +162,7 @@ fn inspect_git_identity(root: &Path) -> Result<Option<GitIdentity>, ()> {
         if marker_metadata.is_dir() || marker.is_dir() {
             return Ok(Some(GitIdentity {
                 worktree_root: fs::canonicalize(ancestor).map_err(|_| ())?,
+                git_dir: fs::canonicalize(&marker).map_err(|_| ())?,
                 common_dir: fs::canonicalize(marker).map_err(|_| ())?,
                 is_linked_worktree: false,
             }));
@@ -205,6 +207,7 @@ fn inspect_git_identity(root: &Path) -> Result<Option<GitIdentity>, ()> {
 
         return Ok(Some(GitIdentity {
             worktree_root: fs::canonicalize(ancestor).map_err(|_| ())?,
+            git_dir,
             common_dir,
             is_linked_worktree: true,
         }));

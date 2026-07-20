@@ -1,9 +1,9 @@
 # Compatibility
 
-Status: Milestone 0 discovery with desktop work through Milestone 10A
+Status: Milestone 0 discovery with desktop work through Milestone 10
 implemented and verified on the discovery host, including the versioned Codex
 boundary, direct project attachment, conversation/session/approval workflows,
-and read-only Git review.
+and reviewed Git status/diff/mutation workflows.
 
 ## Identity compatibility contract
 
@@ -108,6 +108,7 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 | Integrated process API                     | Present              | Do not use as default terminal                                                | Experimental/outside Codex sandbox    |
 | Scheduled hosted tasks                     | Not established      | Defer                                                                         | Unsupported until discovered          |
 | Repository status and staged/worktree diff | Git 2.53.0 available | Fixed native shell-free Git service over a revalidated attachment             | Implemented locally in Milestone 10A  |
+| Stage, unstage, bounded revert, and commit  | Git 2.53.0 available | Native-held preview/confirmation plans with fixed Git operations               | Implemented locally in Milestone 10B  |
 
 Account-scoped inspection on 2026-07-19 returned a multi-page app directory
 from both the default OpenAI catalog and ecosystem directory, with only a small

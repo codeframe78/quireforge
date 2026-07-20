@@ -11,6 +11,7 @@ import {
   cancelCodexAuth,
   cancelProjectAttachment,
   confirmProjectAttachment,
+  confirmGitMutation,
   decideConversationApproval,
   detachProject,
   interruptConversation,
@@ -28,8 +29,10 @@ import {
   pickProjectDirectory,
   pickProjectRelink,
   preflightProject,
+  previewGitMutation,
   pollConversation,
   refreshCodexAuth,
+  recoverGitMutation,
   restoreConversation,
   resumeConversation,
   forkConversation,
@@ -55,7 +58,12 @@ import {
   scaffoldGitWorkspace,
   type GitDiffRequest,
   type GitDiffSnapshot,
+  type GitMutationConfirmRequest,
+  type GitMutationPreviewRequest,
+  type GitMutationPreviewSnapshot,
+  type GitMutationResultSnapshot,
   type GitOpenFileRequest,
+  type GitRecoveryRequest,
   type GitWorkspaceSnapshot,
 } from "./lib/git";
 import {
@@ -108,6 +116,15 @@ interface AppProps {
   loadGitStatusTask?: (projectId: string) => Promise<GitWorkspaceSnapshot>;
   loadGitDiffTask?: (request: GitDiffRequest) => Promise<GitDiffSnapshot>;
   openGitFileTask?: (request: GitOpenFileRequest) => Promise<void>;
+  previewGitMutationTask?: (
+    request: GitMutationPreviewRequest,
+  ) => Promise<GitMutationPreviewSnapshot>;
+  confirmGitMutationTask?: (
+    request: GitMutationConfirmRequest,
+  ) => Promise<GitMutationResultSnapshot>;
+  recoverGitMutationTask?: (
+    request: GitRecoveryRequest,
+  ) => Promise<GitMutationResultSnapshot>;
   loadConversation?: () => Promise<ConversationSnapshot>;
   startConversationTask?: (
     request: ConversationStartRequest,
@@ -282,6 +299,9 @@ export default function App({
   loadGitStatusTask = loadGitStatus,
   loadGitDiffTask = loadGitDiff,
   openGitFileTask = openGitFile,
+  previewGitMutationTask = previewGitMutation,
+  confirmGitMutationTask = confirmGitMutation,
+  recoverGitMutationTask = recoverGitMutation,
   loadConversation = loadConversationStatus,
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
@@ -322,6 +342,10 @@ export default function App({
   const [gitState, setGitState] = useState<GitViewState>("checking");
   const [gitBusy, setGitBusy] = useState(false);
   const [gitActionError, setGitActionError] = useState(false);
+  const [gitMutationPreview, setGitMutationPreview] =
+    useState<GitMutationPreviewSnapshot | null>(null);
+  const [gitMutationResult, setGitMutationResult] =
+    useState<GitMutationResultSnapshot | null>(null);
   const [conversation, setConversation] =
     useState<ConversationSnapshot>(scaffoldConversation);
   const [conversationEvents, setConversationEvents] = useState<
@@ -444,6 +468,8 @@ export default function App({
         setGitDiff(null);
         setGitSelectedRequest(null);
         setGitActionError(false);
+        setGitMutationPreview(null);
+        setGitMutationResult(null);
       });
     };
     if (projectState === "preview") {
@@ -472,6 +498,8 @@ export default function App({
       setGitDiff(null);
       setGitSelectedRequest(null);
       setGitActionError(false);
+      setGitMutationPreview(null);
+      setGitMutationResult(null);
     });
     void loadGitStatusTask(project.id)
       .then((result) => {
@@ -678,6 +706,8 @@ export default function App({
       setGitDiff(null);
       setGitSelectedRequest(null);
       setGitState("native");
+      setGitMutationPreview(null);
+      setGitMutationResult(null);
     } catch {
       setGitActionError(true);
     } finally {
@@ -704,6 +734,58 @@ export default function App({
     setGitActionError(false);
     try {
       await openGitFileTask({ projectId, path });
+    } catch {
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
+    }
+  }
+
+  async function beginGitMutation(request: GitMutationPreviewRequest) {
+    setGitBusy(true);
+    setGitActionError(false);
+    setGitMutationResult(null);
+    try {
+      setGitMutationPreview(await previewGitMutationTask(request));
+    } catch {
+      setGitMutationPreview(null);
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
+    }
+  }
+
+  async function applyGitMutation(confirmationId: string) {
+    setGitBusy(true);
+    setGitActionError(false);
+    try {
+      const result = await confirmGitMutationTask({ confirmationId });
+      setGitMutationPreview(null);
+      setGitMutationResult(result);
+      if (result.workspace) {
+        setGitSnapshot(result.workspace);
+        setGitDiff(null);
+        setGitSelectedRequest(null);
+        setGitState("native");
+      }
+    } catch {
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
+    }
+  }
+
+  async function recoverGitRevert(recoveryId: string) {
+    setGitBusy(true);
+    setGitActionError(false);
+    try {
+      const result = await recoverGitMutationTask({ recoveryId });
+      setGitMutationResult(result);
+      if (result.workspace) {
+        setGitSnapshot(result.workspace);
+        setGitDiff(null);
+        setGitSelectedRequest(null);
+      }
     } catch {
       setGitActionError(true);
     } finally {
@@ -942,7 +1024,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 10 read-only source review
+              Milestone 10 reviewed Git operations
             </span>
             <button
               className="theme-toggle"
@@ -1076,11 +1158,17 @@ export default function App({
             snapshot={gitSnapshot}
             diff={gitDiff}
             selectedRequest={gitSelectedRequest}
-            busy={gitBusy}
+            mutationPreview={gitMutationPreview}
+            mutationResult={gitMutationResult}
+            busy={gitBusy || conversationActive}
             actionError={gitActionError}
             onRefresh={refreshGitReview}
             onReview={reviewGitDiff}
             onOpen={openReviewedGitFile}
+            onPreviewMutation={beginGitMutation}
+            onConfirmMutation={applyGitMutation}
+            onCancelMutation={() => setGitMutationPreview(null)}
+            onRecoverMutation={recoverGitRevert}
           />
 
           <SessionWorkspace
