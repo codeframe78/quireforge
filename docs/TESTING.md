@@ -57,7 +57,7 @@ release, child reaping, and shared strict Rust/TypeScript fixtures. They use
 deterministic mock app-server processes and never read a personal transcript or
 start a live model turn.
 
-## Manual Milestone 9A checklist
+## Manual Milestone 9 checklist
 
 - Use deterministic mock app-server fixtures only; do not start a billable
   model turn or approve a real command during routine validation.
@@ -83,8 +83,13 @@ start a live model turn.
   fields.
 - Run focused native/frontend suites, the complete repository and browser
   gates, the warm unbundled native build, and an isolated launch smoke check.
-  Milestone 9B must separately verify selectable expansion, approval controls,
-  keyboard behavior, responsive layout, and accessibility.
+- Confirm each activity is one keyboard-operable row, expansion stays open as
+  lifecycle/output updates arrive, detail is normalized, and long output is
+  tail-bounded without horizontal page overflow.
+- Confirm the pending card displays only advertised decisions, sends the exact
+  app conversation/approval IDs, rejects duplicate submission, and cannot be
+  overwritten by a stale waiting-state poll. Run these checks with deterministic
+  fixtures only; do not approve a real command during routine validation.
 
 ## Responsive browser and accessibility checks
 

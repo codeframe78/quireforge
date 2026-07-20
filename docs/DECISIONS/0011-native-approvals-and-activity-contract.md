@@ -1,6 +1,6 @@
 # ADR 0011: Native Approval and Detailed Activity Contract
 
-- Status: Accepted for Milestone 9A
+- Status: Accepted and implemented through Milestone 9B
 - Date: 2026-07-19
 
 ## Context
@@ -56,9 +56,11 @@ tail is discarded at completion.
 
 The TypeScript schema version advances to 2 and rejects unknown fields. A fixed
 `conversation_approval_decide` command accepts only the app conversation ID,
-app approval ID, and closed decision enum. Milestone 9A exposes the normalized
-state and a minimal safe activity presentation; Milestone 9B owns the polished
-selectable, in-place expanded activity and approval interface.
+app approval ID, and closed decision enum. React aggregates normalized activity
+events by app activity ID into bounded selectable rows. The expanded panel
+shows only the projected kind, detail, output tail, and exit code. The approval
+card renders only decisions advertised for the exact pending request, submits
+one decision at a time, and suspends polling during that state transition.
 
 ## Consequences
 
@@ -71,8 +73,9 @@ selectable, in-place expanded activity and approval interface.
   prevents raw fields from entering React state.
 - Unknown or changed server-request shapes remain a compatibility failure, not
   implicit consent.
-- The complete click/expand/decision interaction is a separately verified
-  Milestone 9B checkpoint.
+- The click/expand/decision interaction is covered by deterministic component
+  and desktop/mobile browser checks; routine validation performs no real
+  approval.
 
 ## Alternatives considered
 

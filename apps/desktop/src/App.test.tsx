@@ -423,6 +423,92 @@ describe("QuireForge desktop shell", () => {
     expect(pollConversationTask).not.toHaveBeenCalled();
   });
 
+  it("prevents an in-flight poll from overwriting an approval decision", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const approvalId = "018f0000-0000-7000-8000-000000000011";
+    const waiting = conversationSnapshotSchema.parse({
+      schemaVersion: 2,
+      state: "waiting-for-approval",
+      conversationId,
+      projectId,
+      modelId: "gpt-5.6-sol",
+      reasoningEffort: "high",
+      sandboxMode: "workspace-write",
+      approvalPolicy: "on-request",
+      pendingApproval: {
+        approvalId,
+        activityId: "018f0000-0000-7000-8000-000000000012",
+        kind: "command-execution",
+        title: "Run checks?",
+        reason: null,
+        details: [],
+        decisions: ["approve", "decline"],
+      },
+      events: [
+        {
+          type: "approval-requested",
+          sequence: 1,
+          approvalId,
+          activityId: "018f0000-0000-7000-8000-000000000012",
+          kind: "command-execution",
+        },
+      ],
+      diagnosticCode: null,
+    });
+    const completed = conversationSnapshotSchema.parse({
+      ...waiting,
+      state: "completed",
+      pendingApproval: null,
+      events: [
+        ...waiting.events,
+        {
+          type: "approval-resolved",
+          sequence: 2,
+          approvalId,
+          resolution: "approved",
+        },
+      ],
+    });
+    let resolvePoll: ((value: typeof waiting) => void) | undefined;
+    const pollConversationTask = vi.fn(
+      () =>
+        new Promise<typeof waiting>((resolve) => {
+          resolvePoll = resolve;
+        }),
+    );
+    const decideConversationApprovalTask = vi.fn().mockResolvedValue(completed);
+
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadProjects={() => Promise.resolve(attachedProject)}
+        loadConversation={() => Promise.resolve(waiting)}
+        pollConversationTask={pollConversationTask}
+        decideConversationApprovalTask={decideConversationApprovalTask}
+      />,
+    );
+
+    const approve = await screen.findByRole("button", {
+      name: "Approve once",
+    });
+    await waitFor(() => expect(pollConversationTask).toHaveBeenCalled());
+    fireEvent.click(approve);
+    await waitFor(() =>
+      expect(decideConversationApprovalTask).toHaveBeenCalledWith({
+        conversationId,
+        approvalId,
+        decision: "approve",
+      }),
+    );
+    expect(await screen.findByText("Task completed")).toBeInTheDocument();
+    resolvePoll?.(waiting);
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    expect(screen.getByText("Task completed")).toBeInTheDocument();
+    expect(screen.queryByText("Run checks?")).toBeNull();
+  });
+
   it("wires session search and resume through app-owned references", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const lifecycle = sessionLifecycleSchema.parse({

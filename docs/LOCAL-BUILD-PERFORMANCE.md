@@ -314,3 +314,35 @@ without materially changing build pressure. The warm release link remains the
 longest individual local command. Milestone 9B can keep the Balanced profile,
 four Cargo workers, and two Playwright workers unless its fresh preflight finds
 different system load or memory availability.
+
+## Milestone 9B measurements
+
+The selectable activity/approval checkpoint reused the warm Cargo target,
+registry, pnpm, Vite, Astro, and Playwright caches. The Balanced profile kept
+four Cargo workers and two Playwright workers. No dependency installation,
+clean build, schema generation, database migration, or native protocol change
+was required.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Parallel desktop type/lint/unit checkpoint | 9.1 seconds overall | Not instrumented | Passed type checking, lint, and 61 tests across 11 files |
+| Desktop production build | 2.1 seconds overall; Vite phase 0.13 seconds | Not instrumented | Passed, 115 modules |
+| Focused desktop/mobile approval browser check | 3.5 seconds after build | Low runtime pressure | Passed 2 checks with axe and overflow analysis |
+| Full non-browser repository gate | 36.70 seconds | about 1.25 GiB | Passed 64 JavaScript and 68 Rust tests; 2 live probes ignored |
+| Combined desktop/website browser gate | 9.99 seconds | about 283 MiB | Passed all 18 desktop/mobile checks |
+| Warm unbundled native release build | 30.73 seconds | about 1.55 GiB | Passed, including a 26.77-second release compile/link |
+| Isolated native release launch | 3-second bounded launch | Low runtime pressure | Schema migrations 1–3, owner-only metadata, and no remaining child verified |
+| Desktop rendered-state inspection | 3.5-second focused trace | Low runtime pressure | Waiting approval, expanded activity/output, decision transition, and completed state remained readable |
+
+Approximately 44 GiB of RAM remained available around the gates. Swap stayed
+near 175 MiB, and timed commands reported zero swaps. The first aggregate gate
+ended after 16.54 seconds when its transient environment omitted
+`/home/jjennison/.cargo/bin` from `PATH`; the rerun explicitly preserved the
+already-installed tool path and passed without changing persistent
+configuration. There was no OOM, throttling, dependency download, cache
+deletion, clean build, or competing QuireForge build.
+
+The feature remained frontend-bound: Rust and the reviewed Codex schema subset
+were unchanged. CPU, system RAM, NVMe, and warm caches were the relevant
+resources. The RTX 3050 remained unused because neither React aggregation nor
+the browser accessibility checks were a genuine GPU-compute workload.

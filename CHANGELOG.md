@@ -122,6 +122,14 @@ released a usable application.
   and request-resolution schemas plus deterministic tests for ID collisions,
   malformed/unsupported requests, raw argument/diff discard, split-secret
   redaction, exact decision responses, and cancel-before-interrupt ordering.
+- A Milestone 9B selectable activity presentation that aggregates normalized
+  lifecycle and output events by stable app-owned ID, expands in place with
+  bounded live detail, preserves expansion through polling updates, and remains
+  keyboard accessible on desktop and mobile layouts.
+- A prominent approval interface that displays only normalized reason/detail
+  fields, exposes only native-advertised approve/decline/cancel choices,
+  prevents duplicate submissions, pauses polling during a decision, and sends
+  only the exact app conversation ID, app approval ID, and closed decision enum.
 
 ### Changed
 
@@ -190,6 +198,10 @@ released a usable application.
   call, real approval response, persistent policy grant, deployment, package,
   or release was performed. The polished selectable/expanded interface remains
   Milestone 9B.
+- Completed the Milestone 9B selectable activity and approval interface
+  locally with deterministic fixtures. No live model call, real command
+  approval, persistent policy grant, deployment, package, or release was
+  performed.
 
 ### Migration note
 
@@ -206,9 +218,9 @@ released a usable application.
 ### Known limitations
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
-  conversation MVP, native session lifecycle/history, Milestone 9A approval and
-  detailed-activity contract, and website are locally verified, but the
-  polished selectable/expanded approval interface, installable
-  packages, website deployment, and a release workflow do not exist.
+  conversation MVP, native session lifecycle/history, complete Milestone 9
+  approval and detailed-activity interface, and website are locally verified,
+  but installable packages, website deployment, and a release workflow do not
+  exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

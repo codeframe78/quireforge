@@ -49,7 +49,8 @@ reconciliation, and conservative crash recovery. Milestone 8B adds the bounded
 history/search/tabs presentation and accessible lifecycle actions.
 Milestone 9A adds the native approval and detailed-activity contract with
 app-owned correlation, one-turn decisions, redaction, and safe cancellation;
-the selectable expanded interface remains Milestone 9B.
+Milestone 9B adds the selectable expanded activity and bounded approval
+interface over that contract.
 
 ## Status
 
@@ -64,7 +65,7 @@ the selectable expanded interface remains Milestone 9B.
 | 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
 | 7 | Conversation MVP | Very large | Complete; merged to `main` |
 | 8 | Session lifecycle and crash recovery | Large | Complete; merged to `main` |
-| 9 | Approvals and command presentation | Large | 9A complete; merged to `main` in PR #9; 9B planned |
+| 9 | Approvals and command presentation | Large | Complete and verified; publication recorded in repository history |
 | 10 | Git status and diff review | Large | Planned |
 | 11 | Worktrees and parallel work | Very large | Planned |
 | 12 | Integrated terminal | Large | Planned |
@@ -249,8 +250,18 @@ credential-shaped values, reduces paths to project-relative or
 `[outside project]`, buffers output to line boundaries, and discards raw tool
 arguments and file diffs. Pending approval remains ephemeral and uses existing
 conservative crash recovery; no database migration or sensitive persistence is
-added. Milestone 9B will aggregate these events into the requested selectable,
-in-place expanded activity rows and complete approval controls.
+added.
+
+Milestone 9B aggregates activity lifecycle and bounded output deltas by stable
+app activity ID. Each semantic button expands in place to show only normalized
+kind, detail, live output, and exit status, retains its open state while polling
+updates arrive, and caps the rendered activity/output history. A prominent
+approval card displays the normalized reason and details and renders only the
+approve, decline, or cancel choices advertised for the exact pending request.
+Decision submission is single-flight, uses the fixed typed bridge, and pauses
+polling so stale waiting snapshots cannot overwrite a completed decision.
+Desktop and mobile fixtures verify keyboard semantics, accessibility, bounded
+layout, exact app-ID submission, and duplicate-submission prevention.
 
 ### 10 — Git and Diff Review
 

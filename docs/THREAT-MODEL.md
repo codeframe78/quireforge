@@ -4,7 +4,7 @@ Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary,
 Milestone 4 Codex process adapter, Milestone 5 authentication controls, and
 Milestone 6 native directory-attachment controls, Milestone 7 native
 conversation controls, Milestone 8A native lifecycle/recovery controls, and
-Milestone 9A approval/activity controls applied. It must be revisited before
+Milestone 9 approval/activity controls applied. It must be revisited before
 integrations, packaging, and release milestones.
 
 ## Assets
@@ -82,6 +82,13 @@ output through line boundaries, strips terminal and bidirectional controls,
 redacts credential-shaped values, reduces paths to project-relative or an
 outside-project marker, and applies strict size/count bounds. Raw Codex
 protocol and identity remain native-only.
+
+Milestone 9B does not widen this trust boundary. React groups only normalized
+events by app-owned activity ID, caps each displayed output tail, and reveals
+detail only after a semantic user action. Approval buttons are generated from
+the native-advertised closed decision list, guarded against duplicate
+submission, and polling is suspended during the decision transition. Routine
+UI and browser tests use fixtures and never authorize a real command.
 
 ## Principal threats and controls
 
