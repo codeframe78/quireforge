@@ -3,7 +3,9 @@ import { useEffect, useState, type ReactNode } from "react";
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
 import { ConversationWorkspace } from "./ConversationWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
+import { SessionWorkspace } from "./SessionWorkspace";
 import {
+  archiveConversation,
   archiveProject,
   cancelCodexAuth,
   cancelProjectAttachment,
@@ -12,6 +14,7 @@ import {
   interruptConversation,
   loadCodexAuth,
   loadConversationStatus,
+  loadConversationSessions,
   loadCodexRuntime,
   loadDesktopBootstrap,
   loadProjectWorkspace,
@@ -22,6 +25,9 @@ import {
   preflightProject,
   pollConversation,
   refreshCodexAuth,
+  restoreConversation,
+  resumeConversation,
+  forkConversation,
   startConversation,
   startCodexAuth,
 } from "./lib/bridge";
@@ -44,6 +50,12 @@ import {
   type ProjectPreflightSnapshot,
   type ProjectWorkspaceSnapshot,
 } from "./lib/project";
+import {
+  scaffoldSessionLifecycle,
+  type ConversationContinueRequest,
+  type SessionLifecycleSnapshot,
+  type SessionListRequest,
+} from "./lib/session";
 
 import "./styles.css";
 
@@ -53,6 +65,7 @@ type RuntimeState =
 type AuthViewState = CodexAuthSnapshot["state"] | "checking" | "preview";
 type ProjectViewState = "checking" | "native" | "preview";
 type ConversationViewState = "checking" | "native" | "preview";
+type SessionViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -88,12 +101,45 @@ interface AppProps {
   interruptConversationTask?: (
     conversationId: string,
   ) => Promise<ConversationSnapshot>;
+  loadSessions?: (
+    request?: SessionListRequest,
+  ) => Promise<SessionLifecycleSnapshot>;
+  resumeConversationTask?: (
+    request: ConversationContinueRequest,
+  ) => Promise<ConversationSnapshot>;
+  forkConversationTask?: (
+    request: ConversationContinueRequest,
+  ) => Promise<ConversationSnapshot>;
+  archiveConversationTask?: (
+    conversationId: string,
+  ) => Promise<SessionLifecycleSnapshot>;
+  restoreConversationTask?: (
+    conversationId: string,
+  ) => Promise<SessionLifecycleSnapshot>;
 }
 
 const navigation = [
-  { label: "Workspace", milestone: 3, icon: "grid" },
-  { label: "Threads", milestone: 7, icon: "thread" },
-  { label: "Integrations", milestone: 14, icon: "blocks" },
+  {
+    label: "Workspace",
+    milestone: 3,
+    icon: "grid",
+    target: "workspace-top",
+    ready: true,
+  },
+  {
+    label: "Threads",
+    milestone: 8,
+    icon: "thread",
+    target: "sessions",
+    ready: true,
+  },
+  {
+    label: "Integrations",
+    milestone: 14,
+    icon: "blocks",
+    target: "",
+    ready: false,
+  },
 ] as const;
 
 function initialTheme(): Theme {
@@ -202,6 +248,11 @@ export default function App({
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
   interruptConversationTask = interruptConversation,
+  loadSessions = loadConversationSessions,
+  resumeConversationTask = resumeConversation,
+  forkConversationTask = forkConversation,
+  archiveConversationTask = archiveConversation,
+  restoreConversationTask = restoreConversation,
 }: AppProps) {
   const [bootstrap, setBootstrap] =
     useState<DesktopBootstrap>(scaffoldBootstrap);
@@ -233,6 +284,19 @@ export default function App({
     useState<ConversationViewState>("checking");
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationActionError, setConversationActionError] = useState(false);
+  const [sessions, setSessions] = useState<SessionLifecycleSnapshot>(
+    scaffoldSessionLifecycle,
+  );
+  const [sessionState, setSessionState] =
+    useState<SessionViewState>("checking");
+  const [sessionBusy, setSessionBusy] = useState(false);
+  const [sessionActionError, setSessionActionError] = useState(false);
+  const [sessionSearchTerm, setSessionSearchTerm] = useState<string | null>(
+    null,
+  );
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    null,
+  );
   const [theme, setTheme] = useState<Theme>(initialTheme);
 
   useEffect(() => {
@@ -322,6 +386,23 @@ export default function App({
   }, [loadConversation]);
 
   useEffect(() => {
+    let active = true;
+    void loadSessions({ projectId: null, searchTerm: null })
+      .then((result) => {
+        if (!active) return;
+        setSessions(result);
+        setSessionState("native");
+      })
+      .catch(() => {
+        if (active) setSessionState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadSessions]);
+
+  useEffect(() => {
     if (authState !== "login-pending") return;
     let active = true;
     const poll = window.setInterval(() => {
@@ -364,6 +445,13 @@ export default function App({
         );
         if (["running", "stopping"].includes(result.state)) {
           timer = window.setTimeout(() => void poll(), 250);
+        } else {
+          void loadSessions({
+            projectId: null,
+            searchTerm: sessionSearchTerm,
+          })
+            .then((sessionResult) => setSessions(sessionResult))
+            .catch(() => setSessionActionError(true));
         }
       } catch {
         if (active) setConversationActionError(true);
@@ -375,7 +463,13 @@ export default function App({
       active = false;
       if (timer !== undefined) window.clearTimeout(timer);
     };
-  }, [conversation.conversationId, conversation.state, pollConversationTask]);
+  }, [
+    conversation.conversationId,
+    conversation.state,
+    loadSessions,
+    pollConversationTask,
+    sessionSearchTerm,
+  ]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -497,9 +591,90 @@ export default function App({
     }
   }
 
+  async function refreshSessions(
+    request: SessionListRequest = {
+      projectId: null,
+      searchTerm: sessionSearchTerm,
+    },
+  ) {
+    setSessionBusy(true);
+    setSessionActionError(false);
+    try {
+      const result = await loadSessions(request);
+      setSessions(result);
+      setSessionSearchTerm(request.searchTerm);
+      setSessionState("native");
+    } catch (error) {
+      setSessionActionError(true);
+      throw error;
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
+  async function continueHistoricalConversation(
+    action: (
+      request: ConversationContinueRequest,
+    ) => Promise<ConversationSnapshot>,
+    request: ConversationContinueRequest,
+  ): Promise<ConversationSnapshot> {
+    setConversationBusy(true);
+    setSessionBusy(true);
+    setConversationActionError(false);
+    setSessionActionError(false);
+    try {
+      const source = sessions.sessions.find(
+        (session) => session.conversationId === request.conversationId,
+      );
+      if (source) setSelectedProjectId(source.projectId);
+      const result = await action(request);
+      setConversation(result);
+      setConversationEvents(result.events);
+      if (result.state === "unavailable") setSessionActionError(true);
+      return result;
+    } catch (error) {
+      setConversationActionError(true);
+      setSessionActionError(true);
+      throw error;
+    } finally {
+      setConversationBusy(false);
+      setSessionBusy(false);
+    }
+  }
+
+  async function mutateSession(
+    action: () => Promise<SessionLifecycleSnapshot>,
+  ) {
+    setSessionBusy(true);
+    setSessionActionError(false);
+    try {
+      const mutation = await action();
+      if (mutation.state === "unavailable") {
+        setSessionActionError(true);
+        return;
+      }
+      const result = await loadSessions({
+        projectId: null,
+        searchTerm: sessionSearchTerm,
+      });
+      setSessions(result);
+    } catch (error) {
+      setSessionActionError(true);
+      throw error;
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
   const currentProject =
+    projects.projects.find(
+      (project) => project.id === selectedProjectId && !project.archived,
+    ) ??
     projects.projects.find((project) => !project.archived) ??
     projects.projects[0];
+  const conversationActive = ["running", "stopping"].includes(
+    conversation.state,
+  );
 
   return (
     <div className="app-shell">
@@ -533,7 +708,12 @@ export default function App({
               className={`nav-item ${index === 0 ? "nav-item--active" : ""}`}
               type="button"
               aria-current={index === 0 ? "page" : undefined}
-              disabled={index !== 0}
+              disabled={!item.ready}
+              onClick={() =>
+                document.getElementById(item.target)?.scrollIntoView({
+                  behavior: "smooth",
+                })
+              }
               key={item.label}
             >
               <Glyph name={item.icon} />
@@ -571,7 +751,7 @@ export default function App({
         </div>
       </aside>
 
-      <main className="workspace">
+      <main className="workspace" id="workspace-top">
         <header className="topbar">
           <div className="breadcrumb" aria-label="Current location">
             <span>QuireForge</span>
@@ -581,7 +761,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 7 native conversation
+              Milestone 8 session lifecycle
             </span>
             <button
               className="theme-toggle"
@@ -707,6 +887,31 @@ export default function App({
               applyProjectAction(() => archiveProjectMetadata(projectId))
             }
             onPreflight={verifyProject}
+          />
+
+          <SessionWorkspace
+            availability={sessionState}
+            snapshot={sessions}
+            projects={projects.projects}
+            activeConversationId={conversation.conversationId}
+            busy={sessionBusy || conversationBusy || conversationActive}
+            actionError={sessionActionError}
+            searchTerm={sessionSearchTerm}
+            onSearch={refreshSessions}
+            onRefresh={() => refreshSessions()}
+            onSelect={(session) => setSelectedProjectId(session.projectId)}
+            onResume={(request) =>
+              continueHistoricalConversation(resumeConversationTask, request)
+            }
+            onFork={(request) =>
+              continueHistoricalConversation(forkConversationTask, request)
+            }
+            onArchive={(conversationId) =>
+              mutateSession(() => archiveConversationTask(conversationId))
+            }
+            onRestore={(conversationId) =>
+              mutateSession(() => restoreConversationTask(conversationId))
+            }
           />
 
           <ConversationWorkspace

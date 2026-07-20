@@ -45,8 +45,8 @@ Milestone 7B adds the responsive task composer, runtime-derived controls,
 normalized progress stream, and exact stop interaction. Application packages
 and external provider settings remain milestone- and approval-gated. Milestone
 8A adds native resume, fork, archive/restore, Codex-authoritative reference
-reconciliation, and conservative crash recovery; its history/search/tabs UI is
-the separately gated Milestone 8B checkpoint.
+reconciliation, and conservative crash recovery. Milestone 8B adds the bounded
+history/search/tabs presentation and accessible lifecycle actions.
 
 ## Status
 
@@ -60,7 +60,7 @@ the separately gated Milestone 8B checkpoint.
 | 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
 | 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
 | 7 | Conversation MVP | Very large | Complete; merged to `main` |
-| 8 | Session lifecycle and crash recovery | Large | 8A native lifecycle complete; 8B UI planned |
+| 8 | Session lifecycle and crash recovery | Large | Complete locally; 8A native lifecycle and 8B UI verified |
 | 9 | Approvals and command presentation | Large | Planned |
 | 10 | Git status and diff review | Large | Planned |
 | 11 | Worktrees and parallel work | Very large | Planned |
@@ -212,14 +212,23 @@ ownership. Deterministic tests prove exact-ID/cwd correlation, bounded listing,
 no transcript/path exposure, no source or thread deletion, child cleanup, and
 no live model use.
 
-Milestone 8B remains separately gated for title search, history presentation,
-tabs, grouping, and the accessible resume/fork/archive/restore interface.
+Milestone 8B adds a second bounded `thread/list` title-search projection after
+complete reconciliation, then intersects both results with app-owned
+references. React receives only transient normalized titles, app/project IDs,
+parent-app lineage, controls, timestamps, and stable lifecycle states. Titles
+are not persisted. The responsive interface groups sessions by project and
+fork lineage, provides keyboard-accessible tabs, and wires resume, fork,
+archive, and restore through exact app-owned IDs. Browser preview remains
+honestly non-interactive, and archive never becomes deletion.
 
 ### 9 — Approvals and Command Presentation
 
 Render exact scoped command, file, MCP/app, and permission requests; implement
 decision handling, safe cancellation, terminal-control sanitization, redaction,
-and recovery.
+and recovery. Live activity rows must be selectable and expand in place to show
+normalized real-time command/tool/file/process progress, comparable to Codex's
+own disclosed activity presentation, without exposing raw protocol payloads,
+credentials, unsafe terminal sequences, or unredacted private paths.
 
 ### 10 — Git and Diff Review
 

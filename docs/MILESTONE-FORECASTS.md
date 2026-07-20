@@ -385,3 +385,57 @@ the final native/webview security review.
   preliminary range is approximately 2–4 active hours, 5–15 minutes of local
   commands, and 2.5–5 total elapsed hours in one session, medium confidence;
   model and reasoning must still receive a separate gate before work begins.
+
+### Milestone 8B — Session History, Search, and Tabs
+
+| Field | Record |
+|---|---|
+| Forecast date | 2026-07-19 |
+| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
+| Preliminary forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours; medium confidence |
+| Calibrated forecast | 1.5–3 active hours; initially 5–12, then revised to 8–18 minutes of local commands; about 2–4 total elapsed hours in one session; medium-to-high confidence |
+| Calibration basis | Clean merged Milestone 8A `main`, confirmed stable `thread/list.searchTerm` and optional title fields, 44 GiB available RAM, 726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers |
+| Observed active execution | Approximately 35–55 minutes through contract design, native title projection, React history/tabs/actions, deterministic tests, accessibility corrections, documentation, security/diff review, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 4–7 minutes across focused native/frontend checks, repeated responsive accessibility checks, the final 41.37-second full gate, 8.81-second combined browser gate, 30.97-second release build, and isolated native smoke check |
+| User approval/waiting time | Manual model/reasoning and milestone-start confirmations were excluded; the user's new expandable-process-detail requirement was routed to Milestone 9 without pausing or expanding 8B |
+| Sessions | One active implementation session with recoverable contract, UI/test, documentation, validation, and publication checkpoints |
+| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
+| Completion status | Complete and verified locally; publication is recorded in repository history |
+
+The calibrated forecast overestimated implementation time. Milestone 8A had
+already established fixed lifecycle commands, strict session schemas, app-owned
+lineage, complete reconciliation, and deterministic mock process patterns.
+Codex 0.144.6 already exposed both the stable title filter and optional title,
+so 8B needed a bounded second projection rather than a new content index or
+database migration. High reasoning was appropriate for keeping filtered search
+separate from missing-state reconciliation, UI/task state coordination, and
+the accessibility/security review; XHigh would not have materially improved
+the predominantly bounded integration work.
+
+### Milestone 8B required observations and lessons
+
+- A filtered title result cannot stand in for complete reconciliation. Native
+  code first obtains the complete current/archived set, requires filtered IDs
+  to be a subset, and only then intersects with app-owned references.
+- Titles are trimmed, control-safe, bounded to 256 characters, exposed only in
+  the version 2 session snapshot, and never persisted to SQLite. Paths, native
+  IDs, previews, transcripts, raw status objects, and protocol payloads remain
+  outside React.
+- Component and shell tests cover project/fork grouping, exact-ID actions,
+  keyboard tabs, search/clear/refresh, unavailable and preview states, mobile
+  overflow, and axe-core. The first browser run found and corrected tablist
+  ownership and light-theme primary-button contrast before the gate.
+- The full gate passed 57 JavaScript tests and 58 Rust tests with 2 deliberate
+  live probes ignored. The combined browser gate passed 16 desktop/website
+  tests; the release build and isolated native launch also passed.
+- The full gate took 41.37 seconds, about 40% above the prior 29.45-second
+  baseline because the changed Rust boundary recompiled and the suite grew. The
+  local-command forecast was revised, but overall elapsed time remained within
+  the calibrated range.
+- Available RAM remained about 44 GiB, swap stayed at about 175 MiB with zero
+  measured swaps, and no OOM, throttling, dependency download, cache deletion,
+  live model call, approval decision, deletion, project-file mutation, or GPU
+  workload occurred.
+- Selectable expandable real-time command/tool/file/process details are now an
+  explicit Milestone 9 requirement and require a separate normalized redacted
+  event contract rather than raw protocol display.

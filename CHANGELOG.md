@@ -101,6 +101,14 @@ released a usable application.
   Codex 0.144.6 lifecycle schemas, bounded exact-cwd reconciliation, and
   deterministic mismatch, recovery, fork-lineage, archive/restore, child-
   cleanup, and raw-identity/path rejection tests.
+- A Milestone 8B session-history workspace with bounded Codex-authoritative
+  title search, project and fork grouping, keyboard-operable tabs, transient
+  titles, and accessible exact-reference resume, fork, archive, and restore
+  controls.
+- Deterministic native, component, shell-integration, responsive, overflow, and
+  axe-core coverage proving that title filtering does not corrupt complete
+  reconciliation or expose paths, Codex IDs, previews, transcripts, or raw
+  protocol records.
 
 ### Changed
 
@@ -160,6 +168,10 @@ released a usable application.
   checkpoint locally. No live model call, approval decision, thread deletion,
   project-file mutation, deployment, package, or release was performed; the
   history/search/tabs interface remains Milestone 8B.
+- Completed the Milestone 8B history/search/tabs interface locally. Titles
+  remain transient, lifecycle actions use app-owned IDs, and no live model
+  call, approval decision, deletion, deployment, package, or release was
+  performed.
 
 ### Migration note
 
@@ -176,8 +188,8 @@ released a usable application.
 ### Known limitations
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
-  conversation MVP, native session lifecycle, and website are locally verified,
-  but the session history UI, installable packages, website deployment, and a
-  release workflow do not exist.
+  conversation MVP, native session lifecycle and history interface, and website
+  are locally verified, but approval/expanded process details, installable
+  packages, website deployment, and a release workflow do not exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

@@ -13,6 +13,7 @@ import {
   projectWorkspaceSchema,
   scaffoldProjectWorkspace,
 } from "./lib/project";
+import { sessionLifecycleSchema } from "./lib/session";
 
 const projectId = "018f0000-0000-7000-8000-000000000001";
 const associationId = "018f0000-0000-7000-8000-000000000002";
@@ -418,5 +419,90 @@ describe("QuireForge desktop shell", () => {
     unmount();
     await new Promise((resolve) => window.setTimeout(resolve, 300));
     expect(pollConversationTask).not.toHaveBeenCalled();
+  });
+
+  it("wires session search and resume through app-owned references", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const lifecycle = sessionLifecycleSchema.parse({
+      schemaVersion: 2,
+      state: "ready",
+      sessions: [
+        {
+          conversationId,
+          projectId,
+          parentConversationId: null,
+          title: "Review session wiring",
+          modelId: "gpt-5.6-sol",
+          reasoningEffort: "high",
+          sandboxMode: "workspace-write",
+          approvalPolicy: "on-request",
+          state: "completed",
+          createdAtMs: 1,
+          updatedAtMs: 2,
+        },
+      ],
+      diagnosticCode: null,
+    });
+    const running = conversationSnapshotSchema.parse({
+      schemaVersion: 1,
+      state: "running",
+      conversationId,
+      projectId,
+      modelId: "gpt-5.6-sol",
+      reasoningEffort: "high",
+      sandboxMode: "workspace-write",
+      approvalPolicy: "on-request",
+      events: [],
+      diagnosticCode: null,
+    });
+    const completed = conversationSnapshotSchema.parse({
+      ...running,
+      state: "completed",
+    });
+    const loadSessions = vi.fn().mockResolvedValue(lifecycle);
+    const resumeConversationTask = vi.fn().mockResolvedValue(running);
+    const pollConversationTask = vi.fn().mockResolvedValue(completed);
+
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadProjects={() => Promise.resolve(attachedProject)}
+        loadConversation={() => Promise.resolve(scaffoldConversation)}
+        loadSessions={loadSessions}
+        resumeConversationTask={resumeConversationTask}
+        pollConversationTask={pollConversationTask}
+      />,
+    );
+
+    fireEvent.change(await screen.findByLabelText("Search session titles"), {
+      target: { value: "wiring" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    await waitFor(() =>
+      expect(loadSessions).toHaveBeenCalledWith({
+        projectId: null,
+        searchTerm: "wiring",
+      }),
+    );
+
+    fireEvent.click(
+      screen.getByText("Review session wiring").closest("button")!,
+    );
+    fireEvent.change(screen.getByLabelText("Next task"), {
+      target: { value: "Continue from the app-owned reference." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Resume" }));
+
+    await waitFor(() =>
+      expect(resumeConversationTask).toHaveBeenCalledWith({
+        conversationId,
+        prompt: "Continue from the app-owned reference.",
+      }),
+    );
+    await waitFor(() =>
+      expect(pollConversationTask).toHaveBeenCalledWith(conversationId),
+    );
   });
 });

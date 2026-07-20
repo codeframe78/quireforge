@@ -230,6 +230,38 @@ removed. The RTX 3050 was correctly unused because schema generation, Rust,
 SQLite, TypeScript, Vite, Astro, and Playwright are CPU/system-memory workloads
 for this milestone.
 
+## Milestone 8B measurements
+
+The session-history checkpoint reused the warm Cargo target, registry, pnpm,
+Vite, Astro, and Playwright caches. The Balanced profile retained four Cargo
+workers and two Playwright workers. No dependency install, clean build, cache
+deletion, database migration, or simultaneous release/browser build was
+required.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Focused native lifecycle suite | 5.32 seconds compile plus 0.22 seconds tests | Not instrumented | Passed, 8 lifecycle/storage-filtered tests |
+| Desktop component/integration suite | 4.76 seconds | Not instrumented | Passed, 54 tests across 11 files |
+| Desktop production build | Vite phase about 0.13 seconds | Not instrumented | Passed, 115 modules |
+| Full non-browser repository gate | 41.37 seconds | about 1.24 GiB | Passed, including 57 JavaScript and 58 Rust tests; 2 live probes ignored |
+| Combined desktop/website browser gate | 8.81 seconds | about 265 MiB | Passed, 16 tests with two workers per package |
+| Warm unbundled native release build | 30.97 seconds | about 1.48 GiB | Passed |
+| Isolated native release launch | under 1 second | Low runtime pressure | Exact D-Bus identity, schema version 3, `0700`/`0600` metadata, and no Codex child verified |
+| Desktop/mobile visual inspection | Manual review interval | Low runtime pressure | Grouping, tabs, lifecycle controls, responsive stacking, and no horizontal overflow verified |
+
+The full gate was about 40% slower than Milestone 8A's 29.45-second baseline.
+It compiled the changed native lifecycle boundary, ran the expanded suites, and
+reported 3,139 major page faults and about 1.24 GiB peak RSS, but zero swaps.
+The browser gate stayed near baseline despite adding native-fixture session
+coverage. The release build was about 23% slower than the prior 25.13-second
+measurement and remained below the forecast-update threshold.
+
+Approximately 44 GiB of RAM and 726 GiB of NVMe space remained available after
+the gates at a load average near 1.4. Swap stayed at about 175 MiB with no
+measured growth, OOM, thermal issue, or material disk pressure. The RTX 3050 was
+correctly unused because Rust, SQLite, React, TypeScript, Vite, Astro, and
+Playwright remained CPU/system-memory workloads.
+
 ## Current execution guidance
 
 - Default to the Balanced profile and preserve desktop responsiveness.

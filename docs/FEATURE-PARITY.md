@@ -16,8 +16,8 @@ Codex commands, protocol types, integration IDs, or compatibility boundaries.
 | Model and reasoning picker | Desktop exposes available choices | `model/list` | Native start validates advertised values; picker remains UI work | M7A core complete / M7B UI planned |
 | Streaming conversation | Rich item and event stream | App-server v2 | Bounded native normalization implemented; rendering remains UI work | M7A core complete / M7B UI planned |
 | Stop task | Interactive interruption | `turn/interrupt` | Native exact-turn interrupt implemented; task control remains UI work | M7A core complete / M7B UI planned |
-| Resume/fork/archive/restore | Documented conversation organization | Thread RPCs and CLI commands | Project association and UX | M8 / feasible |
-| Search conversations | Search past chats/projects | Stable title/cwd filters; deeper paging mixed | Local metadata index without copying authoritative content | M8 / partial |
+| Resume/fork/archive/restore | Documented conversation organization | Thread RPCs and CLI commands | Exact app-owned IDs, project association, accessible controls | M8 / complete locally |
+| Search conversations | Search past chats/projects | Stable title/cwd filters; deeper paging mixed | Transient bounded titles after complete owned-reference reconciliation | M8 / complete locally |
 | Command/file approvals | Desktop asks before protected actions | Approval server requests | Safe, scoped approval UI | M9 / feasible |
 | Plans, commands, and diffs | Desktop activity and diff views | Normalized app-server events | Presentation and review state | M7/M10 / feasible |
 | Git stage/revert/commit/push/PR | Public desktop docs describe these controls | Git CLI is authoritative | Explicit Git service and confirmations | M10 / local |

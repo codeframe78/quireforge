@@ -30,8 +30,10 @@ and stores reference-only metadata. Milestone 7B adds the responsive composer,
 runtime-derived model and reasoning controls, explicit sandbox and approval
 choices, normalized progress stream, and exact stop action. Milestone 8A adds
 native app-reference-only resume, fork, archive/restore, authoritative session
-reconciliation, and conservative crash recovery; the history/search/tabs UI
-remains Milestone 8B.
+reconciliation, and conservative crash recovery. Milestone 8B adds bounded
+Codex-authoritative title search, project/fork grouping, keyboard-accessible
+tabs, and the user-facing resume/fork/archive/restore interface without
+persisting titles or transcript content.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -48,14 +50,13 @@ deployed. There is no application package to install yet.
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
   strict native conversation runtime with a responsive task UI and native
-  session-lifecycle/recovery boundary.
+  session-lifecycle/recovery boundary plus accessible session history controls.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 8 — the 8A native session lifecycle is
-  implemented and verified; the separately gated 8B history/search/tabs UI is
-  planned.
-- Known limitations: session lifecycle has no user-facing history controls yet,
-  and approval decisions remain planned; no installable packages, releases,
+- Current milestone: Milestone 8 is implemented and verified locally; Milestone
+  9 approvals and real-time command/tool/process presentation is next.
+- Known limitations: approval decisions and expandable real-time process details
+  remain planned; no installable packages, releases,
   public deployment, or production Lighthouse evidence exists yet.
 
 ## Discovery documents

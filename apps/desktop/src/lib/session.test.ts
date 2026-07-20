@@ -5,6 +5,7 @@ import {
   conversationContinueRequestSchema,
   scaffoldSessionLifecycle,
   sessionLifecycleSchema,
+  sessionListRequestSchema,
 } from "./session";
 
 const conversationId = "018f0000-0000-7000-8000-000000000010";
@@ -45,13 +46,14 @@ describe("session lifecycle contract", () => {
 
   it("accepts bounded app-owned lifecycle metadata", () => {
     const parsed = sessionLifecycleSchema.parse({
-      schemaVersion: 1,
+      schemaVersion: 2,
       state: "ready",
       sessions: [
         {
           conversationId,
           projectId,
           parentConversationId: null,
+          title: "Review the session boundary",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
           sandboxMode: "read-only",
@@ -69,13 +71,14 @@ describe("session lifecycle contract", () => {
 
   it("rejects raw protocol, path, transcript, and inconsistent metadata", () => {
     const valid = {
-      schemaVersion: 1 as const,
+      schemaVersion: 2 as const,
       state: "ready" as const,
       sessions: [
         {
           conversationId,
           projectId,
           parentConversationId: null,
+          title: "Review the session boundary",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
           sandboxMode: "read-only" as const,
@@ -108,6 +111,28 @@ describe("session lifecycle contract", () => {
     ).toThrow();
     expect(() =>
       sessionLifecycleSchema.parse({ ...valid, state: "empty" }),
+    ).toThrow();
+  });
+
+  it("accepts only bounded title-search input and opaque project IDs", () => {
+    expect(
+      sessionListRequestSchema.parse({
+        projectId,
+        searchTerm: "  lifecycle  ",
+      }),
+    ).toEqual({ projectId, searchTerm: "lifecycle" });
+    expect(() =>
+      sessionListRequestSchema.parse({
+        projectId,
+        searchTerm: "unsafe\nsearch",
+      }),
+    ).toThrow();
+    expect(() =>
+      sessionListRequestSchema.parse({
+        projectId,
+        searchTerm: "search",
+        cwd: "/private/raw/path",
+      }),
     ).toThrow();
   });
 });

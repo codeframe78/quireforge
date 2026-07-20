@@ -148,6 +148,30 @@ print the account-visible catalog.
   rejection, and metadata failure; verify stable diagnostics and no child
   process remains.
 
+## Manual Milestone 8B checklist
+
+- Confirm an empty title query performs complete reconciliation only; a
+  non-empty query performs complete reconciliation before the separate bounded
+  `searchTerm` projection.
+- Confirm filtered IDs must exist in the complete authoritative result and only
+  QuireForge-owned references reach the UI; an unmatched session must not be
+  relabeled missing.
+- Confirm titles are trimmed, bounded to 256 characters, rejected when they
+  contain control or directional-formatting characters, and never written to
+  SQLite.
+- Search, clear, and refresh history across project groups. Open parent and fork
+  rows as tabs; exercise Arrow Left/Right, Home, End, close, focus indication,
+  and mobile overflow behavior.
+- Resume and fork with a bounded prompt, then confirm the task stream uses the
+  returned app conversation ID. Archive and restore by exact app ID and confirm
+  neither operation presents or performs deletion.
+- Confirm archived, missing, busy, unavailable, empty-result, and browser-
+  preview states prevent inappropriate actions and expose no Codex ID, cwd,
+  preview, transcript, raw status, or protocol payload.
+- Run component and shell integration tests, both Playwright viewports, axe-core,
+  the complete repository validator, the warm unbundled native build, and the
+  isolated launch smoke check without a live model turn.
+
 ## Manual Milestone 7 checklist
 
 - Use deterministic mock app-server fixtures only; do not start a live or
