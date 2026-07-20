@@ -1,10 +1,10 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the Milestone 2 website foundation
-and Milestones 3–5 desktop scaffold, Codex process adapter, and authentication
-boundary implemented locally. Persistence, project, Git, terminal, and
-integration interfaces remain subject to validation in their implementation
-milestones.
+and Milestones 3–7A desktop scaffold, Codex process adapter, authentication,
+project attachment, and native conversation boundary implemented locally. Git,
+terminal, conversation UI, and integration interfaces remain subject to
+validation in their implementation milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -85,12 +85,12 @@ returned to the frontend. Closing or killing the owned child is followed by a
 wait, including timeout and early-exit paths.
 
 Milestone 4 committed only initialize and `model/list` portions of the installed
-CLI's generated schema with hashes; Milestone 5 adds the stable account
-lifecycle subset. Runtime models and reasoning efforts always come from the live
-supported catalog; sanitized fixtures are deterministic test contracts, not
-hardcoded production state. Threads, turns, approvals, project working
-directories, Codex configuration writes, and session persistence remain
-excluded.
+CLI's generated schema with hashes; later milestones add reviewed account and
+conversation subsets. Runtime models and reasoning efforts always come from the
+live supported catalog; sanitized fixtures are deterministic test contracts,
+not hardcoded production state. The Milestone 4 probe itself still excludes
+threads, turns, approvals, project working directories, Codex configuration
+writes, and session persistence.
 
 ### Milestone 5 implementation boundary
 
@@ -116,6 +116,36 @@ one-time code exist only in the in-memory pending snapshot because they are
 required for user handoff; they disappear after completion or cancellation.
 Logout requires a second explicit UI action. QuireForge does not read Codex
 credential files or browser storage and creates no authentication database.
+
+### Milestone 6 implementation boundary
+
+The native `ProjectService` owns migrated QuireForge SQLite metadata and native
+directory selection. Attachment confirmation binds selected and resolved path
+identity, mount and accessibility evidence, Git/worktree identity, and detected
+project instructions. Every execution preflight reloads and revalidates that
+evidence; uncertainty fails closed without falling back to another directory.
+Detach, archive, and relink mutate only application metadata and never delete
+source content or Codex-owned state.
+
+### Milestone 7A implementation boundary
+
+`ConversationService` is the serialized native owner of one MVP conversation.
+It reserves the project against detach, archive, and relink races, revalidates
+the attached directory immediately before execution, discovers the live model
+catalog on the owned app-server process, and sends fixed `thread/start` and
+`turn/start` requests with the exact verified cwd and explicit model, reasoning,
+sandbox, and approval settings.
+
+The native boundary correlates UUIDv7 thread and turn IDs, emits only bounded
+normalized lifecycle, agent-message, reasoning-summary, plan, coarse-activity,
+and stable-error events, and rejects raw protocol fields or mismatched stream
+identities. `turn/interrupt` uses only the native-owned thread and turn IDs.
+Approval server requests are not guessed or auto-approved: the conversation
+enters a blocked state and its child is closed and waited. SQLite stores only
+Codex reference IDs, selected controls, and lifecycle status—never prompts,
+message text, reasoning, command output, diffs, or credentials. The strict
+frontend contract can start, poll, inspect, and interrupt by an application ID;
+the user-facing conversation view remains Milestone 7B.
 
 ## Application layers
 
@@ -146,10 +176,14 @@ The implemented compatibility boundary consists of:
   with bounded handoff data and stable diagnostics.
 - `CodexAuthSnapshot`: strict account-kind and lifecycle state without account
   identity or secret fields.
+- `ConversationService`: serialized app-server ownership, project reservation,
+  exact turn correlation and interruption, and reference-only persistence.
+- `ConversationSnapshot`: strict application-ID state plus bounded normalized
+  events; native Codex IDs and cwd never cross IPC.
 
-Later milestones extend the boundary with conversation methods without
-bypassing this normalization layer. Generated schemas and sanitized fixtures
-drive contract tests.
+Later milestones extend recovery, approvals, and presentation without bypassing
+this normalization layer. Generated schemas and sanitized fixtures drive
+contract tests.
 
 ## Required service boundaries
 
@@ -215,8 +249,9 @@ paths are never database keys.
 
 - `project_settings`: model preference, sandbox/approval defaults, terminal and
   editor preferences; no secrets.
-- `project_threads`: project ID to authoritative Codex thread ID and cwd
-  association.
+- `conversation_references`: project ID to authoritative Codex thread ID,
+  active-turn reference, selected controls, and lifecycle status; no transcript
+  or task content.
 - `integration_references`: normalized identifiers, scope, and display cache;
   Codex remains authoritative for installed/auth state.
 - `terminal_sessions`: recoverable presentation/process metadata, never shell
@@ -285,8 +320,10 @@ Normalized events include:
 - Authentication and policy changes.
 - Adapter warnings, version mismatches, and unsupported capabilities.
 
-Each event carries an application correlation ID, Codex thread/turn/item IDs
-when available, timestamp, maturity source, and redaction status.
+Native normalization correlates Codex thread/turn/item IDs when available, but
+the frontend event contract carries an application conversation ID and ordered
+sequence only. Raw Codex IDs, cwd, timestamps from untrusted payloads, and
+unreviewed event fields do not cross IPC.
 
 ## Integration domain model
 
@@ -358,7 +395,6 @@ Most tests require neither model calls nor third-party authorization.
 ## Open architecture decisions
 
 - Oldest supported Ubuntu packaging baseline.
-- SQLite crate and migration mechanism.
 - PTY implementation and terminal renderer.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or

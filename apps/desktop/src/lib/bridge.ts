@@ -8,6 +8,13 @@ import {
 import { codexRuntimeSchema, type CodexRuntimeSnapshot } from "./codex";
 import { desktopBootstrapSchema, type DesktopBootstrap } from "./contract";
 import {
+  conversationSnapshotSchema,
+  conversationStartRequestSchema,
+  conversationIdSchema,
+  type ConversationSnapshot,
+  type ConversationStartRequest,
+} from "./conversation";
+import {
   projectPreflightSchema,
   projectWorkspaceSchema,
   type ProjectPreflightSnapshot,
@@ -30,6 +37,10 @@ export const PROJECT_CANCEL_ATTACHMENT_COMMAND = "project_cancel_attachment";
 export const PROJECT_DETACH_COMMAND = "project_detach";
 export const PROJECT_ARCHIVE_COMMAND = "project_archive";
 export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
+export const CONVERSATION_STATUS_COMMAND = "conversation_status";
+export const CONVERSATION_START_COMMAND = "conversation_start";
+export const CONVERSATION_POLL_COMMAND = "conversation_poll";
+export const CONVERSATION_INTERRUPT_COMMAND = "conversation_interrupt";
 
 export type InvokeFunction = (
   command: string,
@@ -185,4 +196,44 @@ export async function preflightProject(
     projectId,
   });
   return projectPreflightSchema.parse(payload);
+}
+
+export async function loadConversationStatus(
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  const payload = await invokeFunction(CONVERSATION_STATUS_COMMAND);
+  return conversationSnapshotSchema.parse(payload);
+}
+
+export async function startConversation(
+  request: ConversationStartRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  const reviewedRequest = conversationStartRequestSchema.parse(request);
+  const payload = await invokeFunction(CONVERSATION_START_COMMAND, {
+    request: reviewedRequest,
+  });
+  return conversationSnapshotSchema.parse(payload);
+}
+
+export async function pollConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  const reviewedId = conversationIdSchema.parse(conversationId);
+  const payload = await invokeFunction(CONVERSATION_POLL_COMMAND, {
+    conversationId: reviewedId,
+  });
+  return conversationSnapshotSchema.parse(payload);
+}
+
+export async function interruptConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationSnapshot> {
+  const reviewedId = conversationIdSchema.parse(conversationId);
+  const payload = await invokeFunction(CONVERSATION_INTERRUPT_COMMAND, {
+    conversationId: reviewedId,
+  });
+  return conversationSnapshotSchema.parse(payload);
 }

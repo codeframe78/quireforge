@@ -144,6 +144,32 @@ available system memory. No swap growth, OOM, throttling, cache deletion, or
 competing build was observed. GPU computation remained unnecessary; native
 WebKit rendering used the normal graphics stack only.
 
+## Milestone 7A measurements
+
+The native conversation checkpoint reused warm Rust, Tauri, pnpm, Vite, Astro,
+and browser caches. The Balanced profile retained four Cargo workers and two
+Playwright workers. Reviewed protocol fixtures added no dependency and no clean
+build was run.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+|---|---:|---:|---|
+| Full experimental schema generation to temporary storage | about 0.32 seconds | about 45 MiB | Passed; temporary output removed after review |
+| Reviewed schema-fixture generation | about 1.01 seconds | about 141 MiB | Passed, 28 selected schemas; repeat run idempotent |
+| First corrected incremental `cargo check` | about 1.89 seconds | about 538 MiB | Passed |
+| Conversation-focused Rust suite | about 5.2–6.3 seconds | about 1.24 GiB | Passed, 9 tests |
+| Final full non-browser repository gate | about 27.81 seconds | about 660 MiB | Passed, including 50 Rust tests; 2 deliberate live probes ignored |
+| Final combined browser gate | about 8.48 seconds | about 251 MiB | Passed, 14 tests |
+| Warm unbundled native release build | about 28.86 seconds | about 1.45 GiB | Passed |
+| Isolated native release launch | Manual smoke interval | Low runtime pressure | Exact D-Bus identity, schema v2 migration, owner-only metadata, and clean exit verified |
+
+The security review added explicit shutdown-and-wait behavior for every spawned
+conversation startup failure; a deterministic mock blocks until stdin closes
+and proves its exit trap completes before the service returns. The release
+build was less than half the Milestone 6B time because the relevant release
+graph and linker cache were warm. Approximately 46 GiB remained available
+before the full gates, with no competing build, swap growth, OOM, throttling,
+or material disk pressure. The RTX 3050 was correctly unused.
+
 ## Current execution guidance
 
 - Default to the Balanced profile and preserve desktop responsiveness.

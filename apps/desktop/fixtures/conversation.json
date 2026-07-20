@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "state": "empty",
+  "conversationId": null,
+  "projectId": null,
+  "modelId": null,
+  "reasoningEffort": null,
+  "sandboxMode": null,
+  "approvalPolicy": null,
+  "events": [],
+  "diagnosticCode": null
+}

@@ -26,6 +26,21 @@ SELECTED_SCHEMAS = (
     "v2/LogoutAccountResponse.json",
     "v2/ModelListParams.json",
     "v2/ModelListResponse.json",
+    "v2/ThreadStartParams.json",
+    "v2/ThreadStartResponse.json",
+    "v2/TurnStartParams.json",
+    "v2/TurnStartResponse.json",
+    "v2/TurnInterruptParams.json",
+    "v2/TurnInterruptResponse.json",
+    "v2/ThreadStartedNotification.json",
+    "v2/TurnStartedNotification.json",
+    "v2/TurnCompletedNotification.json",
+    "v2/AgentMessageDeltaNotification.json",
+    "v2/ReasoningSummaryTextDeltaNotification.json",
+    "v2/TurnPlanUpdatedNotification.json",
+    "v2/ItemStartedNotification.json",
+    "v2/ItemCompletedNotification.json",
+    "v2/ErrorNotification.json",
 )
 
 
@@ -97,7 +112,10 @@ def main() -> None:
             "schemaVersion": 1,
             "codexCliVersion": version,
             "generator": "codex app-server generate-json-schema --experimental",
-            "selection": "initialize, model/list, and stable account lifecycle only",
+            "selection": (
+                "initialize, model/list, stable account lifecycle, and the "
+                "Milestone 7 conversation start/interrupt/event subset only"
+            ),
             "files": manifest_files,
         }
         destination.mkdir(parents=True, exist_ok=True)

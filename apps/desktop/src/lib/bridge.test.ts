@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { scaffoldCodexAuth } from "./auth";
 import { scaffoldCodexRuntime } from "./codex";
+import { scaffoldConversation } from "./conversation";
 import {
   archiveProject,
   cancelProjectAttachment,
@@ -12,16 +13,22 @@ import {
   CODEX_AUTH_STATUS_COMMAND,
   CODEX_RUNTIME_PROBE_COMMAND,
   confirmProjectAttachment,
+  CONVERSATION_INTERRUPT_COMMAND,
+  CONVERSATION_POLL_COMMAND,
+  CONVERSATION_START_COMMAND,
+  CONVERSATION_STATUS_COMMAND,
   DESKTOP_BOOTSTRAP_COMMAND,
   detachProject,
   loadCodexAuth,
   loadCodexRuntime,
+  loadConversationStatus,
   loadDesktopBootstrap,
   loadProjectWorkspace,
   openCodexAuthBrowser,
   pickProjectDirectory,
   pickProjectRelink,
   preflightProject,
+  pollConversation,
   PROJECT_ARCHIVE_COMMAND,
   PROJECT_CANCEL_ATTACHMENT_COMMAND,
   PROJECT_CONFIRM_ATTACHMENT_COMMAND,
@@ -31,6 +38,8 @@ import {
   PROJECT_PREFLIGHT_COMMAND,
   PROJECT_WORKSPACE_STATUS_COMMAND,
   startCodexAuth,
+  startConversation,
+  interruptConversation,
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
 import { scaffoldProjectWorkspace } from "./project";
@@ -138,5 +147,50 @@ describe("desktop bridge", () => {
     });
 
     await expect(loadProjectWorkspace(invoke)).rejects.toThrow();
+  });
+
+  it("uses fixed conversation commands without paths or Codex protocol IDs", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const request = {
+      projectId: "018f0000-0000-7000-8000-000000000001",
+      prompt: "Review the attached project.",
+      modelId: "gpt-5.6-sol",
+      reasoningEffort: "high",
+      sandboxMode: "read-only" as const,
+      approvalPolicy: "untrusted" as const,
+    };
+    const invoke = vi.fn().mockResolvedValue(scaffoldConversation);
+
+    await loadConversationStatus(invoke);
+    await startConversation(request, invoke);
+    await pollConversation(conversationId, invoke);
+    await interruptConversation(conversationId, invoke);
+
+    expect(invoke.mock.calls).toEqual([
+      [CONVERSATION_STATUS_COMMAND],
+      [CONVERSATION_START_COMMAND, { request }],
+      [CONVERSATION_POLL_COMMAND, { conversationId }],
+      [CONVERSATION_INTERRUPT_COMMAND, { conversationId }],
+    ]);
+  });
+
+  it("rejects path-bearing conversation input before native invocation", async () => {
+    const invoke = vi.fn().mockResolvedValue(scaffoldConversation);
+
+    await expect(
+      startConversation(
+        {
+          projectId: "018f0000-0000-7000-8000-000000000001",
+          prompt: "Review.",
+          modelId: "gpt-5.6-sol",
+          reasoningEffort: "high",
+          sandboxMode: "read-only",
+          approvalPolicy: "untrusted",
+          cwd: "/private/raw/path",
+        } as never,
+        invoke,
+      ),
+    ).rejects.toThrow();
+    expect(invoke).not.toHaveBeenCalled();
   });
 });

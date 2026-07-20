@@ -24,6 +24,11 @@
       "id": "normalized-events",
       "state": "ready",
       "route": "native"
+    },
+    {
+      "id": "conversation-runtime",
+      "state": "ready",
+      "route": "app-server"
     }
   ],
   "models": [

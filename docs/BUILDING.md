@@ -1,8 +1,9 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and Milestones 3–6 desktop shell, Codex,
-authentication, and project-attachment work can be developed and built locally.
-An installable application package does not yet exist.
+Status: the Milestone 2 website and Milestones 3–7A desktop shell, Codex,
+authentication, project attachment, and native conversation runtime can be
+developed and built locally. An installable application package does not yet
+exist.
 
 ## Supported development baseline
 
@@ -97,15 +98,20 @@ pnpm desktop:preview
 Browser preview mode cannot call native IPC and labels itself accordingly.
 The production Tauri window exposes `desktop_bootstrap`, the fixed-purpose
 `codex_runtime_probe`, narrow `codex_auth_*` commands, and fixed-purpose
-`project_*` lifecycle commands. Runtime probing accepts no arguments and may
+`project_*` lifecycle commands. It also exposes fixed `conversation_status`,
+`conversation_start`, `conversation_poll`, and `conversation_interrupt`
+commands. Runtime probing accepts no arguments and may
 run only `codex --version` plus a bounded local app-server
 initialize/`model/list` exchange. Authentication accepts only a closed
 browser/device method; browser opening takes no frontend URL and uses the
 validated native-held handoff. Project directory paths can enter only through
 the native folder picker; later actions accept opaque project IDs, and no
 source-deletion or general filesystem command is exposed. No arbitrary shell,
-process, thread, turn, configuration, or integration command is exposed. The
-main window retains an empty direct plugin-permission list.
+process, configuration, or integration command is exposed. Conversation start
+accepts only an opaque project ID, bounded prompt, and closed model/reasoning,
+sandbox, and approval values; cwd and native Codex IDs never enter from the
+webview. Poll and interrupt accept only QuireForge's application conversation
+ID. The main window retains an empty direct plugin-permission list.
 
 ## Refresh the reviewed Codex schemas
 
@@ -116,12 +122,12 @@ pnpm codex:schema
 ```
 
 The generator writes a versioned fixture directory containing only initialize,
-`model/list`, and stable account-lifecycle schemas plus SHA-256 hashes. It does
-not modify Codex configuration, authentication, or sessions. Never accept a
-refresh mechanically: inspect the CLI version, generated diff, field semantics,
-adapter normalization, tests, and compatibility documentation before
-committing it. Do not commit the complete multi-megabyte experimental schema
-bundle.
+`model/list`, stable account-lifecycle, and reviewed Milestone 7A thread/turn
+schemas plus SHA-256 hashes. It does not modify Codex configuration,
+authentication, or sessions. Never accept a refresh mechanically: inspect the
+CLI version, generated diff, field semantics, adapter normalization, tests, and
+compatibility documentation before committing it. Do not commit the complete
+multi-megabyte experimental schema bundle.
 
 ## Full non-browser validation
 

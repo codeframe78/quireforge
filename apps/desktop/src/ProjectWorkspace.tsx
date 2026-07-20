@@ -48,6 +48,8 @@ const diagnosticMessages: Record<
   "duplicate-directory": "That resolved directory is already attached.",
   "project-not-found":
     "The selected project no longer exists in QuireForge metadata.",
+  "project-busy":
+    "That project has an active Codex task. Stop it before changing its attachment.",
   "attachment-not-pending":
     "The attachment preview expired. Select the folder again.",
   "identity-changed":

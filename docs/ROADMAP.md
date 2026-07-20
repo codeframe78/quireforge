@@ -39,8 +39,10 @@ Codex-owned browser/device onboarding, exact cancellation/completion handling,
 explicit logout, and redacted recovery without retaining secrets. Milestone 6
 adds app-owned project metadata, native directory attachment, identity-aware
 preflight, and an accessible project workspace without copying or deleting
-source content. Application packages and external provider settings remain
-milestone- and approval-gated.
+source content. Milestone 7A adds the native conversation runtime, strict
+normalized contracts, exact-turn interruption, and reference-only persistence;
+the Milestone 7B user interface remains gated. Application packages and external
+provider settings remain milestone- and approval-gated.
 
 ## Status
 
@@ -53,7 +55,7 @@ milestone- and approval-gated.
 | 4 | Codex process adapter and contracts | Very large | Complete; merged to `main` |
 | 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
 | 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
-| 7 | Conversation MVP | Very large | Planned |
+| 7 | Conversation MVP | Very large | In progress; 7A native runtime complete locally, 7B UI pending |
 | 8 | Session lifecycle and crash recovery | Large | Planned |
 | 9 | Approvals and command presentation | Large | Planned |
 | 10 | Git status and diff review | Large | Planned |
@@ -169,6 +171,19 @@ directory, Codex-owned state, package, deployment, or release was changed.
 Start threads/turns in the verified attached directory, stream normalized
 output, stop tasks, persist references, and expose model, reasoning, sandbox,
 and approval controls from capabilities.
+
+Milestone 7A native-runtime checkpoint implemented locally: one serialized
+native owner validates the project association and re-resolves the exact
+attached cwd before starting work; discovers the live model/reasoning catalog;
+starts `thread/start` and `turn/start` with explicit sandbox and approval
+controls; emits only bounded normalized lifecycle, message, reasoning-summary,
+plan, and coarse-activity events; interrupts the exact owned turn; and stores
+only Codex reference IDs and lifecycle metadata in QuireForge SQLite. Active
+execution reserves the project against detach, archive, or relink races.
+Approval requests block and close the task rather than being guessed or
+auto-approved. Deterministic tests use a mock app-server and make no model call.
+The user-facing conversation composer, stream view, controls, and accessible
+interaction states remain Milestone 7B.
 
 ### 8 — Session Lifecycle
 

@@ -41,6 +41,7 @@ impl CodexRuntimeSnapshot {
                 CodexCapability::ready("runtime-probe", CapabilityRoute::Cli),
                 CodexCapability::unavailable("app-server-stdio", CapabilityRoute::AppServer),
                 CodexCapability::unavailable("model-discovery", CapabilityRoute::AppServer),
+                CodexCapability::unavailable("conversation-runtime", CapabilityRoute::AppServer),
                 CodexCapability::ready("normalized-events", CapabilityRoute::Native),
             ],
             models: Vec::new(),
@@ -83,6 +84,11 @@ fn base_capabilities(state: CapabilityState) -> Vec<CodexCapability> {
             id: "normalized-events".to_owned(),
             state: CapabilityState::Ready,
             route: CapabilityRoute::Native,
+        },
+        CodexCapability {
+            id: "conversation-runtime".to_owned(),
+            state,
+            route: CapabilityRoute::AppServer,
         },
     ]
 }

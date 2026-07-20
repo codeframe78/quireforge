@@ -233,3 +233,53 @@ of local command time, excluding approval waits.
 - No swap growth, OOM, thermal concern, GPU-compute workload, cache deletion,
   Codex-owned state change, source-directory mutation, or package/deployment
   operation occurred.
+
+## Milestone 7 — Conversation MVP
+
+### Milestone 7A — Native Conversation Runtime
+
+| Field | Record |
+|---|---|
+| Forecast date | 2026-07-19 |
+| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
+| Preliminary forecast | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence |
+| Calibrated forecast | 2.5–4.5 active hours; 10–25 minutes of local commands; about 3–5.25 total elapsed hours across 1–2 sessions; medium confidence |
+| Calibration basis | Clean Milestone 6 `main`, stable Codex 0.144.6 schemas, 46 GiB available RAM, warm 13 GiB Rust target cache, warm pnpm/browser caches, four Cargo workers, and two Playwright workers |
+| Observed active execution | Approximately 45–65 minutes through protocol review, implementation, deterministic tests, security correction, documentation, full validation, release/native verification, and commit preparation; approval delay excluded |
+| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checking/tests, the 27.81-second full gate, 8.48-second browser gate, 28.86-second release build, and isolated native smoke check |
+| User approval/waiting time | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation; waiting time was excluded |
+| Sessions | One active implementation session with recoverable contract, native-service, validation, and publication checkpoints |
+| Usage intensity | High model/tool activity; moderate CPU use and low memory pressure |
+| Completion status | Milestone 7A complete; Milestone 7B user interface pending |
+
+The forecast overestimated model-driven implementation and build time. The
+existing app-server process owner, project preflight service, SQLite repository,
+strict shared-fixture pattern, and warm caches compressed the critical path
+without reducing scope. XHigh reasoning was useful for protocol correlation,
+path/task lifetime binding, exact interruption, reference-only persistence,
+approval fail-closed behavior, and the final security review. The review found
+and corrected a startup-error cleanup path so a spawned child is explicitly
+closed and waited rather than relying only on kill-on-drop.
+
+### Milestone 7A required observations and lessons
+
+- Full experimental schema calibration took about 0.32 seconds at about 45 MiB
+  peak RSS; generation of the 28 reviewed schemas took about 1.01 seconds at
+  about 141 MiB and was idempotent.
+- The final conversation-focused Rust suite passed 9 tests after about 5–6
+  seconds of incremental compilation. The full locked Rust suite passed 50
+  tests with 2 deliberate live probes ignored.
+- The final full non-browser repository gate took 27.81 seconds at about 660
+  MiB peak RSS. The combined browser gate passed 14 tests in 8.48 seconds at
+  about 251 MiB peak RSS.
+- The warm unbundled release build took 28.86 seconds at about 1.45 GiB peak
+  RSS, materially faster than Milestone 6B's 67-second release measurement.
+- An isolated native launch owned the exact D-Bus identity, migrated an empty
+  database through schema version 2, created its application-data directory and
+  metadata database with `0700`/`0600` permissions, and left no app-server child.
+- No live model turn, approval decision, package, deployment, source-directory
+  mutation, cache deletion, OOM, heavy swapping, or GPU-compute workload
+  occurred.
+- Milestone 7B is predominantly frontend integration and interaction design,
+  so its reasoning strength and forecast must be gated independently rather
+  than automatically retaining XHigh.

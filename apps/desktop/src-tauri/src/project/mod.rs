@@ -3,6 +3,7 @@ mod storage;
 pub mod types;
 
 use std::{
+    collections::HashSet,
     path::{Path, PathBuf},
     sync::Mutex,
 };
@@ -31,6 +32,28 @@ struct PendingAttachment {
 pub struct ProjectService {
     repository: Mutex<Option<ProjectRepository>>,
     pending: Mutex<Option<PendingAttachment>>,
+    active_executions: Mutex<HashSet<String>>,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum ProjectExecutionError {
+    InvalidProjectId,
+    MetadataUnavailable,
+    ProjectNotFound,
+    DirectoryUnavailable,
+    IdentityChanged,
+    NotWritable,
+    ProjectBusy,
+}
+
+pub(crate) struct ConversationReference<'a> {
+    pub conversation_id: &'a str,
+    pub project_id: &'a str,
+    pub codex_thread_id: &'a str,
+    pub model_id: &'a str,
+    pub reasoning_effort: &'a str,
+    pub sandbox_mode: &'a str,
+    pub approval_policy: &'a str,
 }
 
 impl ProjectService {
@@ -38,6 +61,7 @@ impl ProjectService {
         Self {
             repository: Mutex::new(None),
             pending: Mutex::new(None),
+            active_executions: Mutex::new(HashSet::new()),
         }
     }
 
@@ -45,14 +69,16 @@ impl ProjectService {
         Self {
             repository: Mutex::new(ProjectRepository::open(database_path).ok()),
             pending: Mutex::new(None),
+            active_executions: Mutex::new(HashSet::new()),
         }
     }
 
     #[cfg(test)]
-    fn in_memory() -> Self {
+    pub(crate) fn in_memory() -> Self {
         Self {
             repository: Mutex::new(ProjectRepository::in_memory().ok()),
             pending: Mutex::new(None),
+            active_executions: Mutex::new(HashSet::new()),
         }
     }
 
@@ -75,6 +101,9 @@ impl ProjectService {
     ) -> ProjectWorkspaceSnapshot {
         if !valid_id(&project_id) {
             return self.build_snapshot(Some(ProjectDiagnosticCode::ProjectNotFound));
+        }
+        if self.execution_active(&project_id) {
+            return self.build_snapshot(Some(ProjectDiagnosticCode::ProjectBusy));
         }
         self.prepare(
             PendingAttachmentKind::Relink,
@@ -99,6 +128,13 @@ impl ProjectService {
         let Some(pending) = pending else {
             return self.build_snapshot(Some(ProjectDiagnosticCode::AttachmentNotPending));
         };
+        if pending
+            .project_id
+            .as_deref()
+            .is_some_and(|project_id| self.execution_active(project_id))
+        {
+            return self.build_snapshot(Some(ProjectDiagnosticCode::ProjectBusy));
+        }
 
         let current_identity = match inspect_directory(&pending.identity.selected_path) {
             Ok(identity) => identity,
@@ -225,6 +261,118 @@ impl ProjectService {
         }
     }
 
+    pub(crate) fn execution_cwd(&self, project_id: &str) -> Result<PathBuf, ProjectExecutionError> {
+        if !valid_id(project_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        let project = repository
+            .project(project_id)
+            .map_err(|error| match error {
+                StorageError::ProjectNotFound => ProjectExecutionError::ProjectNotFound,
+                _ => ProjectExecutionError::MetadataUnavailable,
+            })?;
+        if project.archived {
+            return Err(ProjectExecutionError::ProjectNotFound);
+        }
+        let association = project
+            .association
+            .ok_or(ProjectExecutionError::DirectoryUnavailable)?;
+        drop(repository_guard);
+
+        let identity = inspect_directory(Path::new(&association.selected_path))
+            .map_err(|_| ProjectExecutionError::DirectoryUnavailable)?;
+        if !same_stored_identity(&association, &identity) {
+            return Err(ProjectExecutionError::IdentityChanged);
+        }
+        if identity.accessibility != DirectoryAccessibilityState::ConnectedAccessible {
+            return Err(ProjectExecutionError::NotWritable);
+        }
+        Ok(identity.resolved_path)
+    }
+
+    pub(crate) fn reserve_execution(&self, project_id: &str) -> Result<(), ProjectExecutionError> {
+        if !valid_id(project_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let mut active = self
+            .active_executions
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        if !active.insert(project_id.to_owned()) {
+            return Err(ProjectExecutionError::ProjectBusy);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn release_execution(&self, project_id: &str) {
+        if let Ok(mut active) = self.active_executions.lock() {
+            active.remove(project_id);
+        }
+    }
+
+    pub(crate) fn record_conversation_reference(
+        &self,
+        reference: ConversationReference<'_>,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .insert_conversation_reference(&reference)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn record_conversation_turn(
+        &self,
+        conversation_id: &str,
+        active_turn_id: &str,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .update_conversation_turn(conversation_id, active_turn_id)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn record_conversation_status(
+        &self,
+        conversation_id: &str,
+        status: &str,
+    ) -> Result<(), ProjectExecutionError> {
+        if !matches!(
+            status,
+            "stopping" | "completed" | "interrupted" | "blocked" | "failed"
+        ) {
+            return Err(ProjectExecutionError::MetadataUnavailable);
+        }
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .update_conversation_status(conversation_id, status)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
     fn prepare(
         &self,
         kind: PendingAttachmentKind,
@@ -299,6 +447,9 @@ impl ProjectService {
         if !valid_id(project_id) {
             return self.build_snapshot(Some(ProjectDiagnosticCode::ProjectNotFound));
         }
+        if self.execution_active(project_id) {
+            return self.build_snapshot(Some(ProjectDiagnosticCode::ProjectBusy));
+        }
         let result =
             self.repository.lock().ok().and_then(|mut repository| {
                 repository.as_mut().map(|repo| action(repo, project_id))
@@ -310,6 +461,13 @@ impl ProjectService {
                 ProjectWorkspaceSnapshot::unavailable(ProjectDiagnosticCode::MetadataUnavailable)
             }
         }
+    }
+
+    fn execution_active(&self, project_id: &str) -> bool {
+        self.active_executions
+            .lock()
+            .map(|active| active.contains(project_id))
+            .unwrap_or(true)
     }
 
     fn build_snapshot(
