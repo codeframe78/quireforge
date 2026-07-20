@@ -1,10 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2–5 establish repository, website, desktop frontend, native
-contract, Codex adapter, authentication, and Tauri build checks. Milestone 6A
-adds native directory-attachment and database-migration suites; its frontend
-checks remain in progress. PTY, broader Git fixtures, and conversation suites
-arrive with the milestones that introduce those systems.
+Status: Milestones 2–6 establish repository, website, desktop frontend, native
+contract, Codex adapter, authentication, project attachment, and Tauri build
+checks. PTY, broader Git fixtures, and conversation suites arrive with the
+milestones that introduce those systems.
 
 ## Repository, website, and desktop checks
 
@@ -40,6 +39,9 @@ Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
 Git repositories and linked worktrees, duplicate roots, confirmation-time
 changes, relink/detach/archive behavior, and fail-closed cwd preflight.
+Frontend project tests share a normalized fixture with Rust, reject unknown or
+path-bearing bridge input, and cover confirmation, missing/read-only states,
+relink, preflight, and two-step detach/archive controls.
 
 ## Responsive browser and accessibility checks
 
@@ -110,7 +112,7 @@ Confirm either test leaves no additional `codex app-server` process. It must
 not start a thread or turn, write configuration, inspect session content, or
 print the account-visible catalog.
 
-## Manual Milestone 6A checklist
+## Manual Milestone 6 checklist
 
 - Confirm the folder picker is native and no command accepts a frontend path.
 - Preview and cancel an attachment without writing project metadata.
@@ -126,6 +128,9 @@ print the account-visible catalog.
   Codex authentication, session, connector, or project-file content.
 - Do not use a personal source directory for destructive validation. The
   automated suite uses only temporary or in-memory fixtures.
+- Verify the release executable starts with isolated temporary XDG directories,
+  owns `io.github.codeframe78.QuireForge` on the session bus, creates its app
+  data directory with owner-only permissions, and exits cleanly.
 
 ## Manual Milestone 5 checklist
 

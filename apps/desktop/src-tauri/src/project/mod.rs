@@ -536,6 +536,18 @@ mod tests {
     }
 
     #[test]
+    fn serialized_empty_workspace_matches_the_shared_frontend_fixture() {
+        let service = ProjectService::in_memory();
+        let actual =
+            serde_json::to_value(service.status()).expect("workspace snapshot must serialize");
+        let expected: serde_json::Value =
+            serde_json::from_str(include_str!("../../../fixtures/project-workspace.json"))
+                .expect("shared workspace fixture must parse");
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     fn attaches_and_preflights_the_original_directory_in_place() {
         let directory = temporary_directory("attach");
         fs::write(directory.join("kept-in-place.txt"), "original").expect("marker must be written");

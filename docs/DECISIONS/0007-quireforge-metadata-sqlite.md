@@ -1,6 +1,6 @@
 # ADR 0007: Own Project Metadata in Native SQLite
 
-- Status: Accepted for Milestone 6 implementation
+- Status: Accepted and implemented in Milestone 6
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 

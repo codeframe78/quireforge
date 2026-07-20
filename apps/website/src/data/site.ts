@@ -86,16 +86,16 @@ export const sitePages: SitePage[] = [
     title: "A Linux workspace built around the repository you already have.",
     description:
       "QuireForge is being designed for direct local-directory work, observable Codex tasks, deliberate approvals, and native Linux workflows.",
-    status: "Design validated · implementation pending",
+    status: "Project attachment implemented locally · conversations pending",
     sections: [
       {
         heading: "Projects stay where they are",
         paragraphs: [
-          "Attach an existing local directory and keep working against the original path. QuireForge will not require an import folder, background upload, or duplicate repository.",
+          "Attach an existing local directory and keep working against the original path. QuireForge does not require an import folder, background upload, or duplicate repository.",
         ],
         items: [
           "Persistent project-to-directory associations",
-          "Git repository, worktree, branch, and dirty-state detection",
+          "Git repository and linked-worktree identity detection",
           "Missing, moved, read-only, removable, and network-path states",
           "Explicit detach and re-link actions that never delete source files",
         ],
@@ -299,7 +299,7 @@ export const sitePages: SitePage[] = [
     title: "Twenty-one gated milestones, one reviewable step at a time.",
     description:
       "QuireForge is built milestone by milestone, with model selection, acceptance criteria, tests, documentation, review, and explicit approval for external actions.",
-    status: "Milestone 5 complete locally · Milestone 6 next",
+    status: "Milestone 6 complete locally · Milestone 7 next",
     sections: [
       {
         heading: "Completed locally",
@@ -310,16 +310,18 @@ export const sitePages: SitePage[] = [
           "Milestone 3: Tauri, React, TypeScript, and Rust desktop scaffold with typed IPC and local Wayland verification",
           "Milestone 4: supervised Codex app-server probe, normalized runtime contracts, deterministic mocks, and bounded failure recovery",
           "Milestone 5: Codex-owned browser/device authentication, normalized account state, cancellation, logout confirmation, and redacted recovery",
+          "Milestone 6: native local-directory attachment, app-owned metadata, identity-aware preflight, and accessible project controls",
         ],
       },
       {
         heading: "Next gated milestone",
-        items: ["Milestone 6: direct local-directory attachment"],
+        items: [
+          "Milestone 7: conversation MVP in the verified attached directory",
+        ],
       },
       {
         heading: "Later",
         items: [
-          "Milestone 7: conversation MVP in the verified attached directory",
           "Milestones 13–14: integration discovery and management",
           "Milestones 19–20: packages, approved deployment, and beta release",
         ],

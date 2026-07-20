@@ -36,8 +36,11 @@ versioned Codex boundary, supervised app-server probe, normalized model catalog,
 mock/failure tests, and selected generated schemas without starting a model
 turn or modifying Codex state. Milestone 5 added normalized account status,
 Codex-owned browser/device onboarding, exact cancellation/completion handling,
-explicit logout, and redacted recovery without retaining secrets. Application
-packages and external provider settings remain milestone- and approval-gated.
+explicit logout, and redacted recovery without retaining secrets. Milestone 6
+adds app-owned project metadata, native directory attachment, identity-aware
+preflight, and an accessible project workspace without copying or deleting
+source content. Application packages and external provider settings remain
+milestone- and approval-gated.
 
 ## Status
 
@@ -49,7 +52,7 @@ packages and external provider settings remain milestone- and approval-gated.
 | 3 | Desktop scaffold consolidation | Large | Complete; merged to `main`; not packaged |
 | 4 | Codex process adapter and contracts | Very large | Complete; merged to `main` |
 | 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
-| 6 | Projects and direct local-directory attachment | Very large | Current; native core verified locally, UI pending |
+| 6 | Projects and direct local-directory attachment | Very large | Complete locally; merge pending |
 | 7 | Conversation MVP | Very large | Planned |
 | 8 | Session lifecycle and crash recovery | Large | Planned |
 | 9 | Approvals and command presentation | Large | Planned |
@@ -148,14 +151,18 @@ selected/resolved identity, Git/worktree and project-instruction detection,
 confirmation, missing/read-only/mount states, detach, relink, and per-task cwd
 preflight.
 
-In progress locally: the native core now owns a migrated SQLite metadata store,
+Completed locally: the native core owns a migrated SQLite metadata store,
 UUIDv7 project/association IDs, selected and resolved path identity, mount and
 Git/worktree evidence, project-instruction detection, confirmation-time change
 detection, detach/archive/relink metadata operations, and fail-closed cwd
 preflight. Deterministic Rust tests cover symlink retargeting, linked worktrees,
 read-only and missing directories, duplicate roots, storage permissions, and
-the no-source-deletion boundary. The typed frontend bridge, project workspace
-UI, visual verification, and final milestone gate remain pending.
+the no-source-deletion boundary. A strict TypeScript contract rejects unknown
+or path-bearing input, while the accessible project workspace provides native
+selection, confirmation, missing/read-only states, preflight, relink, and
+two-step detach/archive controls. Desktop/mobile browser checks, an unbundled
+release build, and a native Wayland/D-Bus launch are verified. No source
+directory, Codex-owned state, package, deployment, or release was changed.
 
 ### 7 — Conversation MVP
 

@@ -1,6 +1,6 @@
 # ADR 0002: Preserve selected and resolved directory identity
 
-- Status: Accepted; Milestone 6 implementation in progress
+- Status: Accepted and implemented in Milestone 6
 - Date: 2026-07-19
 
 ## Context

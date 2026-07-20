@@ -1,8 +1,8 @@
 # Building QuireForge
 
-Status: the Milestone 2 website, Milestones 3–5 desktop shell/Codex/authentication
-work, and the Milestone 6 native project core can be developed and built
-locally. The project UI and installable application package do not yet exist.
+Status: the Milestone 2 website and Milestones 3–6 desktop shell, Codex,
+authentication, and project-attachment work can be developed and built locally.
+An installable application package does not yet exist.
 
 ## Supported development baseline
 
