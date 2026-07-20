@@ -1,10 +1,9 @@
 # Architecture
 
-Status: Milestone 0 application proposal with the Milestone 2 website foundation
-and Milestones 3–7A desktop scaffold, Codex process adapter, authentication,
-project attachment, and native conversation boundary implemented locally. Git,
-terminal, conversation UI, and integration interfaces remain subject to
-validation in their implementation milestones.
+Status: Milestone 0 application proposal with the website foundation and the
+desktop work through Milestone 10A implemented locally. Git mutation, worktree,
+terminal, packaging, deployment, and integration interfaces remain subject to
+their separately gated implementation milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -223,6 +222,28 @@ Decision submission is single-flight, and App pauses its poll loop while any
 conversation action is in progress so a stale response cannot overwrite the
 decision result.
 
+### Milestone 10A read-only Git boundary
+
+`GitService` accepts only an app-owned project ID and closed status/diff/open
+requests. It reuses the attachment identity check but permits a verified
+read-only directory. Each operation reloads and reinspects the attachment; no
+frontend cwd, absolute path, executable, Git argument, revision, or environment
+value is accepted.
+
+The service runs fixed Git argv arrays with an explicit attached-directory cwd,
+cleared environment, prompts and optional locks disabled, external diff and
+text conversion disabled, and bounded output and lifetime. Porcelain-v2 object
+IDs and raw patch headers are discarded. Paths must be UTF-8, relative,
+component-safe, control-safe, directional-formatting-safe, and present in a
+fresh status snapshot. Worktree content and editor handoff additionally require
+a non-symlink regular file whose canonical path remains inside the attachment.
+
+React receives a strict normalized branch/status projection and bounded diff
+line records only. It cannot supply Git options or open an arbitrary file.
+Browser preview does not simulate repository data, and no status or diff content
+is stored. Stage, unstage, revert, and commit remain absent until the separately
+gated Milestone 10B. See [ADR 0012](DECISIONS/0012-read-only-git-review-boundary.md).
+
 ## Application layers
 
 ### Frontend
@@ -230,7 +251,9 @@ decision result.
 React and TypeScript render semantic, keyboard-accessible views. State is split
 between persisted application state, short-lived UI state, and normalized
 backend event streams. The frontend cannot directly open filesystem paths,
-spawn processes, mutate Git, or edit Codex configuration.
+spawn processes, mutate Git, or edit Codex configuration. Its editor action
+supplies only an app-owned project ID and normalized changed-file path for
+native revalidation.
 
 ### Native application core
 
@@ -272,8 +295,9 @@ contract tests.
 - `DirectoryAttachmentService`: attach, confirm, detach, and relink workflow.
 - `DirectoryIdentityService`: selected/resolved paths, stat identity, mounts,
   accessibility, and change detection.
-- `GitService`: repository/worktree discovery, status, diff, branch, and safe
-  mutations.
+- `GitService`: implemented bounded status, branch, diff, and changed-file
+  editor handoff; separately gated mutation and worktree operations remain
+  later work.
 - `TerminalService`: independent PTY sessions rooted in verified directories.
 - `ApprovalService`: request correlation, scope, decision validation, expiry.
 - `PreviewService`: bounded MIME/type-aware previews.
@@ -295,31 +319,31 @@ paths are never database keys.
 
 ### `projects`
 
-| Field | Purpose |
-|---|---|
-| `id` | Stable application project ID |
-| `display_name` | User-facing name |
+| Field                             | Purpose                       |
+| --------------------------------- | ----------------------------- |
+| `id`                              | Stable application project ID |
+| `display_name`                    | User-facing name              |
 | `active_directory_association_id` | Explicit current working root |
-| `archived_at` | Application organization only |
-| `created_at`, `updated_at` | Metadata timestamps |
+| `archived_at`                     | Application organization only |
+| `created_at`, `updated_at`        | Metadata timestamps           |
 
 ### `directory_associations`
 
-| Field | Purpose |
-|---|---|
-| `id` | Stable association ID |
-| `project_id` | Owning project |
-| `selected_path` | Exact absolute path selected by the user |
-| `resolved_path` | Last verified resolved absolute path |
-| `display_path` | Home-relative presentation when appropriate |
-| `role` | Primary, additional writable, read-only context, etc. |
-| `is_primary` | Primary working-directory flag |
-| `expected_access` | Read/write expectation |
-| `device_id`, `inode` | Local identity evidence where supported |
-| `filesystem_type`, `mount_id` | Mount/removable/network evidence |
-| `git_common_dir`, `git_worktree_root` | Git/worktree identity |
-| `last_verified_at` | Last complete verification |
-| `accessibility_state` | Explicit state enum |
+| Field                                 | Purpose                                               |
+| ------------------------------------- | ----------------------------------------------------- |
+| `id`                                  | Stable association ID                                 |
+| `project_id`                          | Owning project                                        |
+| `selected_path`                       | Exact absolute path selected by the user              |
+| `resolved_path`                       | Last verified resolved absolute path                  |
+| `display_path`                        | Home-relative presentation when appropriate           |
+| `role`                                | Primary, additional writable, read-only context, etc. |
+| `is_primary`                          | Primary working-directory flag                        |
+| `expected_access`                     | Read/write expectation                                |
+| `device_id`, `inode`                  | Local identity evidence where supported               |
+| `filesystem_type`, `mount_id`         | Mount/removable/network evidence                      |
+| `git_common_dir`, `git_worktree_root` | Git/worktree identity                                 |
+| `last_verified_at`                    | Last complete verification                            |
+| `accessibility_state`                 | Explicit state enum                                   |
 
 ### Supporting records
 
@@ -432,6 +456,14 @@ Git commands use argv arrays, explicit cwd, bounded output, and no shell
 interpolation. Read operations are automatic. Mutating operations identify the
 repository/worktree and preview effects. Destructive cleanup is separate from
 closing/removing an application project.
+
+The Milestone 10A implementation limits status to the attached directory,
+ignores global/system Git configuration, disables optional write/performance
+features and extensible diff execution, reparses current status before each
+path-specific action, and returns only normalized bounded records. It performs
+no index, worktree, reference, configuration, or object mutation. Mutating Git
+operations remain unimplemented rather than being hidden behind the review
+bridge.
 
 Codex-managed sessions and user worktrees are never removed as a side effect of
 detaching a directory or deleting app metadata.

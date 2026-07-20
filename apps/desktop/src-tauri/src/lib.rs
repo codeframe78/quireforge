@@ -1,5 +1,6 @@
 mod codex;
 mod contract;
+mod git;
 mod project;
 
 use codex::{
@@ -8,6 +9,10 @@ use codex::{
     ConversationService, ConversationSnapshot, ConversationStartRequest, SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
+use git::{
+    types::{GitDiffRequest, GitDiffSnapshot, GitOpenFileRequest, GitWorkspaceSnapshot},
+    GitService,
+};
 use project::{
     types::{ProjectPreflightSnapshot, ProjectWorkspaceSnapshot},
     ProjectService,
@@ -156,6 +161,40 @@ fn project_preflight(
 }
 
 #[tauri::command]
+async fn git_status(
+    project_id: String,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<GitWorkspaceSnapshot, ()> {
+    Ok(service.status(project_id, &projects).await)
+}
+
+#[tauri::command]
+async fn git_diff(
+    request: GitDiffRequest,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<GitDiffSnapshot, ()> {
+    Ok(service.diff(request, &projects).await)
+}
+
+#[tauri::command]
+async fn git_open_file(
+    request: GitOpenFileRequest,
+    app: tauri::AppHandle,
+    service: tauri::State<'_, GitService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<(), git::types::GitDiagnosticCode> {
+    let path = service.review_file(request, &projects).await?;
+    let path = path
+        .to_str()
+        .ok_or(git::types::GitDiagnosticCode::InvalidPath)?;
+    app.opener()
+        .open_path(path, None::<&str>)
+        .map_err(|_| git::types::GitDiagnosticCode::DiffUnavailable)
+}
+
+#[tauri::command]
 async fn conversation_status(
     service: tauri::State<'_, ConversationService>,
 ) -> Result<ConversationSnapshot, ()> {
@@ -251,6 +290,7 @@ pub fn run() {
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
         .manage(ConversationService::default())
+        .manage(GitService)
         .setup(|app| {
             let service = app
                 .path()
@@ -277,6 +317,9 @@ pub fn run() {
             project_detach,
             project_archive,
             project_preflight,
+            git_status,
+            git_diff,
+            git_open_file,
             conversation_status,
             conversation_start,
             conversation_poll,

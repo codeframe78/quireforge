@@ -11,17 +11,17 @@ are not deleted merely to create benchmarks.
 
 ## Milestone 3 — Desktop Scaffold Consolidation
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Recommended model | GPT-5.6 Sol, High reasoning |
-| Preliminary forecast | 18–30 active engineering hours; low confidence |
-| Calibrated forecast | Not produced; system-calibrated forecasting was introduced during final validation |
-| Observed active execution | Approximately 35–55 minutes across two active work periods; approval delay excluded and exact end-to-end time not instrumented |
-| User approval/waiting time | Present for milestone confirmation and sudo prerequisite installation; not measured reliably |
-| Sessions | Two active work periods separated by the host-prerequisite checkpoint |
-| Usage intensity | High model/tool activity; moderate local CPU use during cold Rust builds |
-| Completion status | Complete locally; not pushed, merged, packaged, or released |
+| Field                      | Record                                                                                                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Forecast date              | 2026-07-19                                                                                                                     |
+| Recommended model          | GPT-5.6 Sol, High reasoning                                                                                                    |
+| Preliminary forecast       | 18–30 active engineering hours; low confidence                                                                                 |
+| Calibrated forecast        | Not produced; system-calibrated forecasting was introduced during final validation                                             |
+| Observed active execution  | Approximately 35–55 minutes across two active work periods; approval delay excluded and exact end-to-end time not instrumented |
+| User approval/waiting time | Present for milestone confirmation and sudo prerequisite installation; not measured reliably                                   |
+| Sessions                   | Two active work periods separated by the host-prerequisite checkpoint                                                          |
+| Usage intensity            | High model/tool activity; moderate local CPU use during cold Rust builds                                                       |
+| Completion status          | Complete locally; not pushed, merged, packaged, or released                                                                    |
 
 The preliminary forecast substantially overestimated implementation time. It
 was created before repository-native Rust measurements existed and treated the
@@ -61,19 +61,19 @@ the start.
 
 ## Milestone 4 — Codex Process Adapter and Contracts
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary forecast | 2–4 active hours; about 2.25–4.5 total elapsed hours; low-to-medium confidence |
-| Calibrated forecast | 4–7 active hours; about 4.5–8 total elapsed hours across 2–3 sessions; low-to-medium confidence |
-| Calibration cause | The generated experimental protocol bundle contained 337 files / about 3.16 MB, and process/redaction failure paths were broader than the preliminary assumption |
-| Observed active execution | Approximately 25–35 minutes from branch creation through implementation, required validation, documentation, and commit preparation; approval delay excluded |
-| Local command time | Approximately 2–4 minutes across required dependency, compile, test, build, browser, live-probe, and repeated failure-correction commands |
-| User approval/waiting time | Manual model and start confirmations occurred before branch creation; waiting time was not included |
-| Sessions | One active implementation session with recoverable contract, transport, UI, and validation checkpoints |
-| Usage intensity | High model/tool activity; low-to-moderate local CPU and memory use |
-| Completion status | Complete locally; not pushed, merged, authenticated, packaged, deployed, or released |
+| Field                      | Record                                                                                                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date              | 2026-07-19                                                                                                                                                       |
+| Selected model             | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                  |
+| Preliminary forecast       | 2–4 active hours; about 2.25–4.5 total elapsed hours; low-to-medium confidence                                                                                   |
+| Calibrated forecast        | 4–7 active hours; about 4.5–8 total elapsed hours across 2–3 sessions; low-to-medium confidence                                                                  |
+| Calibration cause          | The generated experimental protocol bundle contained 337 files / about 3.16 MB, and process/redaction failure paths were broader than the preliminary assumption |
+| Observed active execution  | Approximately 25–35 minutes from branch creation through implementation, required validation, documentation, and commit preparation; approval delay excluded     |
+| Local command time         | Approximately 2–4 minutes across required dependency, compile, test, build, browser, live-probe, and repeated failure-correction commands                        |
+| User approval/waiting time | Manual model and start confirmations occurred before branch creation; waiting time was not included                                                              |
+| Sessions                   | One active implementation session with recoverable contract, transport, UI, and validation checkpoints                                                           |
+| Usage intensity            | High model/tool activity; low-to-moderate local CPU and memory use                                                                                               |
+| Completion status          | Complete locally; not pushed, merged, authenticated, packaged, deployed, or released                                                                             |
 
 Both forecasts overestimated execution time. The calibrated forecast correctly
 identified the protocol and lifecycle risks but assumed substantially more
@@ -108,19 +108,19 @@ compressed the critical path without reducing the accepted milestone scope.
 
 ## Milestone 5 — Authentication and Onboarding
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary forecast | 2–4 active hours; about 2.25–4.5 total elapsed hours across 1–2 sessions; low-to-medium confidence |
-| Calibrated forecast | 2–4 active hours; about 2.25–4.5 total elapsed hours across 1–2 sessions; medium confidence |
-| Calibration basis | Stable installed authentication schemas, ample current memory, warm Milestone 4 caches, six Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 25–40 minutes from branch creation through implementation, required validation, visual checks, documentation, and commit preparation; approval delay excluded |
-| Local command time | Approximately 5–8 minutes across schema inspection, dependency resolution, compile, test, browser-cache restoration, release build, smoke test, and validation commands |
-| User approval/waiting time | Manual model, reasoning-strength, audit, and start confirmations occurred before branch creation; waiting time was not included |
-| Sessions | One active implementation session with recoverable native-service, UI, validation, and documentation checkpoints |
-| Usage intensity | High model/tool activity; moderate local CPU use and low memory pressure during cold native builds |
-| Completion status | Complete locally; not pushed, merged, logged in, logged out, packaged, deployed, or released |
+| Field                      | Record                                                                                                                                                                      |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date              | 2026-07-19                                                                                                                                                                  |
+| Selected model             | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                             |
+| Preliminary forecast       | 2–4 active hours; about 2.25–4.5 total elapsed hours across 1–2 sessions; low-to-medium confidence                                                                          |
+| Calibrated forecast        | 2–4 active hours; about 2.25–4.5 total elapsed hours across 1–2 sessions; medium confidence                                                                                 |
+| Calibration basis          | Stable installed authentication schemas, ample current memory, warm Milestone 4 caches, six Cargo workers, and two Playwright workers                                       |
+| Observed active execution  | Approximately 25–40 minutes from branch creation through implementation, required validation, visual checks, documentation, and commit preparation; approval delay excluded |
+| Local command time         | Approximately 5–8 minutes across schema inspection, dependency resolution, compile, test, browser-cache restoration, release build, smoke test, and validation commands     |
+| User approval/waiting time | Manual model, reasoning-strength, audit, and start confirmations occurred before branch creation; waiting time was not included                                             |
+| Sessions                   | One active implementation session with recoverable native-service, UI, validation, and documentation checkpoints                                                            |
+| Usage intensity            | High model/tool activity; moderate local CPU use and low memory pressure during cold native builds                                                                          |
+| Completion status          | Complete locally; not pushed, merged, logged in, logged out, packaged, deployed, or released                                                                                |
 
 The forecast overestimated model-driven implementation and debugging time. The
 stable installed protocol schemas, existing owned-process adapter, strict shared
@@ -156,24 +156,24 @@ intentionally excluded because they mutate external authentication state.
 
 ## Milestone 6 — Workspace Attachment and QuireForge Metadata
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed for Milestone 6A |
-| Preliminary forecast | 3–6 active hours; about 3.5–7 total elapsed hours across 1–2 sessions; low-to-medium confidence |
-| Calibrated complete-milestone forecast | 2.5–5 active hours; 15–35 minutes of local commands; about 3–6 total elapsed hours; medium confidence |
-| Calibrated Milestone 6A forecast | 1.5–3 active hours; 8–20 minutes of local commands; about 1.75–3.5 total elapsed hours; medium confidence |
-| Observed Milestone 6A execution | Approximately 45–70 active minutes through implementation, security review, expanded native tests, documentation, final validation, and checkpoint publication; approval delay excluded |
-| Observed local command time | Approximately 3–5 minutes across dependency-expanded checking, targeted/full Rust gates, and repeated full repository validation after correcting stale expectations; file reads excluded |
-| User approval/waiting time | Manual model, reasoning, audit, and start confirmations occurred before implementation; waiting time was excluded |
-| Sessions | Two gated checkpoints: native core followed by frontend/integration |
-| Usage intensity | High model/tool activity; moderate CPU and low memory pressure |
-| Milestone 6B selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary Milestone 6B forecast | 1–2.25 active hours; 5–15 minutes of local commands; about 1.25–2.75 total elapsed hours; medium confidence |
-| Calibrated Milestone 6B forecast | 1–2 active hours; 5–12 minutes of local commands; about 1.25–2.5 total elapsed hours; medium confidence |
-| Observed Milestone 6B execution | Approximately 35–55 active minutes through strict contract/UI implementation, tests, visual review, release/native verification, documentation, and final gates; approval delay excluded |
-| Milestone 6B command observations | Full non-browser gate 30.0 seconds at about 1.23 GiB peak RSS; combined browser gate 8.3 seconds at about 251 MiB; unbundled release build 67.0 seconds at about 1.36 GiB |
-| Completion status | Milestone 6 complete; merged to `main` in PR #3 |
+| Field                                  | Record                                                                                                                                                                                    |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date                          | 2026-07-19                                                                                                                                                                                |
+| Selected model                         | GPT-5.6 Sol, XHigh reasoning; manually confirmed for Milestone 6A                                                                                                                         |
+| Preliminary forecast                   | 3–6 active hours; about 3.5–7 total elapsed hours across 1–2 sessions; low-to-medium confidence                                                                                           |
+| Calibrated complete-milestone forecast | 2.5–5 active hours; 15–35 minutes of local commands; about 3–6 total elapsed hours; medium confidence                                                                                     |
+| Calibrated Milestone 6A forecast       | 1.5–3 active hours; 8–20 minutes of local commands; about 1.75–3.5 total elapsed hours; medium confidence                                                                                 |
+| Observed Milestone 6A execution        | Approximately 45–70 active minutes through implementation, security review, expanded native tests, documentation, final validation, and checkpoint publication; approval delay excluded   |
+| Observed local command time            | Approximately 3–5 minutes across dependency-expanded checking, targeted/full Rust gates, and repeated full repository validation after correcting stale expectations; file reads excluded |
+| User approval/waiting time             | Manual model, reasoning, audit, and start confirmations occurred before implementation; waiting time was excluded                                                                         |
+| Sessions                               | Two gated checkpoints: native core followed by frontend/integration                                                                                                                       |
+| Usage intensity                        | High model/tool activity; moderate CPU and low memory pressure                                                                                                                            |
+| Milestone 6B selected model            | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                           |
+| Preliminary Milestone 6B forecast      | 1–2.25 active hours; 5–15 minutes of local commands; about 1.25–2.75 total elapsed hours; medium confidence                                                                               |
+| Calibrated Milestone 6B forecast       | 1–2 active hours; 5–12 minutes of local commands; about 1.25–2.5 total elapsed hours; medium confidence                                                                                   |
+| Observed Milestone 6B execution        | Approximately 35–55 active minutes through strict contract/UI implementation, tests, visual review, release/native verification, documentation, and final gates; approval delay excluded  |
+| Milestone 6B command observations      | Full non-browser gate 30.0 seconds at about 1.23 GiB peak RSS; combined browser gate 8.3 seconds at about 251 MiB; unbundled release build 67.0 seconds at about 1.36 GiB                 |
+| Completion status                      | Milestone 6 complete; merged to `main` in PR #3                                                                                                                                           |
 
 The Milestone 6A forecast overestimated implementation and command time. The
 accepted architecture, fast bundled-SQLite compilation, warm Tauri caches,
@@ -238,19 +238,19 @@ of local command time, excluding approval waits.
 
 ### Milestone 7A — Native Conversation Runtime
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
-| Preliminary forecast | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence |
-| Calibrated forecast | 2.5–4.5 active hours; 10–25 minutes of local commands; about 3–5.25 total elapsed hours across 1–2 sessions; medium confidence |
-| Calibration basis | Clean Milestone 6 `main`, stable Codex 0.144.6 schemas, 46 GiB available RAM, warm 13 GiB Rust target cache, warm pnpm/browser caches, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 45–65 minutes through protocol review, implementation, deterministic tests, security correction, documentation, full validation, release/native verification, and commit preparation; approval delay excluded |
-| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checking/tests, the 27.81-second full gate, 8.48-second browser gate, 28.86-second release build, and isolated native smoke check |
-| User approval/waiting time | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation; waiting time was excluded |
-| Sessions | One active implementation session with recoverable contract, native-service, validation, and publication checkpoints |
-| Usage intensity | High model/tool activity; moderate CPU use and low memory pressure |
-| Completion status | Milestone 7A complete; Milestone 7B user interface pending |
+| Field                       | Record                                                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-19                                                                                                                                                                                                                  |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                            |
+| Preliminary forecast        | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence                                                                                                                       |
+| Calibrated forecast         | 2.5–4.5 active hours; 10–25 minutes of local commands; about 3–5.25 total elapsed hours across 1–2 sessions; medium confidence                                                                                              |
+| Calibration basis           | Clean Milestone 6 `main`, stable Codex 0.144.6 schemas, 46 GiB available RAM, warm 13 GiB Rust target cache, warm pnpm/browser caches, four Cargo workers, and two Playwright workers                                       |
+| Observed active execution   | Approximately 45–65 minutes through protocol review, implementation, deterministic tests, security correction, documentation, full validation, release/native verification, and commit preparation; approval delay excluded |
+| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checking/tests, the 27.81-second full gate, 8.48-second browser gate, 28.86-second release build, and isolated native smoke check                             |
+| User approval/waiting time  | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation; waiting time was excluded                                                                                        |
+| Sessions                    | One active implementation session with recoverable contract, native-service, validation, and publication checkpoints                                                                                                        |
+| Usage intensity             | High model/tool activity; moderate CPU use and low memory pressure                                                                                                                                                          |
+| Completion status           | Milestone 7A complete; Milestone 7B user interface pending                                                                                                                                                                  |
 
 The forecast overestimated model-driven implementation and build time. The
 existing app-server process owner, project preflight service, SQLite repository,
@@ -286,19 +286,19 @@ closed and waited rather than relying only on kill-on-drop.
 
 ### Milestone 7B — Conversation User Interface
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary forecast | 1.5–3 active hours; 5–15 minutes of local commands; about 2–4 total elapsed hours; medium confidence |
-| Calibrated forecast | 1.5–3 active hours; 5–15 minutes of local commands; about 2–4 total elapsed hours in one session; medium-to-high confidence |
-| Calibration basis | Clean Milestone 7A `main`, stable strict frontend/native contracts, 45–46 GiB available RAM, warm pnpm/Vite/Playwright/Rust caches, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 30–50 minutes through shell integration, UI implementation, focused tests, responsive/accessibility review, documentation, full validation, and commit preparation; approval and hosted-runner delays excluded |
-| Observed local command time | Approximately 2–4 minutes across iterative type/lint/test runs, a 2.37-second frontend build, a 5.54-second desktop browser gate, full repository gates, and release/native checks |
-| User approval/waiting time | Manual reasoning and milestone-start confirmations occurred before implementation and were excluded; GitHub-hosted CI runner queue time was also tracked separately |
-| Sessions | One active implementation session with recoverable UI, test, visual-review, validation, and publication checkpoints |
-| Usage intensity | High model/tool activity; low local CPU and memory pressure |
-| Completion status | Complete and verified locally; publication remains separately recorded in repository history |
+| Field                       | Record                                                                                                                                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-19                                                                                                                                                                                                                   |
+| Selected model              | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                                                              |
+| Preliminary forecast        | 1.5–3 active hours; 5–15 minutes of local commands; about 2–4 total elapsed hours; medium confidence                                                                                                                         |
+| Calibrated forecast         | 1.5–3 active hours; 5–15 minutes of local commands; about 2–4 total elapsed hours in one session; medium-to-high confidence                                                                                                  |
+| Calibration basis           | Clean Milestone 7A `main`, stable strict frontend/native contracts, 45–46 GiB available RAM, warm pnpm/Vite/Playwright/Rust caches, four Cargo workers, and two Playwright workers                                           |
+| Observed active execution   | Approximately 30–50 minutes through shell integration, UI implementation, focused tests, responsive/accessibility review, documentation, full validation, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 2–4 minutes across iterative type/lint/test runs, a 2.37-second frontend build, a 5.54-second desktop browser gate, full repository gates, and release/native checks                                           |
+| User approval/waiting time  | Manual reasoning and milestone-start confirmations occurred before implementation and were excluded; GitHub-hosted CI runner queue time was also tracked separately                                                          |
+| Sessions                    | One active implementation session with recoverable UI, test, visual-review, validation, and publication checkpoints                                                                                                          |
+| Usage intensity             | High model/tool activity; low local CPU and memory pressure                                                                                                                                                                  |
+| Completion status           | Complete and verified locally; publication remains separately recorded in repository history                                                                                                                                 |
 
 The forecast overestimated implementation and debugging time. Milestone 7A had
 already established the strict request/snapshot contracts and fixed native IPC,
@@ -338,19 +338,19 @@ the largely frontend implementation.
 
 ### Milestone 8A — Native Session Lifecycle and Recovery
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
-| Preliminary forecast | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence |
-| Calibrated forecast | 4–7 active hours; 15–35 minutes of local commands; about 4.5–8 total elapsed hours across up to two sessions; medium confidence |
-| Calibration basis | Clean merged Milestone 7B `main`, reviewed Codex 0.144.6 lifecycle schemas, 44 GiB available RAM, 726 GiB free NVMe space, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 60–90 minutes through protocol review, schema/storage changes, native lifecycle implementation, strict frontend contracts, deterministic tests, security review, documentation, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
-| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checks/tests, the final 29.45-second full gate, 8.60-second browser gate, final 25.13-second release build, and isolated native smoke check |
-| User approval/waiting time | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation and were excluded; GitHub-hosted queue time is tracked separately |
-| Sessions | One active implementation session with recoverable schema, storage, native boundary, frontend contract, validation, and publication checkpoints |
-| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
-| Completion status | Complete and verified locally; publication is recorded in repository history |
+| Field                       | Record                                                                                                                                                                                                                                                                                                    |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-19                                                                                                                                                                                                                                                                                                |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                          |
+| Preliminary forecast        | 3–5 active hours; 15–35 minutes of local commands; about 3.5–6 total elapsed hours; medium confidence                                                                                                                                                                                                     |
+| Calibrated forecast         | 4–7 active hours; 15–35 minutes of local commands; about 4.5–8 total elapsed hours across up to two sessions; medium confidence                                                                                                                                                                           |
+| Calibration basis           | Clean merged Milestone 7B `main`, reviewed Codex 0.144.6 lifecycle schemas, 44 GiB available RAM, 726 GiB free NVMe space, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers                                                                               |
+| Observed active execution   | Approximately 60–90 minutes through protocol review, schema/storage changes, native lifecycle implementation, strict frontend contracts, deterministic tests, security review, documentation, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 3–5 minutes across schema generation, iterative checks/tests, the final 29.45-second full gate, 8.60-second browser gate, final 25.13-second release build, and isolated native smoke check                                                                                                 |
+| User approval/waiting time  | Manual model, reasoning-strength, audit, and milestone-start confirmations occurred before implementation and were excluded; GitHub-hosted queue time is tracked separately                                                                                                                               |
+| Sessions                    | One active implementation session with recoverable schema, storage, native boundary, frontend contract, validation, and publication checkpoints                                                                                                                                                           |
+| Usage intensity             | High model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                      |
+| Completion status           | Complete and verified locally; publication is recorded in repository history                                                                                                                                                                                                                              |
 
 The calibrated forecast substantially overestimated implementation time. The
 Milestone 7A serialized process owner, strict conversation types, reference-only
@@ -388,19 +388,19 @@ the final native/webview security review.
 
 ### Milestone 8B — Session History, Search, and Tabs
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours; medium confidence |
-| Calibrated forecast | 1.5–3 active hours; initially 5–12, then revised to 8–18 minutes of local commands; about 2–4 total elapsed hours in one session; medium-to-high confidence |
-| Calibration basis | Clean merged Milestone 8A `main`, confirmed stable `thread/list.searchTerm` and optional title fields, 44 GiB available RAM, 726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 35–55 minutes through contract design, native title projection, React history/tabs/actions, deterministic tests, accessibility corrections, documentation, security/diff review, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
-| Observed local command time | Approximately 4–7 minutes across focused native/frontend checks, repeated responsive accessibility checks, the final 41.37-second full gate, 8.81-second combined browser gate, 30.97-second release build, and isolated native smoke check |
-| User approval/waiting time | Manual model/reasoning and milestone-start confirmations were excluded; the user's new expandable-process-detail requirement was routed to Milestone 9 without pausing or expanding 8B |
-| Sessions | One active implementation session with recoverable contract, UI/test, documentation, validation, and publication checkpoints |
-| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
-| Completion status | Complete and verified locally; publication is recorded in repository history |
+| Field                       | Record                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-19                                                                                                                                                                                                                                                                                                 |
+| Selected model              | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                                                                                                                                            |
+| Preliminary forecast        | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours; medium confidence                                                                                                                                                                                                       |
+| Calibrated forecast         | 1.5–3 active hours; initially 5–12, then revised to 8–18 minutes of local commands; about 2–4 total elapsed hours in one session; medium-to-high confidence                                                                                                                                                |
+| Calibration basis           | Clean merged Milestone 8A `main`, confirmed stable `thread/list.searchTerm` and optional title fields, 44 GiB available RAM, 726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, four Cargo workers, and two Playwright workers                                                           |
+| Observed active execution   | Approximately 35–55 minutes through contract design, native title projection, React history/tabs/actions, deterministic tests, accessibility corrections, documentation, security/diff review, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 4–7 minutes across focused native/frontend checks, repeated responsive accessibility checks, the final 41.37-second full gate, 8.81-second combined browser gate, 30.97-second release build, and isolated native smoke check                                                                |
+| User approval/waiting time  | Manual model/reasoning and milestone-start confirmations were excluded; the user's new expandable-process-detail requirement was routed to Milestone 9 without pausing or expanding 8B                                                                                                                     |
+| Sessions                    | One active implementation session with recoverable contract, UI/test, documentation, validation, and publication checkpoints                                                                                                                                                                               |
+| Usage intensity             | High model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                       |
+| Completion status           | Complete and verified locally; publication is recorded in repository history                                                                                                                                                                                                                               |
 
 The calibrated forecast overestimated implementation time. Milestone 8A had
 already established fixed lifecycle commands, strict session schemas, app-owned
@@ -442,19 +442,19 @@ the predominantly bounded integration work.
 
 ### Milestone 9A — Native Approvals and Detailed Activity Contract
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-19 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
-| Preliminary forecast | 4–7 active hours; 15–35 minutes of local commands; about 5–8.5 total elapsed hours across one or two sessions; medium confidence |
-| Calibrated forecast | 4–7 active hours; 15–35 minutes of local commands; about 5–8.5 total elapsed hours across one or two sessions; medium confidence |
-| Calibration basis | Clean merged Milestone 8 `main`, reviewed Codex 0.144.6 request/activity schemas, 44 GiB available RAM, 726 GiB free NVMe, warm 13 GiB Cargo target and dependency/browser caches, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 1.5–2.5 hours through protocol/security review, strict parsing, native state/decision handling, redaction, schema-v2 IPC, deterministic tests, minimal presentation, documentation, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
-| Observed local command time | Approximately 5–9 minutes across schema generation, iterative checks/tests, the 37.57-second full gate, browser gates, 32.03-second release build, and isolated native smoke checks |
-| User approval/waiting time | Manual model/reasoning, system-audit, milestone-start, and publication approvals occurred outside execution time; GitHub-hosted queue time is tracked separately |
-| Sessions | One logical implementation session with a compacted handoff and recoverable parser, state-machine, frontend-contract, documentation, validation, and publication checkpoints |
-| Usage intensity | Very high model/tool activity; moderate local CPU and low memory pressure |
-| Completion status | Milestone 9A complete; merged to `main` in PR #9 |
+| Field                       | Record                                                                                                                                                                                                                                                                                                        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-19                                                                                                                                                                                                                                                                                                    |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                              |
+| Preliminary forecast        | 4–7 active hours; 15–35 minutes of local commands; about 5–8.5 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                              |
+| Calibrated forecast         | 4–7 active hours; 15–35 minutes of local commands; about 5–8.5 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                              |
+| Calibration basis           | Clean merged Milestone 8 `main`, reviewed Codex 0.144.6 request/activity schemas, 44 GiB available RAM, 726 GiB free NVMe, warm 13 GiB Cargo target and dependency/browser caches, four Cargo workers, and two Playwright workers                                                                             |
+| Observed active execution   | Approximately 1.5–2.5 hours through protocol/security review, strict parsing, native state/decision handling, redaction, schema-v2 IPC, deterministic tests, minimal presentation, documentation, full gates, release/native verification, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 5–9 minutes across schema generation, iterative checks/tests, the 37.57-second full gate, browser gates, 32.03-second release build, and isolated native smoke checks                                                                                                                           |
+| User approval/waiting time  | Manual model/reasoning, system-audit, milestone-start, and publication approvals occurred outside execution time; GitHub-hosted queue time is tracked separately                                                                                                                                              |
+| Sessions                    | One logical implementation session with a compacted handoff and recoverable parser, state-machine, frontend-contract, documentation, validation, and publication checkpoints                                                                                                                                  |
+| Usage intensity             | Very high model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                     |
+| Completion status           | Milestone 9A complete; merged to `main` in PR #9                                                                                                                                                                                                                                                              |
 
 The forecast substantially overestimated implementation time. The existing
 serialized process owner, app-reference model, strict fixtures, conservative
@@ -507,19 +507,19 @@ handling, and the final native/webview security review.
 
 ### Milestone 9B — Selectable Activity and Approval Interface
 
-| Field | Record |
-|---|---|
-| Forecast date | 2026-07-20 |
-| Selected model | GPT-5.6 Sol, High reasoning; manually confirmed |
-| Preliminary forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence |
-| Calibrated forecast | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence |
-| Calibration basis | Clean merged Milestone 9A `main`, 44 GiB available RAM, low host load, 726 GiB free NVMe, warm Cargo/pnpm/Playwright caches, existing schema-v2 activity and decision bridge, four Cargo workers, and two Playwright workers |
-| Observed active execution | Approximately 20–35 minutes through contract review, implementation, deterministic tests, documentation, complete gates, rendered-state inspection, security/diff review, and commit preparation; approval and hosted-runner delays excluded |
-| Observed local command time | Approximately 3–5 minutes across iterative checks, the 36.70-second full gate, 9.99-second browser gate, 30.73-second release build, focused visual trace, and isolated launch check |
-| User approval/waiting time | Manual model/reasoning and milestone-start confirmations occurred before branch creation and were excluded; hosted-runner queue time is tracked separately |
-| Sessions | One logical implementation session with recoverable contract, UI, test, documentation, and publication checkpoints |
-| Usage intensity | High model/tool activity; moderate local CPU and low memory pressure |
-| Completion status | Complete and verified locally; publication recorded in repository history |
+| Field                       | Record                                                                                                                                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-20                                                                                                                                                                                                                                   |
+| Selected model              | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                                                                              |
+| Preliminary forecast        | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence                                                                                                                          |
+| Calibrated forecast         | 2–4 active hours; 5–15 minutes of local commands; about 2.5–5 total elapsed hours in one session; medium confidence                                                                                                                          |
+| Calibration basis           | Clean merged Milestone 9A `main`, 44 GiB available RAM, low host load, 726 GiB free NVMe, warm Cargo/pnpm/Playwright caches, existing schema-v2 activity and decision bridge, four Cargo workers, and two Playwright workers                 |
+| Observed active execution   | Approximately 20–35 minutes through contract review, implementation, deterministic tests, documentation, complete gates, rendered-state inspection, security/diff review, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 3–5 minutes across iterative checks, the 36.70-second full gate, 9.99-second browser gate, 30.73-second release build, focused visual trace, and isolated launch check                                                         |
+| User approval/waiting time  | Manual model/reasoning and milestone-start confirmations occurred before branch creation and were excluded; hosted-runner queue time is tracked separately                                                                                   |
+| Sessions                    | One logical implementation session with recoverable contract, UI, test, documentation, and publication checkpoints                                                                                                                           |
+| Usage intensity             | High model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                         |
+| Completion status           | Complete and verified locally; publication recorded in repository history                                                                                                                                                                    |
 
 The forecast overestimated active implementation time. Milestone 9A had already
 established strict schemas, native redaction, exact approval correlation, and a
@@ -564,3 +564,76 @@ completed approval.
   mutation-sensitive workflows, so its reasoning and forecast must be based on
   the exact Git architecture and approval boundaries rather than reusing 9B's
   presentation-oriented setting.
+
+## Milestone 10 — Git and Diff Review
+
+### Milestone 10A — Read-only Status, Diff, and Editor Review
+
+| Field                       | Record                                                                                                                                                                                                                                                                                                                                        |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-20                                                                                                                                                                                                                                                                                                                                    |
+| Selected model              | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                                                                                                                                                                               |
+| Preliminary forecast        | Approximately 4–6 active hours; 15–30 minutes of local commands; about 4.5–7 total elapsed hours in one or two sessions; medium confidence                                                                                                                                                                                                    |
+| Calibrated forecast         | 3.5–5.5 active hours; 10–25 minutes of local commands; about 4–6.5 total elapsed hours in one session; medium confidence                                                                                                                                                                                                                      |
+| Calibration basis           | Clean synchronized Milestone 9 `main`, installed Git 2.53.0, 43–44 GiB available RAM, low host load, 726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, no Git library dependency, four Cargo workers, and two Playwright workers                                                                                           |
+| Observed active execution   | Approximately 55–80 minutes through repository/Git architecture review, native process and path contract, React interface, deterministic tests, accessibility correction, documentation, full gates, release/native verification, visual inspection, security/diff review, and commit preparation; approval and hosted-runner delays excluded |
+| Observed local command time | Approximately 5–9 minutes across focused checks, the 31.72-second publication repository gate, 11.64-second combined browser gate, 31.18-second final release build, temporary-repository tests, rendered-state capture, and isolated launch                                                                                                   |
+| User approval/waiting time  | Manual model/reasoning and milestone-start confirmations occurred before implementation and were excluded; publication and hosted-runner waiting are tracked separately                                                                                                                                                                       |
+| Sessions                    | One logical implementation session with recoverable native-contract, frontend, test, documentation, validation, and publication checkpoints                                                                                                                                                                                                   |
+| Usage intensity             | High model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                                                          |
+| Completion status           | Complete and verified locally; publication pending at this record checkpoint                                                                                                                                                                                                                                                                  |
+
+The forecast substantially overestimated implementation time. Project identity,
+strict shared fixtures, fixed Tauri command patterns, the existing opener
+dependency, and warm build caches were directly reusable. Splitting mutation
+work into 10B also kept 10A's authority genuinely read-only instead of forcing
+approval and recovery design into the status/diff checkpoint. High reasoning
+was appropriate for Git configuration isolation, attached-subdirectory scope,
+read-only repositories, output/process bounds, stale path revalidation,
+symlink/deceptive-path refusal, and the final security review. XHigh would not
+have materially improved this closed read-only contract.
+
+### Milestone 10A required observations and lessons
+
+- Fixed Git CLI commands preserved installed-Git semantics without a new
+  dependency. Environment clearing, system/global-config exclusion, optional
+  lock/fsmonitor/untracked-cache disabling, no external diff/text conversion,
+  and timeout/kill/wait behavior keep repository inspection bounded.
+- Status is scoped to the exact attachment. Every diff/editor action requires a
+  fresh matching status path; worktree reads and editor handoff additionally
+  require a regular non-symlink file contained by the attachment.
+- Porcelain-v2 `-z` paths remain repository-root-relative when Git runs from an
+  attached subdirectory. Native code therefore computes and strips the exact
+  revalidated worktree-to-attachment prefix; a regression test overrides local
+  relative-path and external-diff configuration while proving outside changes
+  remain excluded.
+- React receives no Git arguments, cwd, absolute paths, object IDs, raw headers,
+  stderr, or configuration. Browser preview does not simulate Git data, and no
+  review content is persisted.
+- The first browser run found insufficient light-theme contrast over tinted
+  hunk/addition/deletion rows. Using the primary text token corrected it; the
+  desktop/mobile focused rerun and final combined gate passed axe and overflow.
+- The publication repository gate passed in 31.72 seconds at about 804 MiB peak
+  RSS: 70 JavaScript tests and 78 Rust tests passed, with 2 deliberate live
+  probes ignored. This was about 14% faster than the Milestone 9B baseline and
+  did not cross the forecast-update threshold.
+- The combined browser gate passed 20 checks in 11.64 seconds at about 315 MiB
+  peak RSS. The final release build passed in 31.18 seconds at about 1.61 GiB
+  peak RSS, including a 27.16-second release compile/link.
+  Visual inspection confirmed the two-column desktop and stacked mobile source
+  review remain legible after the contrast correction.
+- An isolated release launch owned the exact D-Bus name, opened schema version
+  3 with `0700`/`0600` metadata permissions, started no Codex app-server, and
+  removed its generated temporary tree after inspection.
+- Two aggregate attempts stopped safely at ordinary lint/format/Clippy findings
+  before the successful gate. The corrections changed only effect scheduling,
+  rustfmt output, and a test literal; no cache or repository state was reset.
+- Available RAM remained about 43 GiB, swap stayed near 175 MiB with zero
+  measured swaps, and there was no OOM, throttling, dependency download, clean
+  build, user-repository Git mutation, live model call, or GPU workload.
+- Milestone 10B requires a fresh reasoning gate. Its preliminary range is
+  approximately 4–7 active hours, 15–35 minutes of local commands, and 5–8.5
+  total elapsed hours across one or two sessions, medium confidence. GPT-5.6
+  Sol with XHigh reasoning is provisionally appropriate because stage, unstage,
+  revert, commit, secret review, concurrency, postconditions, and failure
+  recovery are mutation-sensitive.

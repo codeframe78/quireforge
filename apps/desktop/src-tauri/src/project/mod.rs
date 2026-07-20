@@ -43,8 +43,15 @@ pub(crate) enum ProjectExecutionError {
     ProjectNotFound,
     DirectoryUnavailable,
     IdentityChanged,
+    NotRepository,
     NotWritable,
     ProjectBusy,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub(crate) struct ProjectReviewRoot {
+    pub attached_root: PathBuf,
+    pub worktree_root: PathBuf,
 }
 
 pub(crate) struct ConversationReference<'a> {
@@ -297,6 +304,56 @@ impl ProjectService {
             return Err(ProjectExecutionError::NotWritable);
         }
         Ok(identity.resolved_path)
+    }
+
+    pub(crate) fn review_root(
+        &self,
+        project_id: &str,
+    ) -> Result<ProjectReviewRoot, ProjectExecutionError> {
+        if !valid_id(project_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        let project = repository
+            .project(project_id)
+            .map_err(|error| match error {
+                StorageError::ProjectNotFound => ProjectExecutionError::ProjectNotFound,
+                _ => ProjectExecutionError::MetadataUnavailable,
+            })?;
+        if project.archived {
+            return Err(ProjectExecutionError::ProjectNotFound);
+        }
+        let association = project
+            .association
+            .ok_or(ProjectExecutionError::DirectoryUnavailable)?;
+        drop(repository_guard);
+
+        let identity = inspect_directory(Path::new(&association.selected_path))
+            .map_err(|_| ProjectExecutionError::DirectoryUnavailable)?;
+        if !same_stored_identity(&association, &identity) {
+            return Err(ProjectExecutionError::IdentityChanged);
+        }
+        if !matches!(
+            identity.accessibility,
+            DirectoryAccessibilityState::ConnectedAccessible
+                | DirectoryAccessibilityState::ConnectedReadOnly
+        ) {
+            return Err(ProjectExecutionError::DirectoryUnavailable);
+        }
+        let git = identity.git.ok_or(ProjectExecutionError::NotRepository)?;
+        if !identity.resolved_path.starts_with(&git.worktree_root) {
+            return Err(ProjectExecutionError::IdentityChanged);
+        }
+        Ok(ProjectReviewRoot {
+            attached_root: identity.resolved_path,
+            worktree_root: git.worktree_root,
+        })
     }
 
     pub(crate) fn reserve_execution(&self, project_id: &str) -> Result<(), ProjectExecutionError> {
@@ -744,7 +801,7 @@ mod tests {
 
     use super::{
         types::{DirectoryAccessibilityState, ProjectDiagnosticCode, ProjectWorkspaceState},
-        ProjectService,
+        ProjectExecutionError, ProjectService,
     };
 
     fn temporary_directory(label: &str) -> std::path::PathBuf {
@@ -916,6 +973,48 @@ mod tests {
         );
         fs::set_permissions(&directory, fs::Permissions::from_mode(0o755))
             .expect("directory permissions must be restored");
+        fs::remove_dir_all(directory).expect("temporary directory must be removed");
+    }
+
+    #[test]
+    fn git_review_accepts_a_revalidated_read_only_repository() {
+        let directory = temporary_directory("read-only-review");
+        let initialized = std::process::Command::new("git")
+            .args(["init", "--quiet"])
+            .current_dir(&directory)
+            .status()
+            .expect("git must start for the project test");
+        assert!(initialized.success());
+        let service = ProjectService::in_memory();
+        service.prepare_attachment(directory.clone());
+        let attached = service.confirm_pending();
+        let project_id = attached.projects[0].id.clone();
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o555))
+            .expect("directory must become read-only");
+
+        let root = service
+            .review_root(&project_id)
+            .expect("read-only repository must remain reviewable");
+        assert_eq!(root.attached_root, directory);
+        assert_eq!(root.worktree_root, root.attached_root);
+
+        fs::set_permissions(&directory, fs::Permissions::from_mode(0o755))
+            .expect("directory permissions must be restored");
+        fs::remove_dir_all(directory).expect("temporary directory must be removed");
+    }
+
+    #[test]
+    fn git_review_refuses_an_attached_non_repository() {
+        let directory = temporary_directory("non-repository-review");
+        let service = ProjectService::in_memory();
+        service.prepare_attachment(directory.clone());
+        let attached = service.confirm_pending();
+
+        assert_eq!(
+            service.review_root(&attached.projects[0].id),
+            Err(ProjectExecutionError::NotRepository)
+        );
+
         fs::remove_dir_all(directory).expect("temporary directory must be removed");
     }
 

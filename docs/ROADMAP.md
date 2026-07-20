@@ -51,32 +51,35 @@ Milestone 9A adds the native approval and detailed-activity contract with
 app-owned correlation, one-turn decisions, redaction, and safe cancellation;
 Milestone 9B adds the selectable expanded activity and bounded approval
 interface over that contract.
+Milestone 10A adds a fixed native read-only Git boundary, normalized status and
+diff contracts, a responsive changed-file reviewer, and revalidated editor
+handoff. Index/worktree mutations remain the separately gated Milestone 10B.
 
 ## Status
 
-| Milestone | Scope | Size | Status |
-|---:|---|---|---|
-| 0 | Existing project and feasibility discovery | Very large | Complete; merged to `main` |
-| 1 | QuireForge rename, move, GitHub migration, and governance closure | Medium | Complete; merged to `main` |
-| 2 | QuireForge brand and Cloudflare website foundation | Large | Complete; merged to `main`; not deployed |
-| 3 | Desktop scaffold consolidation | Large | Complete; merged to `main`; not packaged |
-| 4 | Codex process adapter and contracts | Very large | Complete; merged to `main` |
-| 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
-| 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
-| 7 | Conversation MVP | Very large | Complete; merged to `main` |
-| 8 | Session lifecycle and crash recovery | Large | Complete; merged to `main` |
-| 9 | Approvals and command presentation | Large | Complete and verified; publication recorded in repository history |
-| 10 | Git status and diff review | Large | Planned |
-| 11 | Worktrees and parallel work | Very large | Planned |
-| 12 | Integrated terminal | Large | Planned |
-| 13 | Integration discovery and compatibility | Very large | Planned |
-| 14 | Integration Center and installation workflows | Very large | Planned |
-| 15 | File previews and desktop integration | Large | Planned |
-| 16 | Complete Cloudflare Pages website | Very large | Planned |
-| 17 | Scheduled tasks and advanced supported features | Medium–Large | Planned/dependency-gated |
-| 18 | Security, accessibility, and performance hardening | Very large | Planned |
-| 19 | Packaging and release automation | Large | Planned |
-| 20 | Cloudflare Pages production deployment and beta release | Very large | Planned/approval-gated |
+| Milestone | Scope                                                             | Size         | Status                                                                         |
+| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
+|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                                     |
+|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                                     |
+|         2 | QuireForge brand and Cloudflare website foundation                | Large        | Complete; merged to `main`; not deployed                                       |
+|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                                       |
+|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                                     |
+|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                                     |
+|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                                     |
+|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                                     |
+|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                                     |
+|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history              |
+|        10 | Git status and diff review                                        | Large        | In progress; 10A complete locally and verified; 10B mutation workflows pending |
+|        11 | Worktrees and parallel work                                       | Very large   | Planned                                                                        |
+|        12 | Integrated terminal                                               | Large        | Planned                                                                        |
+|        13 | Integration discovery and compatibility                           | Very large   | Planned                                                                        |
+|        14 | Integration Center and installation workflows                     | Very large   | Planned                                                                        |
+|        15 | File previews and desktop integration                             | Large        | Planned                                                                        |
+|        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                                        |
+|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                                       |
+|        18 | Security, accessibility, and performance hardening                | Very large   | Planned                                                                        |
+|        19 | Packaging and release automation                                  | Large        | Planned                                                                        |
+|        20 | Cloudflare Pages production deployment and beta release           | Very large   | Planned/approval-gated                                                         |
 
 ## Milestone definitions
 
@@ -267,6 +270,24 @@ layout, exact app-ID submission, and duplicate-submission prevention.
 
 Add status, branch, changed-file list, diff viewer, inline review context,
 editor integration, and explicit stage/revert/commit workflows.
+
+Milestone 10A implements the read-only checkpoint. Three fixed Tauri commands
+accept only an app-owned project ID plus a normalized current-status path and
+closed staged/worktree area. Native code revalidates the attachment on every
+operation, runs shell-free Git with bounded environment/output/time, limits
+status to the attached directory, discards object IDs and raw headers, and
+rejects escaping, deceptive, symlink, conflicted, submodule, or stale targets.
+The responsive interface presents branch divergence, changed files, staged and
+working-tree selections, normalized line-numbered diffs, binary/truncated
+states, refresh, and an explicit revalidated default-editor handoff. Browser
+preview never simulates repository data, and no Git or diff state is persisted.
+
+Milestone 10B remains pending and requires a separate reasoning/model/start
+gate. It covers explicit stage, unstage, revert, and commit workflows with
+operation-specific previews, confirmation, concurrency/postcondition checks,
+secret review, failure recovery, and deterministic no-data-loss tests. No
+generic Git command, branch/worktree/remote mutation, push, pull, package,
+deployment, or release is authorized by 10A.
 
 ### 11 — Worktrees and Parallel Work
 

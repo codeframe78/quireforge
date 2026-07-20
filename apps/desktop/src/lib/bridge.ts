@@ -1,6 +1,16 @@
 import { invoke } from "@tauri-apps/api/core";
 
 import {
+  gitDiffRequestSchema,
+  gitDiffSchema,
+  gitOpenFileRequestSchema,
+  gitWorkspaceSchema,
+  type GitDiffRequest,
+  type GitDiffSnapshot,
+  type GitOpenFileRequest,
+  type GitWorkspaceSnapshot,
+} from "./git";
+import {
   codexAuthSchema,
   type AuthLoginMethod,
   type CodexAuthSnapshot,
@@ -47,6 +57,9 @@ export const PROJECT_CANCEL_ATTACHMENT_COMMAND = "project_cancel_attachment";
 export const PROJECT_DETACH_COMMAND = "project_detach";
 export const PROJECT_ARCHIVE_COMMAND = "project_archive";
 export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
+export const GIT_STATUS_COMMAND = "git_status";
+export const GIT_DIFF_COMMAND = "git_diff";
+export const GIT_OPEN_FILE_COMMAND = "git_open_file";
 export const CONVERSATION_STATUS_COMMAND = "conversation_status";
 export const CONVERSATION_START_COMMAND = "conversation_start";
 export const CONVERSATION_POLL_COMMAND = "conversation_poll";
@@ -213,6 +226,36 @@ export async function preflightProject(
     projectId,
   });
   return projectPreflightSchema.parse(payload);
+}
+
+export async function loadGitStatus(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<GitWorkspaceSnapshot> {
+  const reviewedId = gitDiffRequestSchema.shape.projectId.parse(projectId);
+  const payload = await invokeFunction(GIT_STATUS_COMMAND, {
+    projectId: reviewedId,
+  });
+  return gitWorkspaceSchema.parse(payload);
+}
+
+export async function loadGitDiff(
+  request: GitDiffRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<GitDiffSnapshot> {
+  const reviewedRequest = gitDiffRequestSchema.parse(request);
+  const payload = await invokeFunction(GIT_DIFF_COMMAND, {
+    request: reviewedRequest,
+  });
+  return gitDiffSchema.parse(payload);
+}
+
+export async function openGitFile(
+  request: GitOpenFileRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<void> {
+  const reviewedRequest = gitOpenFileRequestSchema.parse(request);
+  await invokeFunction(GIT_OPEN_FILE_COMMAND, { request: reviewedRequest });
 }
 
 export async function loadConversationStatus(

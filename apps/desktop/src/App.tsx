@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
 import { ConversationWorkspace } from "./ConversationWorkspace";
+import { GitWorkspace } from "./GitWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
 import {
@@ -18,8 +19,11 @@ import {
   loadConversationSessions,
   loadCodexRuntime,
   loadDesktopBootstrap,
+  loadGitDiff,
+  loadGitStatus,
   loadProjectWorkspace,
   logoutCodexAuth,
+  openGitFile,
   openCodexAuthBrowser,
   pickProjectDirectory,
   pickProjectRelink,
@@ -48,6 +52,13 @@ import {
 } from "./lib/conversation";
 import { mergeConversationEvents } from "./lib/conversationView";
 import {
+  scaffoldGitWorkspace,
+  type GitDiffRequest,
+  type GitDiffSnapshot,
+  type GitOpenFileRequest,
+  type GitWorkspaceSnapshot,
+} from "./lib/git";
+import {
   scaffoldProjectWorkspace,
   type ProjectPreflightSnapshot,
   type ProjectWorkspaceSnapshot,
@@ -66,6 +77,7 @@ type RuntimeState =
   "checking" | "ready" | "degraded" | "unavailable" | "preview";
 type AuthViewState = CodexAuthSnapshot["state"] | "checking" | "preview";
 type ProjectViewState = "checking" | "native" | "preview";
+type GitViewState = "checking" | "native" | "preview";
 type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
@@ -93,6 +105,9 @@ interface AppProps {
   preflightProjectDirectory?: (
     projectId: string,
   ) => Promise<ProjectPreflightSnapshot>;
+  loadGitStatusTask?: (projectId: string) => Promise<GitWorkspaceSnapshot>;
+  loadGitDiffTask?: (request: GitDiffRequest) => Promise<GitDiffSnapshot>;
+  openGitFileTask?: (request: GitOpenFileRequest) => Promise<void>;
   loadConversation?: () => Promise<ConversationSnapshot>;
   startConversationTask?: (
     request: ConversationStartRequest,
@@ -129,6 +144,13 @@ const navigation = [
     milestone: 3,
     icon: "grid",
     target: "workspace-top",
+    ready: true,
+  },
+  {
+    label: "Changes",
+    milestone: 10,
+    icon: "git",
+    target: "changes",
     ready: true,
   },
   {
@@ -175,6 +197,14 @@ function Glyph({ name }: { name: string }) {
       <>
         <path d="m8 3 4 2.3v4.6L8 12.2 4 9.9V5.3L8 3ZM16 11.8l4 2.3v4.6L16 21l-4-2.3v-4.6l4-2.3Z" />
         <path d="m16 3 4 2.3v4.6l-4 2.3-4-2.3V5.3L16 3ZM8 11.8l4 2.3v4.6L8 21l-4-2.3v-4.6l4-2.3Z" />
+      </>
+    ),
+    git: (
+      <>
+        <circle cx="6" cy="5" r="2.5" />
+        <circle cx="18" cy="19" r="2.5" />
+        <circle cx="18" cy="7" r="2.5" />
+        <path d="M8.5 5h2.2A3.3 3.3 0 0 1 14 8.3v7.4a3.3 3.3 0 0 0 3.3 3.3h-1.8M8.5 5A3.5 3.5 0 0 1 12 8.5v2A3.5 3.5 0 0 0 15.5 14H18" />
       </>
     ),
     plus: <path d="M12 5v14M5 12h14" />,
@@ -249,6 +279,9 @@ export default function App({
   detachProjectDirectory = detachProject,
   archiveProjectMetadata = archiveProject,
   preflightProjectDirectory = preflightProject,
+  loadGitStatusTask = loadGitStatus,
+  loadGitDiffTask = loadGitDiff,
+  openGitFileTask = openGitFile,
   loadConversation = loadConversationStatus,
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
@@ -281,6 +314,14 @@ export default function App({
   const [projectPreflights, setProjectPreflights] = useState<
     Record<string, ProjectPreflightSnapshot>
   >({});
+  const [gitSnapshot, setGitSnapshot] =
+    useState<GitWorkspaceSnapshot>(scaffoldGitWorkspace);
+  const [gitDiff, setGitDiff] = useState<GitDiffSnapshot | null>(null);
+  const [gitSelectedRequest, setGitSelectedRequest] =
+    useState<GitDiffRequest | null>(null);
+  const [gitState, setGitState] = useState<GitViewState>("checking");
+  const [gitBusy, setGitBusy] = useState(false);
+  const [gitActionError, setGitActionError] = useState(false);
   const [conversation, setConversation] =
     useState<ConversationSnapshot>(scaffoldConversation);
   const [conversationEvents, setConversationEvents] = useState<
@@ -391,6 +432,62 @@ export default function App({
       active = false;
     };
   }, [loadConversation]);
+
+  useEffect(() => {
+    if (projectState === "checking") return;
+    let active = true;
+    const resetReview = (state: GitViewState) => {
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        setGitState(state);
+        setGitSnapshot(scaffoldGitWorkspace);
+        setGitDiff(null);
+        setGitSelectedRequest(null);
+        setGitActionError(false);
+      });
+    };
+    if (projectState === "preview") {
+      resetReview("preview");
+      return () => {
+        active = false;
+      };
+    }
+    const project =
+      projects.projects.find(
+        (candidate) =>
+          candidate.id === selectedProjectId && !candidate.archived,
+      ) ??
+      projects.projects.find((candidate) => !candidate.archived) ??
+      projects.projects[0];
+    if (!project) {
+      resetReview("native");
+      return () => {
+        active = false;
+      };
+    }
+
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setGitState("checking");
+      setGitDiff(null);
+      setGitSelectedRequest(null);
+      setGitActionError(false);
+    });
+    void loadGitStatusTask(project.id)
+      .then((result) => {
+        if (!active) return;
+        setGitSnapshot(result);
+        setGitState("native");
+      })
+      .catch(() => {
+        if (!active) return;
+        setGitSnapshot(scaffoldGitWorkspace);
+        setGitState("preview");
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadGitStatusTask, projectState, projects, selectedProjectId]);
 
   useEffect(() => {
     let active = true;
@@ -568,6 +665,49 @@ export default function App({
       setProjectActionError(true);
     } finally {
       setProjectBusy(false);
+    }
+  }
+
+  async function refreshGitReview() {
+    if (!currentProject) return;
+    setGitBusy(true);
+    setGitActionError(false);
+    try {
+      const result = await loadGitStatusTask(currentProject.id);
+      setGitSnapshot(result);
+      setGitDiff(null);
+      setGitSelectedRequest(null);
+      setGitState("native");
+    } catch {
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
+    }
+  }
+
+  async function reviewGitDiff(request: GitDiffRequest) {
+    setGitBusy(true);
+    setGitActionError(false);
+    setGitSelectedRequest(request);
+    setGitDiff(null);
+    try {
+      setGitDiff(await loadGitDiffTask(request));
+    } catch {
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
+    }
+  }
+
+  async function openReviewedGitFile(projectId: string, path: string) {
+    setGitBusy(true);
+    setGitActionError(false);
+    try {
+      await openGitFileTask({ projectId, path });
+    } catch {
+      setGitActionError(true);
+    } finally {
+      setGitBusy(false);
     }
   }
 
@@ -802,7 +942,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 8 session lifecycle
+              Milestone 10 read-only source review
             </span>
             <button
               className="theme-toggle"
@@ -928,6 +1068,19 @@ export default function App({
               applyProjectAction(() => archiveProjectMetadata(projectId))
             }
             onPreflight={verifyProject}
+          />
+
+          <GitWorkspace
+            availability={gitState}
+            projectName={currentProject?.displayName ?? null}
+            snapshot={gitSnapshot}
+            diff={gitDiff}
+            selectedRequest={gitSelectedRequest}
+            busy={gitBusy}
+            actionError={gitActionError}
+            onRefresh={refreshGitReview}
+            onReview={reviewGitDiff}
+            onOpen={openReviewedGitFile}
           />
 
           <SessionWorkspace

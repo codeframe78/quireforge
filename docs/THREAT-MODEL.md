@@ -239,7 +239,9 @@ Controls:
 ### Git and worktree data loss
 
 Threats include discarding uncommitted changes, deleting worktrees, overwriting
-branches, force pushes, and committing secrets.
+branches, force pushes, committing secrets, local Git configuration executing
+helpers, deceptive paths, unbounded output, symlink traversal, and a webview
+request reading outside the attached directory.
 
 Controls:
 
@@ -249,6 +251,18 @@ Controls:
 - Worktree cleanup is independent and explicit.
 - Secret scanning and diff review before commit/release.
 - Never rewrite published history by default.
+- Keep read-only status/diff commands fixed and shell-free; clear the inherited
+  environment, ignore global/system configuration, and disable prompts,
+  optional locks, filesystem monitors, external diffs, and text conversion.
+- Revalidate attachment identity and current status for every path action;
+  accept no frontend cwd, absolute path, Git argument, revision, or executable.
+- Reject escaping, non-UTF-8, control-bearing, directional-formatting,
+  backslash-bearing, symlink, conflicted, and submodule review targets; enforce
+  byte, line, change-count, and time limits.
+- Return normalized status and diff-line records only. Discard object IDs, raw
+  headers, stderr, and repository configuration; persist no diff content.
+- Keep stage, unstage, revert, commit, branch, worktree, and remote mutations
+  out of the read-only bridge and behind later explicit gates.
 
 ### Webview and preview content
 
@@ -338,7 +352,9 @@ Controls:
   reference-only persistence, approval-block, event-bound, and child-reaping
   tests using deterministic mock processes.
 - Tauri capability/CSP review and preview fuzzing.
-- Git fixture tests protecting dirty worktrees.
+- Git fixture tests protecting dirty worktrees, attached-subdirectory scope,
+  read-only repositories, path containment, deceptive input, output bounds, and
+  the no-mutation boundary.
 - Workflow-permission and release-artifact verification.
 
 ## Deferred questions

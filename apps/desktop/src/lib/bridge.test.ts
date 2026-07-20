@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { scaffoldCodexAuth } from "./auth";
 import { scaffoldCodexRuntime } from "./codex";
 import { scaffoldConversation } from "./conversation";
+import { scaffoldGitDiff, scaffoldGitWorkspace } from "./git";
 import { scaffoldSessionLifecycle } from "./session";
 import {
   archiveConversation,
@@ -34,8 +35,11 @@ import {
   loadConversationStatus,
   loadConversationSessions,
   loadDesktopBootstrap,
+  loadGitDiff,
+  loadGitStatus,
   loadProjectWorkspace,
   openCodexAuthBrowser,
+  openGitFile,
   pickProjectDirectory,
   pickProjectRelink,
   preflightProject,
@@ -50,6 +54,9 @@ import {
   PROJECT_PICK_RELINK_COMMAND,
   PROJECT_PREFLIGHT_COMMAND,
   PROJECT_WORKSPACE_STATUS_COMMAND,
+  GIT_DIFF_COMMAND,
+  GIT_OPEN_FILE_COMMAND,
+  GIT_STATUS_COMMAND,
   startCodexAuth,
   startConversation,
   interruptConversation,
@@ -160,6 +167,34 @@ describe("desktop bridge", () => {
     });
 
     await expect(loadProjectWorkspace(invoke)).rejects.toThrow();
+  });
+
+  it("uses fixed Git review commands and validates paths before invocation", async () => {
+    const projectId = "018f0000-0000-7000-8000-000000000001";
+    const request = {
+      projectId,
+      path: "src/App.tsx",
+      area: "worktree" as const,
+    };
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce({ ...scaffoldGitWorkspace, projectId })
+      .mockResolvedValueOnce({ ...scaffoldGitDiff, ...request })
+      .mockResolvedValueOnce(undefined);
+
+    await loadGitStatus(projectId, invoke);
+    await loadGitDiff(request, invoke);
+    await openGitFile({ projectId, path: request.path }, invoke);
+
+    expect(invoke.mock.calls).toEqual([
+      [GIT_STATUS_COMMAND, { projectId }],
+      [GIT_DIFF_COMMAND, { request }],
+      [GIT_OPEN_FILE_COMMAND, { request: { projectId, path: request.path } }],
+    ]);
+    await expect(
+      loadGitDiff({ ...request, path: "../outside" }, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(3);
   });
 
   it("uses fixed conversation commands without paths or Codex protocol IDs", async () => {

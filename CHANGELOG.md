@@ -130,6 +130,18 @@ released a usable application.
   fields, exposes only native-advertised approve/decline/cancel choices,
   prevents duplicate submissions, pauses polling during a decision, and sends
   only the exact app conversation ID, app approval ID, and closed decision enum.
+- A Milestone 10A native read-only Git service with fixed shell-free status and
+  diff commands, attachment revalidation, read-only repository support, bounded
+  process/output handling, strict path containment, stable diagnostics, and no
+  index, worktree, reference, configuration, or object mutation.
+- Strict shared Git status/diff fixtures and a responsive source-review
+  interface with branch divergence, changed files, staged/working selections,
+  normalized line numbers, binary/truncation states, refresh, and explicit
+  revalidated default-editor handoff.
+- Deterministic native, TypeScript, component, bridge, desktop/mobile overflow,
+  and axe-core coverage for Git parsing, raw-field rejection, deceptive paths,
+  read-only/non-repository states, fixed-command temporary-repository review,
+  and honest browser-preview degradation.
 
 ### Changed
 
@@ -202,6 +214,9 @@ released a usable application.
   locally with deterministic fixtures. No live model call, real command
   approval, persistent policy grant, deployment, package, or release was
   performed.
+- Completed the Milestone 10A read-only Git-review checkpoint locally. Routine
+  verification did not stage, revert, commit, mutate a user repository, make a
+  model call, deploy, package, or release; Git mutations remain Milestone 10B.
 
 ### Migration note
 
@@ -219,8 +234,8 @@ released a usable application.
 
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
   conversation MVP, native session lifecycle/history, complete Milestone 9
-  approval and detailed-activity interface, and website are locally verified,
-  but installable packages, website deployment, and a release workflow do not
-  exist.
+  approval and detailed-activity interface, Milestone 10A read-only Git review,
+  and website are locally verified, but Git mutation workflows, installable
+  packages, website deployment, and a release workflow do not exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

@@ -1398,6 +1398,7 @@ fn map_project_error(error: ProjectExecutionError) -> ConversationDiagnosticCode
         ProjectExecutionError::IdentityChanged => {
             ConversationDiagnosticCode::ProjectIdentityChanged
         }
+        ProjectExecutionError::NotRepository => ConversationDiagnosticCode::ProjectUnavailable,
         ProjectExecutionError::NotWritable => ConversationDiagnosticCode::ProjectNotWritable,
         ProjectExecutionError::ProjectBusy => ConversationDiagnosticCode::ProjectBusy,
     }

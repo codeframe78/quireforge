@@ -101,6 +101,51 @@ const nativeResponses = {
     pendingAttachment: null,
     diagnosticCode: null,
   },
+  git_status: {
+    schemaVersion: 1,
+    state: "ready",
+    projectId: "018f0000-0000-7000-8000-000000000001",
+    branch: {
+      head: "feature/review",
+      upstream: "origin/feature/review",
+      ahead: 1,
+      behind: 0,
+      detached: false,
+    },
+    changes: [
+      {
+        path: "src/App.tsx",
+        previousPath: null,
+        staged: null,
+        worktree: "modified",
+        conflict: false,
+        submodule: false,
+        reviewable: true,
+      },
+    ],
+    truncated: false,
+    diagnosticCode: null,
+  },
+  git_diff: {
+    schemaVersion: 1,
+    state: "ready",
+    projectId: "018f0000-0000-7000-8000-000000000001",
+    path: "src/App.tsx",
+    area: "worktree",
+    kind: "text",
+    lines: [
+      {
+        kind: "hunk",
+        oldLine: null,
+        newLine: null,
+        text: "@@ -1 +1 @@",
+      },
+      { kind: "deletion", oldLine: 1, newLine: null, text: "old line" },
+      { kind: "addition", oldLine: null, newLine: 1, text: "new line" },
+    ],
+    truncated: false,
+    diagnosticCode: null,
+  },
   conversation_status: {
     schemaVersion: 2,
     state: "empty",
@@ -312,6 +357,29 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
   await expect(page.getByLabel("Next task")).toBeVisible();
   await expect(page.getByRole("button", { name: "Resume" })).toBeDisabled();
 
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("native Git fixture renders a bounded read-only diff", async ({
+  page,
+}) => {
+  await installNativeFixture(page);
+  await page.goto("/");
+
+  await expect(page.getByText("feature/review")).toBeVisible();
+  await page.getByRole("button", { name: "Working · modified" }).click();
+  await expect(
+    page.getByRole("table", { name: "Diff for src/App.tsx" }),
+  ).toBeVisible();
+  await expect(page.getByText("new line")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Open in default editor" }),
+  ).toBeEnabled();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
   const overflow = await page.evaluate(

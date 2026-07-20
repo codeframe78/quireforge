@@ -39,6 +39,11 @@ activity identity, turn-scoped decisions, safe pending-request cancellation,
 and bounded redacted command/tool/file progress. Milestone 9B groups that
 progress into selectable, in-place expanded activity rows and adds an
 accessible approval card that offers only the native-advertised decisions.
+Milestone 10A adds a read-only native Git boundary with branch/status review,
+staged and working-tree diffs, a responsive changed-file interface, and an
+explicit revalidated editor handoff. It cannot stage, revert, commit, accept Git
+arguments, or persist repository content; those mutation workflows remain the
+separately gated Milestone 10B.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -56,13 +61,14 @@ deployed. There is no application package to install yet.
   account-status probe, a verified native project-attachment workflow, and a
   strict native conversation runtime with a responsive task UI and native
   session-lifecycle/recovery boundary, accessible session history controls,
-  and the complete Milestone 9 native approval and detailed-activity interface.
+  the complete Milestone 9 native approval and detailed-activity interface, and
+  Milestone 10A read-only Git status/diff review.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 9 is complete and verified; Milestone 10's Git
-  status and diff-review workflow is next.
-- Known limitations: no installable packages, releases, public deployment, or
-  production Lighthouse evidence exists yet.
+- Current milestone: Milestone 10A read-only Git review is complete and verified
+  locally; Milestone 10B stage/revert/commit workflows require a fresh gate.
+- Known limitations: Git mutations, installable packages, releases, public
+  deployment, and production Lighthouse evidence do not exist yet.
 
 ## Discovery documents
 

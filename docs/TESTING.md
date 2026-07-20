@@ -1,9 +1,9 @@
 # Testing QuireForge
 
-Status: Milestones 2–9A establish repository, website, desktop frontend, native
-contract, Codex adapter, authentication, project attachment, native
-conversation/runtime lifecycle, and Tauri build checks. PTY and broader Git
-fixtures arrive with the milestones that introduce those systems.
+Status: Milestones 2–10A establish repository, website, desktop frontend,
+native contract, Codex adapter, authentication, project attachment,
+conversation/runtime lifecycle, approvals, and read-only Git review checks.
+PTY and mutating Git fixtures arrive with their gated milestones.
 
 ## Repository, website, and desktop checks
 
@@ -56,6 +56,35 @@ archive/restore without deletion, mismatched-cwd rejection, project-reservation
 release, child reaping, and shared strict Rust/TypeScript fixtures. They use
 deterministic mock app-server processes and never read a personal transcript or
 start a live model turn.
+Git-review tests cover shared strict fixtures, porcelain-v2 parsing without
+object IDs, repository and read-only attachment revalidation, fixed-command
+status/diff execution in temporary repositories, binary projection, deceptive
+and escaping path refusal, control stripping, frontend path rejection, browser
+preview honesty, responsive layout, overflow, and axe-core. They never stage,
+revert, commit, alter a user repository, or invoke a model.
+
+## Manual Milestone 10A checklist
+
+- Attach repository roots and repository subdirectories; confirm status is
+  limited to the exact attachment and never falls back to a parent, recent, or
+  home directory.
+- Confirm connected read-only repositories can be reviewed while missing,
+  identity-changed, malformed, non-repository, conflicted, and submodule states
+  fail closed or remain visibly non-reviewable.
+- Exercise staged, working-tree, renamed, deleted, untracked, binary, long, and
+  malformed fixtures. Confirm raw Git headers, stderr, object IDs, absolute
+  paths, repository configuration, and non-UTF-8/control/directional paths do
+  not cross IPC.
+- Confirm every diff and editor request is present in a fresh status snapshot,
+  stays within the attachment, and refuses symlinks or non-regular files.
+- Confirm the webview cannot submit cwd, revisions, Git options, commands, or
+  environment values and browser preview never fabricates Git data.
+- Run component/bridge/native tests, both Playwright viewports, axe-core,
+  overflow checks, the complete repository gate, unbundled native build, and an
+  isolated launch. Inspect repository status before and after to prove routine
+  validation performed no Git mutation.
+- Confirm stage, unstage, revert, commit, branch, worktree, and remote actions do
+  not exist. They remain Milestone 10B or later work.
 
 ## Manual Milestone 9 checklist
 
