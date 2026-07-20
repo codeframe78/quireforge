@@ -45,7 +45,11 @@ explicit revalidated editor handoff. Milestone 10B adds fixed stage, unstage,
 bounded revert/recovery, and commit workflows with native-held expiring
 confirmations, concurrency and postcondition checks, attachment-scoped staged
 paths, repository-local identity, and high-confidence secret refusal. It does
-not expose arbitrary Git arguments, branches, worktrees, or remote operations.
+not expose arbitrary Git arguments or remote operations. Milestone 11A adds a
+managed-worktree foundation: bounded native inventory, app-generated
+destinations, native-picker attachment, expiring confirmations, source-HEAD and
+identity revalidation, and ordinary project registration. It intentionally
+provides no worktree removal, pruning, or cleanup action yet.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -64,14 +68,16 @@ deployed. There is no application package to install yet.
   strict native conversation runtime with a responsive task UI and native
   session-lifecycle/recovery boundary, accessible session history controls,
   the complete Milestone 9 native approval and detailed-activity interface, and
-  complete Milestone 10 reviewed Git status/diff and mutation workflows.
+  complete Milestone 10 reviewed Git status/diff and mutation workflows, plus
+  the Milestone 11A managed-worktree inventory/create/attach foundation.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 10 Git review and controlled mutation workflows
-  are complete and verified locally; Milestone 11 requires a fresh gate.
-- Known limitations: advanced Git/worktree/remote operations, installable
-  packages, releases, public deployment, and production Lighthouse evidence do
-  not exist yet.
+- Current milestone: Milestone 11A is implemented and verified locally;
+  Milestone 11B parallel execution requires a fresh reasoning/model/start gate.
+- Known limitations: concurrent worktree task scheduling, worktree conflict
+  aggregation, worktree cleanup/recovery, advanced remote operations,
+  installable packages, releases, public deployment, and production Lighthouse
+  evidence do not exist yet.
 
 ## Discovery documents
 
@@ -91,6 +97,7 @@ deployed. There is no application package to install yet.
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)
 - [Reviewed Git mutation decision](docs/DECISIONS/0013-reviewed-git-mutation-boundary.md)
+- [Managed worktree foundation decision](docs/DECISIONS/0014-managed-worktree-foundation.md)
 - [Brand sources and usage](assets/brand/README.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)

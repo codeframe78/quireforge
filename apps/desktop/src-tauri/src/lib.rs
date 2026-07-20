@@ -2,6 +2,7 @@ mod codex;
 mod contract;
 mod git;
 mod project;
+mod worktree;
 
 use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
@@ -24,6 +25,13 @@ use project::{
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
+use worktree::{
+    types::{
+        WorktreeCancelRequest, WorktreeConfirmRequest, WorktreeCreatePreviewRequest,
+        WorktreePreviewSnapshot, WorktreeResultSnapshot, WorktreeWorkspaceSnapshot,
+    },
+    WorktreeService,
+};
 
 #[tauri::command]
 fn desktop_bootstrap() -> DesktopBootstrap {
@@ -162,6 +170,62 @@ fn project_preflight(
     service: tauri::State<'_, ProjectService>,
 ) -> ProjectPreflightSnapshot {
     service.preflight(project_id)
+}
+
+#[tauri::command]
+async fn worktree_status(
+    project_id: String,
+    service: tauri::State<'_, WorktreeService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<WorktreeWorkspaceSnapshot, ()> {
+    Ok(service.status(project_id, &projects).await)
+}
+
+#[tauri::command]
+async fn worktree_create_preview(
+    request: WorktreeCreatePreviewRequest,
+    service: tauri::State<'_, WorktreeService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<WorktreePreviewSnapshot, ()> {
+    Ok(service.preview_create(request, &projects).await)
+}
+
+#[tauri::command]
+async fn worktree_pick_attach(
+    project_id: String,
+    app: tauri::AppHandle,
+    service: tauri::State<'_, WorktreeService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<WorktreePreviewSnapshot, ()> {
+    let selection = app
+        .dialog()
+        .file()
+        .set_title("Attach an existing Git worktree")
+        .blocking_pick_folder();
+    Ok(match selection {
+        Some(path) => match path.into_path() {
+            Ok(path) => service.preview_attach(project_id, path, &projects).await,
+            Err(_) => service.picker_unavailable(project_id),
+        },
+        None => service.picker_cancelled(project_id),
+    })
+}
+
+#[tauri::command]
+async fn worktree_confirm(
+    request: WorktreeConfirmRequest,
+    service: tauri::State<'_, WorktreeService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<WorktreeResultSnapshot, ()> {
+    Ok(service.confirm(request, &projects).await)
+}
+
+#[tauri::command]
+fn worktree_cancel(
+    request: WorktreeCancelRequest,
+    service: tauri::State<'_, WorktreeService>,
+) -> bool {
+    service.cancel(request)
 }
 
 #[tauri::command]
@@ -323,12 +387,16 @@ pub fn run() {
         .manage(ConversationService::default())
         .manage(GitService::default())
         .setup(|app| {
-            let service = app
-                .path()
-                .app_data_dir()
-                .map(|directory| ProjectService::open(&directory.join("metadata.sqlite3")))
-                .unwrap_or_else(|_| ProjectService::unavailable());
-            app.manage(service);
+            match app.path().app_data_dir() {
+                Ok(directory) => {
+                    app.manage(ProjectService::open(&directory.join("metadata.sqlite3")));
+                    app.manage(WorktreeService::open(&directory.join("worktrees")));
+                }
+                Err(_) => {
+                    app.manage(ProjectService::unavailable());
+                    app.manage(WorktreeService::unavailable());
+                }
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -348,6 +416,11 @@ pub fn run() {
             project_detach,
             project_archive,
             project_preflight,
+            worktree_status,
+            worktree_create_preview,
+            worktree_pick_attach,
+            worktree_confirm,
+            worktree_cancel,
             git_status,
             git_diff,
             git_open_file,

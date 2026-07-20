@@ -1,9 +1,10 @@
 # Architecture
 
-Status: Milestone 0 application proposal with the website foundation and the
-desktop work through Milestone 10 implemented locally. Advanced Git/worktree,
-terminal, packaging, deployment, and integration interfaces remain subject to
-their separately gated implementation milestones.
+Status: Milestone 0 application proposal with the website foundation, desktop
+work through Milestone 10, and the Milestone 11A managed-worktree foundation
+implemented locally. Parallel worktree execution, cleanup, terminal, packaging,
+deployment, and integration interfaces remain subject to separately gated
+milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -270,6 +271,33 @@ value. It checks final reference and index state and attempts expected-value
 rollback on an unexpected postcondition. See
 [ADR 0013](DECISIONS/0013-reviewed-git-mutation-boundary.md).
 
+### Milestone 11A managed-worktree boundary
+
+`WorktreeService` discovers the repository group from an app-owned project and
+runs a bounded, shell-free `git worktree list --porcelain -z`. React receives
+only display paths, normalized branch names, ownership/state enums, and optional
+QuireForge project IDs; object IDs, raw output, stderr, configuration, Git
+directories, and common-directory paths stay native.
+
+Create preview accepts an app-owned project ID and one bounded new branch name.
+The service generates a destination beneath private app storage, captures the
+source repository identity and HEAD internally, verifies branch absence, and
+stores the plan behind a five-minute one-use UUIDv7. Attach preview obtains the
+path only through the native picker and binds exact directory/Git identity. On
+confirmation, all app-owned projects sharing the source repository are reserved
+and the complete evidence is revalidated. Git uses fixed argument arrays, no
+shell, no prompts/global/system configuration, a timeout, bounded output,
+disabled hooks, and overrides for configured checkout filters.
+
+Schema migration 4 adds only the source project, worktree project, managed or
+attached ownership, and optional normalized branch. Every linked worktree is an
+ordinary project, so existing conversation cwd and Git safeguards are reused.
+If Git creation succeeds but the transaction fails, QuireForge leaves the
+worktree untouched and reports its display path for future explicit recovery.
+No remove, prune, filesystem cleanup, concurrent execution, or conflict action
+exists in 11A. See
+[ADR 0014](DECISIONS/0014-managed-worktree-foundation.md).
+
 ## Application layers
 
 ### Frontend
@@ -280,7 +308,9 @@ backend event streams. The frontend cannot directly open filesystem paths,
 spawn processes, execute Git, or edit Codex configuration. Its editor action
 supplies only an app-owned project ID and normalized changed-file path. A Git
 mutation preview supplies only a closed operation and path/message; confirmation
-supplies only the native-held plan token.
+supplies only the native-held plan token. A worktree create preview supplies one
+bounded branch name; existing paths come from the native picker, and every
+worktree confirmation supplies only its native-held token.
 
 ### Native application core
 
@@ -323,8 +353,11 @@ contract tests.
 - `DirectoryIdentityService`: selected/resolved paths, stat identity, mounts,
   accessibility, and change detection.
 - `GitService`: implemented bounded status, branch, diff, changed-file editor
-  handoff, stage, unstage, bounded revert/recovery, and commit; branch,
-  worktree, and remote operations remain later work.
+  handoff, stage, unstage, bounded revert/recovery, and commit; remote
+  operations remain later work.
+- `WorktreeService`: implemented bounded inventory, managed creation, native-
+  picker attachment, expiring confirmation, and project registration; parallel
+  execution and cleanup remain later gated work.
 - `TerminalService`: independent PTY sessions rooted in verified directories.
 - `ApprovalService`: request correlation, scope, decision validation, expiry.
 - `PreviewService`: bounded MIME/type-aware previews.
@@ -496,6 +529,12 @@ revert/recovery, and an attachment-scoped commit plumbing workflow. Exact status
 index, worktree, tree, and reference postconditions protect unrelated work.
 Hooks, signing, prompts, global/system configuration, arbitrary arguments, and
 advanced branch/worktree/remote operations remain unavailable.
+
+Milestone 11A admits only one advanced branch operation: creating a new branch
+as part of an app-managed worktree. The native plan binds source identity and
+HEAD, owns the destination, disables checkout hooks/configured filters, and
+revalidates every effect at confirmation. Existing-worktree paths come only
+from the native picker. Cleanup remains a separate unavailable operation.
 
 Codex-managed sessions and user worktrees are never removed as a side effect of
 detaching a directory or deleting app metadata.

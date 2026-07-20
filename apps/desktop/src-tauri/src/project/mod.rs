@@ -9,7 +9,9 @@ use std::{
 };
 
 pub(crate) use storage::StoredConversationReference;
-use storage::{ProjectRepository, StorageError, StoredAssociation, StoredProject};
+use storage::{
+    ProjectRepository, StorageError, StoredAssociation, StoredProject, StoredWorktreeRelation,
+};
 use types::{
     DirectoryAccessibilityState, DirectorySummary, GitSummary, PendingAttachmentKind,
     PendingAttachmentPreview, ProjectDiagnosticCode, ProjectPreflightSnapshot, ProjectSummary,
@@ -57,6 +59,47 @@ pub(crate) struct ProjectReviewRoot {
     pub writable: bool,
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct ProjectWorktreeRecord {
+    pub project_id: String,
+    pub display_name: String,
+    pub selected_path: Option<PathBuf>,
+    pub ownership: String,
+    pub branch_name: Option<String>,
+    pub archived: bool,
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct ProjectWorktreeContext {
+    pub source_project_id: String,
+    pub source_display_name: String,
+    pub records: Vec<ProjectWorktreeRecord>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct ProjectWorktreeCandidate {
+    pub selected_path: PathBuf,
+    pub resolved_path: PathBuf,
+    pub display_path: String,
+    pub worktree_root: PathBuf,
+    pub common_dir: PathBuf,
+    pub is_linked_worktree: bool,
+    pub device_id: u64,
+    pub inode: u64,
+    pub mount_id: Option<u64>,
+    pub filesystem_type: Option<String>,
+    pub has_agents_guidance: bool,
+    pub has_codex_config: bool,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum WorktreeRegistrationError {
+    Project(ProjectExecutionError),
+    DuplicateDirectory,
+    NotLinkedWorktree,
+    DifferentRepository,
+}
+
 pub(crate) struct ConversationReference<'a> {
     pub conversation_id: &'a str,
     pub project_id: &'a str,
@@ -92,6 +135,17 @@ impl ProjectService {
             pending: Mutex::new(None),
             active_executions: Mutex::new(HashSet::new()),
         }
+    }
+
+    #[cfg(test)]
+    pub(crate) fn fail_worktree_registration_for_test(&self) {
+        self.repository
+            .lock()
+            .expect("test repository lock must be available")
+            .as_ref()
+            .expect("test repository must be available")
+            .fail_worktree_registration_for_test()
+            .expect("test failure trigger must install");
     }
 
     pub fn status(&self) -> ProjectWorkspaceSnapshot {
@@ -359,6 +413,133 @@ impl ProjectService {
             git_dir: git.git_dir,
             common_dir: git.common_dir,
             writable: identity.accessibility == DirectoryAccessibilityState::ConnectedAccessible,
+        })
+    }
+
+    pub(crate) fn worktree_context(
+        &self,
+        project_id: &str,
+    ) -> Result<ProjectWorktreeContext, ProjectExecutionError> {
+        if !valid_id(project_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        let source_project_id = repository
+            .worktree_source_project_id(project_id)
+            .map_err(map_project_execution_storage_error)?;
+        let source = repository
+            .project(&source_project_id)
+            .map_err(map_project_execution_storage_error)?;
+        if source.archived {
+            return Err(ProjectExecutionError::ProjectNotFound);
+        }
+        let relations = repository
+            .list_worktree_relations(&source_project_id)
+            .map_err(map_project_execution_storage_error)?;
+        let mut records = Vec::with_capacity(relations.len());
+        for relation in relations {
+            let project = repository
+                .project(&relation.worktree_project_id)
+                .map_err(map_project_execution_storage_error)?;
+            records.push(worktree_record(relation, project));
+        }
+        Ok(ProjectWorktreeContext {
+            source_project_id,
+            source_display_name: source.display_name,
+            records,
+        })
+    }
+
+    pub(crate) fn register_worktree_project(
+        &self,
+        source_project_id: &str,
+        selected_path: &Path,
+        expected_common_dir: &Path,
+        ownership: &str,
+        branch_name: Option<&str>,
+    ) -> Result<String, WorktreeRegistrationError> {
+        if !valid_id(source_project_id) {
+            return Err(WorktreeRegistrationError::Project(
+                ProjectExecutionError::InvalidProjectId,
+            ));
+        }
+        let identity = inspect_directory(selected_path).map_err(|_| {
+            WorktreeRegistrationError::Project(ProjectExecutionError::DirectoryUnavailable)
+        })?;
+        if identity.accessibility != DirectoryAccessibilityState::ConnectedAccessible {
+            return Err(WorktreeRegistrationError::Project(
+                ProjectExecutionError::NotWritable,
+            ));
+        }
+        let git = identity
+            .git
+            .as_ref()
+            .ok_or(WorktreeRegistrationError::NotLinkedWorktree)?;
+        if !git.is_linked_worktree {
+            return Err(WorktreeRegistrationError::NotLinkedWorktree);
+        }
+        if git.common_dir != expected_common_dir {
+            return Err(WorktreeRegistrationError::DifferentRepository);
+        }
+        let display_name = branch_name
+            .map(str::to_owned)
+            .unwrap_or_else(|| directory_display_name(selected_path));
+        let mut repository_guard = self.repository.lock().map_err(|_| {
+            WorktreeRegistrationError::Project(ProjectExecutionError::MetadataUnavailable)
+        })?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(WorktreeRegistrationError::Project(
+                ProjectExecutionError::MetadataUnavailable,
+            ))?;
+        repository
+            .insert_worktree_project(
+                source_project_id,
+                &display_name,
+                &identity,
+                ownership,
+                branch_name,
+            )
+            .map_err(|error| match error {
+                StorageError::DuplicateDirectory => WorktreeRegistrationError::DuplicateDirectory,
+                error => {
+                    WorktreeRegistrationError::Project(map_project_execution_storage_error(error))
+                }
+            })
+    }
+
+    pub(crate) fn inspect_worktree_candidate(
+        &self,
+        selected_path: &Path,
+    ) -> Result<ProjectWorktreeCandidate, ProjectExecutionError> {
+        let identity = inspect_directory(selected_path)
+            .map_err(|_| ProjectExecutionError::DirectoryUnavailable)?;
+        if identity.accessibility != DirectoryAccessibilityState::ConnectedAccessible {
+            return Err(ProjectExecutionError::NotWritable);
+        }
+        let git = identity
+            .git
+            .as_ref()
+            .ok_or(ProjectExecutionError::NotRepository)?;
+        Ok(ProjectWorktreeCandidate {
+            selected_path: identity.selected_path,
+            resolved_path: identity.resolved_path,
+            display_path: identity.selected_display_path,
+            worktree_root: git.worktree_root.clone(),
+            common_dir: git.common_dir.clone(),
+            is_linked_worktree: git.is_linked_worktree,
+            device_id: identity.device_id,
+            inode: identity.inode,
+            mount_id: identity.mount_id,
+            filesystem_type: identity.filesystem_type,
+            has_agents_guidance: identity.has_agents_guidance,
+            has_codex_config: identity.has_codex_config,
         })
     }
 
@@ -648,6 +829,23 @@ fn project_summary(project: StoredProject) -> ProjectSummary {
     }
 }
 
+fn worktree_record(
+    relation: StoredWorktreeRelation,
+    project: StoredProject,
+) -> ProjectWorktreeRecord {
+    debug_assert_eq!(relation.source_project_id.len(), 36);
+    ProjectWorktreeRecord {
+        project_id: project.id,
+        display_name: project.display_name,
+        selected_path: project
+            .association
+            .map(|association| PathBuf::from(association.selected_path)),
+        ownership: relation.ownership,
+        branch_name: relation.branch_name,
+        archived: project.archived,
+    }
+}
+
 fn directory_summary(association: StoredAssociation) -> DirectorySummary {
     let selected_path = PathBuf::from(&association.selected_path);
     let stored_resolved_path = PathBuf::from(&association.resolved_path);
@@ -777,6 +975,17 @@ fn map_storage_error(error: &StorageError) -> ProjectDiagnosticCode {
         | StorageError::FutureSchema
         | StorageError::Filesystem
         | StorageError::Sqlite(_) => ProjectDiagnosticCode::MetadataUnavailable,
+    }
+}
+
+fn map_project_execution_storage_error(error: StorageError) -> ProjectExecutionError {
+    match error {
+        StorageError::ProjectNotFound => ProjectExecutionError::ProjectNotFound,
+        StorageError::DuplicateDirectory
+        | StorageError::InvalidStoredValue
+        | StorageError::FutureSchema
+        | StorageError::Filesystem
+        | StorageError::Sqlite(_) => ProjectExecutionError::MetadataUnavailable,
     }
 }
 

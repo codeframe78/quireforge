@@ -76,6 +76,13 @@ released a usable application.
   bridge, and accessible responsive project UI for native selection,
   confirmation, missing/read-only states, preflight, relink, and two-step
   detach/archive actions.
+- A native Milestone 11A managed-worktree service with normalized bounded
+  inventory, app-generated private destinations, native-picker attachment,
+  source-HEAD and identity revalidation, disabled hooks/configured checkout
+  filters, and five-minute one-use confirmations.
+- Schema migration 4 linking each managed or attached worktree to an ordinary
+  QuireForge project, plus a responsive accessible inventory/create/attach UI
+  that deliberately exposes no remove, prune, or cleanup action.
 - A serialized native Milestone 7A conversation service that revalidates the
   attached cwd, starts a supported Codex thread and turn with explicit model,
   reasoning, sandbox, and approval controls, normalizes bounded stream events,
@@ -240,6 +247,11 @@ released a usable application.
   Routine verification mutated only those disposable fixtures; it did not
   alter a user repository, run a live model call, deploy, package, publish, or
   release.
+- Completed Milestone 11A locally with deterministic disposable repositories
+  and app-data roots. Verification created/attached only fixture worktrees,
+  forced and preserved a recoverable post-create metadata failure, and did not
+  alter a user repository, run concurrent Codex tasks, clean a worktree, make a
+  live model call, deploy, package, publish, or release.
 
 ### Migration note
 
@@ -258,8 +270,9 @@ released a usable application.
 - The desktop adapter, Codex-owned authentication workflow, project attachment,
   conversation MVP, native session lifecycle/history, complete Milestone 9
   approval and detailed-activity interface, complete Milestone 10 Git review
-  and controlled mutations, and website are locally verified, but advanced
-  Git/worktree/remote workflows, installable packages, website deployment, and
-  a release workflow do not exist.
+  and controlled mutations, Milestone 11A worktree inventory/create/attach
+  foundation, and website are locally verified, but parallel worktree
+  execution, worktree cleanup/recovery, advanced remote workflows, installable
+  packages, website deployment, and a release workflow do not exist.
 - Integration compatibility is based on Codex CLI 0.144.6 and must be probed at
   runtime.

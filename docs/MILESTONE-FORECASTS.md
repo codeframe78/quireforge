@@ -727,3 +727,77 @@ porcelain commit hooks or overstating recovery guarantees.
   GPT-5.6 Sol with XHigh reasoning is provisionally appropriate because managed
   worktree lifecycle, concurrent Codex ownership, cleanup separation, branch
   safety, and crash recovery are architecture- and data-loss-sensitive.
+
+## Milestone 11 — Worktrees and Parallel Work
+
+The gated implementation split Milestone 11 into recoverable boundaries:
+11A managed inventory/create/attach, 11B parallel execution and aggregated
+status/conflicts, and 11C explicit cleanup/recovery. This prevented the first
+worktree mutation from also authorizing concurrent Codex ownership or
+data-loss-sensitive removal.
+
+### Milestone 11A — Managed Worktree Foundation
+
+| Field                       | Record                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-20                                                                                                                                                                                                                                                                                                                                                  |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                                                                            |
+| Preliminary forecast        | Approximately 3–5 active hours; 15–35 minutes of local commands; about 4–7 total elapsed hours in one session; medium confidence                                                                                                                                                                                                                            |
+| Calibrated forecast         | Approximately 3.5–5.5 active hours; 20–40 minutes of local commands; about 4.5–7.5 total elapsed hours in one or two sessions; low-to-medium confidence                                                                                                                                                                                                       |
+| Calibration basis           | Clean synchronized Milestone 10B `main`, Git 2.53.0, about 42 GiB available RAM, 725–726 GiB free NVMe, warm 13 GiB Cargo target and pnpm/browser caches, no dependency change, four Cargo workers, two Playwright workers, and CPU/system-memory execution with no GPU workload                                                                                |
+| Observed active execution   | Approximately 75–110 minutes through architecture and threat review, schema/service/IPC/UI implementation, disposable-repository adversarial tests, documentation, complete gates, release/native verification, visual inspection, and publication preparation; pre-gate approval and hosted waiting excluded                                                                                          |
+| Observed local command time | Approximately 8–12 minutes across incremental compiles/tests, disposable Git probes, two stopped aggregate checks, the 45.99-second passing full gate, 14.59-second combined browser gate, 33.98-second release build, isolated launch, and rendered-state capture                                                                                               |
+| User approval/waiting time  | Manual model/reasoning and milestone-start confirmations occurred before implementation and are excluded; publication and hosted-runner waiting are tracked separately                                                                                                                                                                                      |
+| Sessions                    | One logical implementation session with architecture, native boundary, strict contract/UI, adversarial fixture, documentation, validation, release, and publication checkpoints                                                                                                                                                                            |
+| Usage intensity             | XHigh model/tool activity; moderate local CPU and low memory pressure                                                                                                                                                                                                                                                                                        |
+| Completion status           | Implemented and fully verified locally; publication prepared on `feat/milestone-11a-worktree-foundation`                                                                                                                                                                                                                                                    |
+
+The forecast substantially overestimated active and elapsed time. Existing
+project identity/revalidation, project reservation, fixed Git runner patterns,
+SQLite migrations, preview tokens, strict Zod contracts, and responsive card
+styles were reusable. The original whole-milestone uncertainty also included
+parallel process ownership and destructive cleanup, which the safer 11A/11B/11C
+split removed from this checkpoint. XHigh reasoning remained appropriate for
+the partial-failure no-cleanup decision, source-HEAD binding, group reservation,
+repository-local hook/filter suppression, and final data-loss review.
+
+### Milestone 11A required observations and lessons
+
+- Each linked worktree is an ordinary QuireForge project. Schema migration 4
+  stores only its canonical source project, worktree project, managed/attached
+  ownership, and optional normalized branch.
+- The frontend can supply only a project ID and bounded new branch name. Native
+  code owns the destination, picker path, Git cwd/argv, source common directory,
+  and base commit; confirmation accepts only a five-minute one-use UUIDv7.
+- Source HEAD must be captured internally at preview and compared again at
+  confirmation. Passing that reviewed object directly to fixed `worktree add`
+  prevents a concurrent HEAD move from changing the branch base silently.
+- `core.hooksPath=/dev/null` is not enough for checkout. Effective configured
+  filter drivers are enumerated with bounded Git output and overridden for the
+  create command; a disposable fixture proves neither a post-checkout hook nor
+  smudge filter executes.
+- A source project may attach a repository subdirectory. Inventory must match
+  the revalidated Git worktree root, not the selected subdirectory, to identify
+  the canonical source correctly.
+- If Git creates the worktree and the SQLite transaction fails, automatic
+  removal would turn metadata failure into possible data loss. The service
+  reports the retained display path and performs no cleanup.
+- The complete repository gate passed in 45.99 seconds at about 1.27 GiB peak
+  RSS: 82 JavaScript tests and 95 Rust tests passed, with 2 live probes ignored.
+  This was about 7% slower than 10B and below the 25% update threshold.
+- The combined browser gate passed 22 checks in 14.59 seconds at about 337 MiB
+  peak RSS. The release build passed in 33.98 seconds at about 1.73 GiB peak
+  RSS, including a 29.93-second release compile/link.
+- The isolated launch owned the exact D-Bus name, applied migrations 1–4 with
+  `0700`/`0600` permissions, started with Codex unavailable on its restricted
+  path, and left no application/Codex process or temporary launch tree.
+- Approximately 42 GiB RAM and 725 GiB NVMe remained available. Swap stayed
+  near 187 MiB, every timed gate reported zero swaps, and there was no OOM,
+  throttling, dependency download, clean build, user-repository mutation, live
+  model call, or GPU-compute workload.
+- Milestone 11B requires a fresh reasoning/model/start gate. A preliminary
+  range is approximately 4–7 active hours, 20–45 minutes of local commands, and
+  5–9 total elapsed hours across one or two sessions, low-to-medium confidence.
+  GPT-5.6 Sol with XHigh reasoning is provisionally appropriate because
+  concurrent process ownership, cross-worktree status/conflicts, cancellation,
+  and crash recovery remain architecture-sensitive.

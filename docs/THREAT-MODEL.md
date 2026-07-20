@@ -278,8 +278,16 @@ Controls:
 - Create commits without hooks, signing, editors, prompts, or inherited/global/
   system configuration; lock/revalidate the index and update `HEAD` only from
   the reviewed old value.
-- Keep branch, worktree, reset, checkout, stash, remote, push, pull, and generic
-  Git mutations behind later explicit gates.
+- For managed worktree creation, generate the destination beneath private app
+  storage, bind source identity and HEAD in a native-held expiring preview,
+  require a bounded new branch, reserve the repository's app-owned project
+  group, and disable hooks and configured checkout filters.
+- Attach an existing worktree only through the native picker and require exact
+  linked-worktree/common-directory identity. Discovered external worktrees have
+  no selectable project ID until attachment succeeds.
+- Leave a worktree intact and report it as recoverable if post-creation metadata
+  persistence fails. Provide no remove, prune, cleanup, arbitrary checkout/ref,
+  reset, stash, remote, push, pull, or generic Git mutation in Milestone 11A.
 
 ### Webview and preview content
 

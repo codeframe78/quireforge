@@ -1,9 +1,10 @@
 # Testing QuireForge
 
-Status: Milestones 2–10 establish repository, website, desktop frontend,
+Status: Milestones 2–11A establish repository, website, desktop frontend,
 native contract, Codex adapter, authentication, project attachment,
-conversation/runtime lifecycle, approvals, and reviewed Git read/write checks.
-PTY fixtures arrive with their gated milestone.
+conversation/runtime lifecycle, approvals, reviewed Git read/write checks, and
+the managed-worktree foundation. Parallel execution, cleanup, and PTY fixtures
+arrive with their separately gated milestones.
 
 ## Repository, website, and desktop checks
 
@@ -67,6 +68,43 @@ bounded revert and single-use recovery, unborn and existing-branch commits,
 unstaged-work preservation, hooks/signing refusal, attachment scope,
 repository-local identity, sensitive filenames/content/messages, and final
 postconditions. They never alter a user repository or invoke a model.
+Worktree tests use disposable repositories and app-data roots to cover
+porcelain inventory without object IDs, strict branch/token contracts, source
+HEAD changes, single-use confirmation, external-before-attach state,
+native-selected linked-worktree identity, managed creation, configured checkout
+filter suppression, schema migration 4, transactional registration, and the
+recoverable-worktree path after a forced metadata failure. Frontend and browser
+tests cover strict schemas, fixed bridge payloads, honest preview behavior,
+responsive inventory/create/attach controls, absence of cleanup actions,
+overflow, and axe-core.
+
+## Manual Milestone 11A checklist
+
+- Use disposable repositories only. Inspect the user repository before and
+  after verification and confirm routine tests created no user worktree or
+  branch.
+- Confirm inventory returns normalized branch/path/ownership/state records and
+  never exposes object IDs, Git directories, common-directory paths, stderr,
+  configuration, cwd, executable, or arbitrary arguments.
+- Preview a bounded new branch and confirm the destination is generated beneath
+  private app storage. Change source HEAD, create the branch elsewhere, or
+  change repository identity before confirmation and confirm the plan fails
+  closed.
+- Configure a checkout filter and hook in a disposable repository; confirm
+  managed creation runs neither. Confirm global/system configuration, prompts,
+  pagers, credentials, and inherited shell environment are unavailable.
+- Discover an external linked worktree and confirm it has no selectable project
+  ID until the exact directory is chosen through the native picker. Reject a
+  primary checkout, a worktree from another common directory, and a retargeted
+  path.
+- Force metadata registration to fail after fixture creation. Confirm the
+  worktree remains on disk with a visible recovery path and QuireForge performs
+  no implicit remove, prune, or cleanup.
+- Confirm there is no remove, delete, prune, clean, generic checkout, reset,
+  stash, remote, push, pull, or arbitrary Git control in native IPC or React.
+- Run native/frontend suites, both Playwright viewports, axe-core, overflow,
+  complete repository validation, warm release build, isolated schema-4 launch,
+  and visual inspection before publication.
 
 ## Manual Milestone 10 checklist
 
@@ -99,8 +137,10 @@ postconditions. They never alter a user repository or invoke a model.
   oversized blobs, sensitive filenames, and high-confidence secrets in files
   or the message. Confirm hooks, signing, editors, and prompts do not run and
   unrelated unstaged changes remain intact.
-- Confirm branch, worktree, reset, checkout, stash, remote, push, pull, and
-  arbitrary Git actions do not exist. They remain later milestone work.
+- Confirm Milestone 10 exposes no branch, worktree, reset, checkout, stash,
+  remote, push, pull, or arbitrary Git action. The separately gated Milestone
+  11A service may only create one bounded new branch as part of a confirmed
+  app-managed worktree.
 
 ## Manual Milestone 9 checklist
 

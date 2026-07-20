@@ -101,6 +101,46 @@ const nativeResponses = {
     pendingAttachment: null,
     diagnosticCode: null,
   },
+  worktree_status: {
+    schemaVersion: 1,
+    state: "ready",
+    sourceProjectId: "018f0000-0000-7000-8000-000000000001",
+    worktrees: [
+      {
+        projectId: "018f0000-0000-7000-8000-000000000001",
+        displayName: "QuireForge",
+        displayPath: "~/work/quireforge",
+        branchName: "feature/review",
+        ownership: "source",
+        state: "ready",
+        current: true,
+      },
+      {
+        projectId: null,
+        displayName: "feature/external",
+        displayPath: "~/work/quireforge-external",
+        branchName: "feature/external",
+        ownership: "external",
+        state: "ready",
+        current: false,
+      },
+    ],
+    truncated: false,
+    diagnosticCode: null,
+  },
+  worktree_create_preview: {
+    schemaVersion: 1,
+    state: "ready",
+    sourceProjectId: "018f0000-0000-7000-8000-000000000001",
+    operation: "create",
+    branchName: "feature/isolated",
+    displayPath: "~/.local/share/quireforge/worktrees/isolated",
+    ownership: "managed",
+    destructive: false,
+    confirmationId: "018f0000-0000-7000-8000-000000000040",
+    diagnosticCode: null,
+  },
+  worktree_cancel: true,
   git_status: {
     schemaVersion: 1,
     state: "ready",
@@ -352,6 +392,11 @@ test("desktop preview renders the honest semantic shell", async ({ page }) => {
     page.getByText(/cannot open a native folder picker/u),
   ).toBeVisible();
   await expect(
+    page.getByText(
+      /Browser preview cannot inspect or create local Git worktrees/u,
+    ),
+  ).toBeVisible();
+  await expect(
     page.getByRole("button", { name: "Attach local project" }),
   ).toBeDisabled();
   await expect(
@@ -422,7 +467,11 @@ test("native Git fixture reviews a diff and confirms a fixed mutation", async ({
   await installNativeFixture(page);
   await page.goto("/");
 
-  await expect(page.getByText("feature/review")).toBeVisible();
+  await expect(
+    page
+      .getByLabel("Review each Git change before applying it.")
+      .getByText("feature/review"),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Working · modified" }).click();
   await expect(
     page.getByRole("table", { name: "Diff for src/App.tsx" }),
@@ -443,6 +492,36 @@ test("native Git fixture reviews a diff and confirms a fixed mutation", async ({
   await expect(
     page.getByRole("button", { name: "Staged · modified" }),
   ).toBeVisible();
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("native worktree fixture previews an isolated checkout without cleanup controls", async ({
+  page,
+}) => {
+  await installNativeFixture(page);
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", {
+      name: "Give each line of work its own checkout.",
+    }),
+  ).toBeVisible();
+  await expect(page.getByText("external checkout")).toBeVisible();
+  await page.getByLabel("New branch name").fill("feature/isolated");
+  await page.getByRole("button", { name: "Preview managed worktree" }).click();
+  await expect(page.getByText("Create feature/isolated")).toBeVisible();
+  await expect(page.getByText("Non-destructive preview")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /remove|delete|prune|clean/u }),
+  ).toHaveCount(0);
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Create feature/isolated")).toHaveCount(0);
+
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
   const overflow = await page.evaluate(

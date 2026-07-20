@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { z } from "zod";
 
 import {
   gitDiffRequestSchema,
@@ -50,6 +51,18 @@ import {
   type SessionListRequest,
   type SessionLifecycleSnapshot,
 } from "./session";
+import {
+  worktreeConfirmationRequestSchema,
+  worktreeCreatePreviewRequestSchema,
+  worktreePreviewSchema,
+  worktreeResultSchema,
+  worktreeWorkspaceSchema,
+  type WorktreeConfirmationRequest,
+  type WorktreeCreatePreviewRequest,
+  type WorktreePreviewSnapshot,
+  type WorktreeResultSnapshot,
+  type WorktreeWorkspaceSnapshot,
+} from "./worktree";
 
 export const CODEX_RUNTIME_PROBE_COMMAND = "codex_runtime_probe";
 export const CODEX_AUTH_STATUS_COMMAND = "codex_auth_status";
@@ -67,6 +80,11 @@ export const PROJECT_CANCEL_ATTACHMENT_COMMAND = "project_cancel_attachment";
 export const PROJECT_DETACH_COMMAND = "project_detach";
 export const PROJECT_ARCHIVE_COMMAND = "project_archive";
 export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
+export const WORKTREE_STATUS_COMMAND = "worktree_status";
+export const WORKTREE_CREATE_PREVIEW_COMMAND = "worktree_create_preview";
+export const WORKTREE_PICK_ATTACH_COMMAND = "worktree_pick_attach";
+export const WORKTREE_CONFIRM_COMMAND = "worktree_confirm";
+export const WORKTREE_CANCEL_COMMAND = "worktree_cancel";
 export const GIT_STATUS_COMMAND = "git_status";
 export const GIT_DIFF_COMMAND = "git_diff";
 export const GIT_OPEN_FILE_COMMAND = "git_open_file";
@@ -239,6 +257,63 @@ export async function preflightProject(
     projectId,
   });
   return projectPreflightSchema.parse(payload);
+}
+
+export async function loadWorktreeStatus(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<WorktreeWorkspaceSnapshot> {
+  const reviewedProjectId =
+    worktreeCreatePreviewRequestSchema.shape.projectId.parse(projectId);
+  const payload = await invokeFunction(WORKTREE_STATUS_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return worktreeWorkspaceSchema.parse(payload);
+}
+
+export async function previewWorktreeCreate(
+  request: WorktreeCreatePreviewRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<WorktreePreviewSnapshot> {
+  const reviewedRequest = worktreeCreatePreviewRequestSchema.parse(request);
+  const payload = await invokeFunction(WORKTREE_CREATE_PREVIEW_COMMAND, {
+    request: reviewedRequest,
+  });
+  return worktreePreviewSchema.parse(payload);
+}
+
+export async function pickWorktreeAttach(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<WorktreePreviewSnapshot> {
+  const reviewedProjectId =
+    worktreeCreatePreviewRequestSchema.shape.projectId.parse(projectId);
+  const payload = await invokeFunction(WORKTREE_PICK_ATTACH_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return worktreePreviewSchema.parse(payload);
+}
+
+export async function confirmWorktree(
+  request: WorktreeConfirmationRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<WorktreeResultSnapshot> {
+  const reviewedRequest = worktreeConfirmationRequestSchema.parse(request);
+  const payload = await invokeFunction(WORKTREE_CONFIRM_COMMAND, {
+    request: reviewedRequest,
+  });
+  return worktreeResultSchema.parse(payload);
+}
+
+export async function cancelWorktree(
+  request: WorktreeConfirmationRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<boolean> {
+  const reviewedRequest = worktreeConfirmationRequestSchema.parse(request);
+  const payload = await invokeFunction(WORKTREE_CANCEL_COMMAND, {
+    request: reviewedRequest,
+  });
+  return z.boolean().parse(payload);
 }
 
 export async function loadGitStatus(

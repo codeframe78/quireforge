@@ -14,6 +14,7 @@ import {
   archiveConversation,
   archiveProject,
   cancelProjectAttachment,
+  cancelWorktree,
   cancelCodexAuth,
   CODEX_AUTH_CANCEL_COMMAND,
   CODEX_AUTH_OPEN_BROWSER_COMMAND,
@@ -21,6 +22,7 @@ import {
   CODEX_AUTH_STATUS_COMMAND,
   CODEX_RUNTIME_PROBE_COMMAND,
   confirmProjectAttachment,
+  confirmWorktree,
   confirmGitMutation,
   decideConversationApproval,
   CONVERSATION_APPROVAL_DECIDE_COMMAND,
@@ -44,12 +46,15 @@ import {
   loadGitDiff,
   loadGitStatus,
   loadProjectWorkspace,
+  loadWorktreeStatus,
   openCodexAuthBrowser,
   openGitFile,
   pickProjectDirectory,
   pickProjectRelink,
+  pickWorktreeAttach,
   preflightProject,
   previewGitMutation,
+  previewWorktreeCreate,
   pollConversation,
   restoreConversation,
   resumeConversation,
@@ -61,6 +66,11 @@ import {
   PROJECT_PICK_RELINK_COMMAND,
   PROJECT_PREFLIGHT_COMMAND,
   PROJECT_WORKSPACE_STATUS_COMMAND,
+  WORKTREE_CANCEL_COMMAND,
+  WORKTREE_CONFIRM_COMMAND,
+  WORKTREE_CREATE_PREVIEW_COMMAND,
+  WORKTREE_PICK_ATTACH_COMMAND,
+  WORKTREE_STATUS_COMMAND,
   GIT_DIFF_COMMAND,
   GIT_OPEN_FILE_COMMAND,
   GIT_MUTATION_CONFIRM_COMMAND,
@@ -74,6 +84,11 @@ import {
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
 import { scaffoldProjectWorkspace } from "./project";
+import {
+  scaffoldWorktreeWorkspace,
+  worktreePreviewSchema,
+  worktreeResultSchema,
+} from "./worktree";
 
 describe("desktop bridge", () => {
   it("invokes the one typed bootstrap command", async () => {
@@ -178,6 +193,68 @@ describe("desktop bridge", () => {
     });
 
     await expect(loadProjectWorkspace(invoke)).rejects.toThrow();
+  });
+
+  it("uses fixed worktree commands without frontend cwd, refs, or argv", async () => {
+    const projectId = "018f0000-0000-7000-8000-000000000001";
+    const confirmationId = "018f0000-0000-7000-8000-000000000002";
+    const preview = worktreePreviewSchema.parse({
+      schemaVersion: 1,
+      state: "ready",
+      sourceProjectId: projectId,
+      operation: "create",
+      branchName: "feature/bridge-fixture",
+      displayPath: "~/.local/share/quireforge/worktrees/fixture",
+      ownership: "managed",
+      destructive: false,
+      confirmationId,
+      diagnosticCode: null,
+    });
+    const result = worktreeResultSchema.parse({
+      schemaVersion: 1,
+      state: "unavailable",
+      sourceProjectId: projectId,
+      projectId: null,
+      workspace: null,
+      recoverableDisplayPath: null,
+      diagnosticCode: "confirmation-expired",
+    });
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce(scaffoldWorktreeWorkspace)
+      .mockResolvedValueOnce(preview)
+      .mockResolvedValueOnce(preview)
+      .mockResolvedValueOnce(result)
+      .mockResolvedValueOnce(true);
+
+    await loadWorktreeStatus(projectId, invoke);
+    await previewWorktreeCreate(
+      { projectId, branchName: "feature/bridge-fixture" },
+      invoke,
+    );
+    await pickWorktreeAttach(projectId, invoke);
+    await confirmWorktree({ confirmationId }, invoke);
+    await cancelWorktree({ confirmationId }, invoke);
+
+    expect(invoke.mock.calls).toEqual([
+      [WORKTREE_STATUS_COMMAND, { projectId }],
+      [
+        WORKTREE_CREATE_PREVIEW_COMMAND,
+        {
+          request: { projectId, branchName: "feature/bridge-fixture" },
+        },
+      ],
+      [WORKTREE_PICK_ATTACH_COMMAND, { projectId }],
+      [WORKTREE_CONFIRM_COMMAND, { request: { confirmationId } }],
+      [WORKTREE_CANCEL_COMMAND, { request: { confirmationId } }],
+    ]);
+    await expect(
+      previewWorktreeCreate(
+        { projectId, branchName: "--force /tmp/outside" },
+        invoke,
+      ),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(5);
   });
 
   it("uses fixed Git review commands and validates paths before invocation", async () => {

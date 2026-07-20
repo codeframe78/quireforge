@@ -5,6 +5,7 @@ import { ConversationWorkspace } from "./ConversationWorkspace";
 import { GitWorkspace } from "./GitWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
+import { WorktreeWorkspace } from "./WorktreeWorkspace";
 import {
   archiveConversation,
   archiveProject,
@@ -38,6 +39,11 @@ import {
   forkConversation,
   startConversation,
   startCodexAuth,
+  cancelWorktree,
+  confirmWorktree,
+  loadWorktreeStatus,
+  pickWorktreeAttach,
+  previewWorktreeCreate,
 } from "./lib/bridge";
 import {
   scaffoldCodexAuth,
@@ -77,6 +83,14 @@ import {
   type SessionLifecycleSnapshot,
   type SessionListRequest,
 } from "./lib/session";
+import {
+  scaffoldWorktreeWorkspace,
+  type WorktreeConfirmationRequest,
+  type WorktreeCreatePreviewRequest,
+  type WorktreePreviewSnapshot,
+  type WorktreeResultSnapshot,
+  type WorktreeWorkspaceSnapshot,
+} from "./lib/worktree";
 
 import "./styles.css";
 
@@ -86,6 +100,7 @@ type RuntimeState =
 type AuthViewState = CodexAuthSnapshot["state"] | "checking" | "preview";
 type ProjectViewState = "checking" | "native" | "preview";
 type GitViewState = "checking" | "native" | "preview";
+type WorktreeViewState = "checking" | "native" | "preview";
 type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
@@ -113,6 +128,19 @@ interface AppProps {
   preflightProjectDirectory?: (
     projectId: string,
   ) => Promise<ProjectPreflightSnapshot>;
+  loadWorktreesTask?: (projectId: string) => Promise<WorktreeWorkspaceSnapshot>;
+  previewWorktreeCreateTask?: (
+    request: WorktreeCreatePreviewRequest,
+  ) => Promise<WorktreePreviewSnapshot>;
+  pickWorktreeAttachTask?: (
+    projectId: string,
+  ) => Promise<WorktreePreviewSnapshot>;
+  confirmWorktreeTask?: (
+    request: WorktreeConfirmationRequest,
+  ) => Promise<WorktreeResultSnapshot>;
+  cancelWorktreeTask?: (
+    request: WorktreeConfirmationRequest,
+  ) => Promise<boolean>;
   loadGitStatusTask?: (projectId: string) => Promise<GitWorkspaceSnapshot>;
   loadGitDiffTask?: (request: GitDiffRequest) => Promise<GitDiffSnapshot>;
   openGitFileTask?: (request: GitOpenFileRequest) => Promise<void>;
@@ -168,6 +196,13 @@ const navigation = [
     milestone: 10,
     icon: "git",
     target: "changes",
+    ready: true,
+  },
+  {
+    label: "Worktrees",
+    milestone: 11,
+    icon: "git",
+    target: "worktrees",
     ready: true,
   },
   {
@@ -296,6 +331,11 @@ export default function App({
   detachProjectDirectory = detachProject,
   archiveProjectMetadata = archiveProject,
   preflightProjectDirectory = preflightProject,
+  loadWorktreesTask = loadWorktreeStatus,
+  previewWorktreeCreateTask = previewWorktreeCreate,
+  pickWorktreeAttachTask = pickWorktreeAttach,
+  confirmWorktreeTask = confirmWorktree,
+  cancelWorktreeTask = cancelWorktree,
   loadGitStatusTask = loadGitStatus,
   loadGitDiffTask = loadGitDiff,
   openGitFileTask = openGitFile,
@@ -334,6 +374,17 @@ export default function App({
   const [projectPreflights, setProjectPreflights] = useState<
     Record<string, ProjectPreflightSnapshot>
   >({});
+  const [worktrees, setWorktrees] = useState<WorktreeWorkspaceSnapshot>(
+    scaffoldWorktreeWorkspace,
+  );
+  const [worktreePreview, setWorktreePreview] =
+    useState<WorktreePreviewSnapshot | null>(null);
+  const [worktreeResult, setWorktreeResult] =
+    useState<WorktreeResultSnapshot | null>(null);
+  const [worktreeState, setWorktreeState] =
+    useState<WorktreeViewState>("checking");
+  const [worktreeBusy, setWorktreeBusy] = useState(false);
+  const [worktreeActionError, setWorktreeActionError] = useState(false);
   const [gitSnapshot, setGitSnapshot] =
     useState<GitWorkspaceSnapshot>(scaffoldGitWorkspace);
   const [gitDiff, setGitDiff] = useState<GitDiffSnapshot | null>(null);
@@ -518,6 +569,61 @@ export default function App({
   }, [loadGitStatusTask, projectState, projects, selectedProjectId]);
 
   useEffect(() => {
+    if (projectState === "checking") return;
+    let active = true;
+    const resetWorktrees = (state: WorktreeViewState) => {
+      void Promise.resolve().then(() => {
+        if (!active) return;
+        setWorktreeState(state);
+        setWorktrees(scaffoldWorktreeWorkspace);
+        setWorktreePreview(null);
+        setWorktreeResult(null);
+        setWorktreeActionError(false);
+      });
+    };
+    if (projectState === "preview") {
+      resetWorktrees("preview");
+      return () => {
+        active = false;
+      };
+    }
+    const project =
+      projects.projects.find(
+        (candidate) =>
+          candidate.id === selectedProjectId && !candidate.archived,
+      ) ??
+      projects.projects.find((candidate) => !candidate.archived) ??
+      projects.projects[0];
+    if (!project) {
+      resetWorktrees("native");
+      return () => {
+        active = false;
+      };
+    }
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setWorktreeState("checking");
+      setWorktreePreview(null);
+      setWorktreeResult(null);
+      setWorktreeActionError(false);
+    });
+    void loadWorktreesTask(project.id)
+      .then((result) => {
+        if (!active) return;
+        setWorktrees(result);
+        setWorktreeState("native");
+      })
+      .catch(() => {
+        if (!active) return;
+        setWorktrees(scaffoldWorktreeWorkspace);
+        setWorktreeState("preview");
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadWorktreesTask, projectState, projects, selectedProjectId]);
+
+  useEffect(() => {
     let active = true;
     void loadSessions({ projectId: null, searchTerm: null })
       .then((result) => {
@@ -693,6 +799,95 @@ export default function App({
       setProjectActionError(true);
     } finally {
       setProjectBusy(false);
+    }
+  }
+
+  async function refreshWorktrees() {
+    if (!currentProject) return;
+    setWorktreeBusy(true);
+    setWorktreeActionError(false);
+    try {
+      const result = await loadWorktreesTask(currentProject.id);
+      setWorktrees(result);
+      setWorktreePreview(null);
+      setWorktreeResult(null);
+      setWorktreeState("native");
+    } catch {
+      setWorktreeActionError(true);
+    } finally {
+      setWorktreeBusy(false);
+    }
+  }
+
+  async function beginWorktreeCreate(branchName: string) {
+    if (!currentProject) return;
+    setWorktreeBusy(true);
+    setWorktreeActionError(false);
+    setWorktreeResult(null);
+    try {
+      setWorktreePreview(
+        await previewWorktreeCreateTask({
+          projectId: currentProject.id,
+          branchName,
+        }),
+      );
+    } catch {
+      setWorktreePreview(null);
+      setWorktreeActionError(true);
+    } finally {
+      setWorktreeBusy(false);
+    }
+  }
+
+  async function beginWorktreeAttach() {
+    if (!currentProject) return;
+    setWorktreeBusy(true);
+    setWorktreeActionError(false);
+    setWorktreeResult(null);
+    try {
+      const preview = await pickWorktreeAttachTask(currentProject.id);
+      setWorktreePreview(preview.state === "cancelled" ? null : preview);
+    } catch {
+      setWorktreePreview(null);
+      setWorktreeActionError(true);
+    } finally {
+      setWorktreeBusy(false);
+    }
+  }
+
+  async function applyWorktree(confirmationId: string) {
+    setWorktreeBusy(true);
+    setWorktreeActionError(false);
+    try {
+      const result = await confirmWorktreeTask({ confirmationId });
+      setWorktreePreview(null);
+      setWorktreeResult(result);
+      if (result.workspace) {
+        setWorktrees(result.workspace);
+        setWorktreeState("native");
+      }
+      if (result.state === "applied") {
+        const projectResult = await loadProjects();
+        setProjects(projectResult);
+        if (result.projectId) setSelectedProjectId(result.projectId);
+      }
+    } catch {
+      setWorktreeActionError(true);
+    } finally {
+      setWorktreeBusy(false);
+    }
+  }
+
+  async function cancelWorktreePreview(confirmationId: string) {
+    setWorktreeBusy(true);
+    setWorktreeActionError(false);
+    try {
+      await cancelWorktreeTask({ confirmationId });
+      setWorktreePreview(null);
+    } catch {
+      setWorktreeActionError(true);
+    } finally {
+      setWorktreeBusy(false);
     }
   }
 
@@ -1024,7 +1219,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 10 reviewed Git operations
+              Milestone 11 managed worktree foundation
             </span>
             <button
               className="theme-toggle"
@@ -1150,6 +1345,22 @@ export default function App({
               applyProjectAction(() => archiveProjectMetadata(projectId))
             }
             onPreflight={verifyProject}
+          />
+
+          <WorktreeWorkspace
+            availability={worktreeState}
+            projectName={currentProject?.displayName ?? null}
+            snapshot={worktrees}
+            preview={worktreePreview}
+            result={worktreeResult}
+            busy={worktreeBusy || conversationActive || gitBusy}
+            actionError={worktreeActionError}
+            onRefresh={refreshWorktrees}
+            onCreate={beginWorktreeCreate}
+            onPickAttach={beginWorktreeAttach}
+            onConfirm={applyWorktree}
+            onCancel={cancelWorktreePreview}
+            onSelectProject={setSelectedProjectId}
           />
 
           <GitWorkspace

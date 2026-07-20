@@ -98,6 +98,25 @@ CREATE INDEX conversation_references_parent
     ON conversation_references(parent_conversation_id, created_at_ms);
 "#;
 
+const WORKTREE_RELATIONS_MIGRATION: &str = r#"
+CREATE TABLE worktree_relations (
+    id TEXT PRIMARY KEY NOT NULL,
+    source_project_id TEXT NOT NULL,
+    worktree_project_id TEXT NOT NULL UNIQUE,
+    ownership TEXT NOT NULL CHECK(ownership IN ('managed', 'attached')),
+    branch_name TEXT,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    CHECK(source_project_id <> worktree_project_id),
+    CHECK(branch_name IS NULL OR length(branch_name) BETWEEN 1 AND 96),
+    FOREIGN KEY(source_project_id) REFERENCES projects(id) ON DELETE RESTRICT,
+    FOREIGN KEY(worktree_project_id) REFERENCES projects(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX worktree_relations_source
+    ON worktree_relations(source_project_id, created_at_ms, id);
+"#;
+
 const MIGRATIONS: &[(i64, &str, &str)] = &[
     (1, "projects-and-directory-associations", INITIAL_MIGRATION),
     (
@@ -106,6 +125,7 @@ const MIGRATIONS: &[(i64, &str, &str)] = &[
         CONVERSATION_REFERENCES_MIGRATION,
     ),
     (3, "session-lifecycle", SESSION_LIFECYCLE_MIGRATION),
+    (4, "worktree-relations", WORKTREE_RELATIONS_MIGRATION),
 ];
 
 #[derive(Debug, Error)]
@@ -166,6 +186,14 @@ pub(crate) struct StoredConversationReference {
     pub updated_at_ms: i64,
 }
 
+#[derive(Clone, Debug)]
+pub(crate) struct StoredWorktreeRelation {
+    pub source_project_id: String,
+    pub worktree_project_id: String,
+    pub ownership: String,
+    pub branch_name: Option<String>,
+}
+
 pub(crate) struct ProjectRepository {
     connection: Connection,
 }
@@ -191,6 +219,16 @@ impl ProjectRepository {
     #[cfg(test)]
     pub(crate) fn from_test_connection(connection: Connection) -> Result<Self, StorageError> {
         Self::from_connection(connection)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn fail_worktree_registration_for_test(&self) -> Result<(), StorageError> {
+        self.connection.execute_batch(
+            "CREATE TEMP TRIGGER fail_worktree_registration
+             BEFORE INSERT ON worktree_relations
+             BEGIN SELECT RAISE(ABORT, 'test worktree registration failure'); END;",
+        )?;
+        Ok(())
     }
 
     fn from_connection(mut connection: Connection) -> Result<Self, StorageError> {
@@ -283,6 +321,121 @@ impl ProjectRepository {
         )?;
         transaction.commit()?;
         Ok(project_id)
+    }
+
+    pub(crate) fn insert_worktree_project(
+        &mut self,
+        source_project_id: &str,
+        display_name: &str,
+        identity: &DirectoryIdentity,
+        ownership: &str,
+        branch_name: Option<&str>,
+    ) -> Result<String, StorageError> {
+        if !matches!(ownership, "managed" | "attached")
+            || display_name.is_empty()
+            || display_name.chars().count() > 120
+            || branch_name.is_some_and(|branch| branch.is_empty() || branch.len() > 96)
+        {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        let transaction = self
+            .connection
+            .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let source_exists = transaction
+            .query_row(
+                "SELECT 1 FROM projects
+                 WHERE id = ?1 AND archived_at_ms IS NULL
+                   AND active_directory_association_id IS NOT NULL",
+                [source_project_id],
+                |_| Ok(()),
+            )
+            .optional()?
+            .is_some();
+        if !source_exists {
+            return Err(StorageError::ProjectNotFound);
+        }
+        ensure_directory_available(&transaction, identity, None)?;
+
+        let project_id = Uuid::now_v7().to_string();
+        let association_id = Uuid::now_v7().to_string();
+        let relation_id = Uuid::now_v7().to_string();
+        let timestamp = now_millis();
+        transaction.execute(
+            "INSERT INTO projects
+             (id, display_name, active_directory_association_id, archived_at_ms,
+              created_at_ms, updated_at_ms)
+             VALUES (?1, ?2, NULL, NULL, ?3, ?3)",
+            params![project_id, display_name, timestamp],
+        )?;
+        insert_association(
+            &transaction,
+            &association_id,
+            &project_id,
+            identity,
+            timestamp,
+        )?;
+        transaction.execute(
+            "UPDATE projects SET active_directory_association_id = ?1 WHERE id = ?2",
+            params![association_id, project_id],
+        )?;
+        transaction.execute(
+            "INSERT INTO worktree_relations
+             (id, source_project_id, worktree_project_id, ownership, branch_name,
+              created_at_ms, updated_at_ms)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?6)",
+            params![
+                relation_id,
+                source_project_id,
+                project_id,
+                ownership,
+                branch_name,
+                timestamp
+            ],
+        )?;
+        transaction.commit()?;
+        Ok(project_id)
+    }
+
+    pub(crate) fn worktree_source_project_id(
+        &self,
+        project_id: &str,
+    ) -> Result<String, StorageError> {
+        if let Some(source_id) = self
+            .connection
+            .query_row(
+                "SELECT source_project_id FROM worktree_relations
+                 WHERE worktree_project_id = ?1",
+                [project_id],
+                |row| row.get::<_, String>(0),
+            )
+            .optional()?
+        {
+            return Ok(source_id);
+        }
+        self.project(project_id).map(|project| project.id)
+    }
+
+    pub(crate) fn list_worktree_relations(
+        &self,
+        source_project_id: &str,
+    ) -> Result<Vec<StoredWorktreeRelation>, StorageError> {
+        let mut statement = self.connection.prepare(
+            "SELECT source_project_id, worktree_project_id, ownership, branch_name
+             FROM worktree_relations WHERE source_project_id = ?1
+             ORDER BY created_at_ms, id LIMIT 256",
+        )?;
+        let relations = statement
+            .query_map([source_project_id], |row| {
+                Ok(StoredWorktreeRelation {
+                    source_project_id: row.get(0)?,
+                    worktree_project_id: row.get(1)?,
+                    ownership: row.get(2)?,
+                    branch_name: row.get(3)?,
+                })
+            })?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(StorageError::from)?;
+        Ok(relations)
     }
 
     pub(crate) fn relink_project(
@@ -612,6 +765,7 @@ fn verify_schema(connection: &Connection) -> Result<(), StorageError> {
         "projects",
         "directory_associations",
         "conversation_references",
+        "worktree_relations",
     ] {
         let exists = connection
             .query_row(
@@ -831,7 +985,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_an_existing_project_database_through_session_lifecycle() {
+    fn migrates_an_existing_project_database_through_worktree_relations() {
         let connection = Connection::open_in_memory().expect("database must open");
         connection
             .execute_batch(
@@ -861,12 +1015,13 @@ mod tests {
             .query_row(
                 "SELECT COUNT(*) FROM schema_migrations
                  WHERE (version = 2 AND name = 'conversation-references')
-                    OR (version = 3 AND name = 'session-lifecycle')",
+                    OR (version = 3 AND name = 'session-lifecycle')
+                    OR (version = 4 AND name = 'worktree-relations')",
                 [],
                 |row| row.get(0),
             )
             .expect("migration ledger must be queryable");
-        assert_eq!(migrated, 2);
+        assert_eq!(migrated, 3);
         let lifecycle_columns: i64 = repository
             .connection
             .query_row(
@@ -899,6 +1054,7 @@ mod tests {
                 "directory_associations".to_owned(),
                 "projects".to_owned(),
                 "schema_migrations".to_owned(),
+                "worktree_relations".to_owned(),
             ]
         );
 
@@ -913,6 +1069,7 @@ mod tests {
             "projects",
             "directory_associations",
             "conversation_references",
+            "worktree_relations",
         ] {
             let mut statement = repository
                 .connection

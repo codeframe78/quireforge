@@ -435,3 +435,39 @@ no OOM, throttling, dependency download, cache deletion, clean build, competing
 project build, user-repository mutation, or material disk pressure. Git, Rust,
 React, TypeScript, Vite, Astro, and Playwright remained CPU/system-memory
 workloads. The RTX 3050 was correctly unused.
+
+## Milestone 11A measurements
+
+The managed-worktree checkpoint reused warm Cargo, Git, pnpm, Vite, Astro, and
+Playwright caches. It added no dependency, clean build, cache reset,
+linker/tool, driver, CUDA, swap, or zram change. The Balanced profile retained
+four Cargo workers and two Playwright workers; Git fixture operations remained
+short, serialized, CPU/storage work.
+
+| Operation                                 | Observed wall time                                   | Approximate peak RSS | Result                                                                                                       |
+| ----------------------------------------- | ----------------------------------------------------: | -------------------: | ------------------------------------------------------------------------------------------------------------ |
+| Focused native worktree suite             | about 7–10 seconds including incremental compile/link |     Not instrumented | Passed inventory, source/subdirectory, create/attach, stale HEAD, token, hook/filter, and recovery fixtures  |
+| Desktop type/component/bridge suite       | about 6–10 seconds per combined checkpoint            |     Not instrumented | Passed 79 tests across 15 files                                                                               |
+| Complete non-browser repository gate      |                                         45.99 seconds |       about 1.27 GiB | Passed 82 JavaScript tests and 95 Rust tests; 2 deliberate live probes ignored                               |
+| Combined desktop/website browser gate     |                                         14.59 seconds |        about 337 MiB | Passed all 22 desktop/mobile checks with axe and overflow analysis                                            |
+| Warm unbundled native release build       |                                         33.98 seconds |       about 1.73 GiB | Passed, including a 29.93-second release compile/link                                                         |
+| Isolated native release launch            |                                       about 2 seconds | Low runtime pressure | Exact D-Bus identity, schema migrations 1–4, `0700`/`0600` metadata, and no remaining app/Codex process      |
+| Desktop/mobile worktree visual inspection |                      Focused rendered-state capture | Low runtime pressure | Create/attach controls, confirmation, source/external inventory, and stacked mobile layout remained legible |
+
+The complete gate was about 7% slower than Milestone 10B's 43.16-second
+baseline, the combined browser gate about 19% slower than 12.31 seconds after
+adding two worktree checks, and the release build effectively unchanged from
+34.56 seconds. None crossed the 25% forecast-update threshold.
+
+One aggregate attempt stopped after 18.04 seconds at rustfmt and the next after
+38.63 seconds at a Clippy-only boolean assertion. Both reruns reused unchanged
+caches. The first focused browser attempt served the preceding production
+bundle; rebuilding once exposed one old unscoped Git text locator after the new
+worktree section introduced a second branch label. The corrected combined gate
+passed without a product change or cache reset.
+
+Approximately 42 GiB RAM and 725 GiB NVMe remained available. Swap stayed near
+187 MiB, all timed gates reported zero swaps, and there was no OOM, throttling,
+dependency download, clean build, competing project build, user-repository
+mutation, live model call, or GPU-compute workload. The RTX 3050 was correctly
+unused.

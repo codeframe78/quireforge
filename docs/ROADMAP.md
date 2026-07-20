@@ -56,6 +56,9 @@ diff contracts, a responsive changed-file reviewer, and revalidated editor
 handoff. Milestone 10B adds fixed stage, unstage, bounded revert/recovery, and
 commit workflows behind native-held preview tokens, exact postconditions,
 project concurrency, attachment scope, and secret review.
+Milestone 11A adds the native managed-worktree foundation, strict inventory and
+preview contracts, app-generated destinations, native-picker attachment, and
+ordinary project registration without adding cleanup or concurrent execution.
 
 ## Status
 
@@ -72,7 +75,7 @@ project concurrency, attachment scope, and secret review.
 |         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                                     |
 |         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history              |
 |        10 | Git status, diff review, and controlled mutations                  | Large        | Complete and verified; publication tracked by this milestone change             |
-|        11 | Worktrees and parallel work                                       | Very large   | Planned                                                                        |
+|        11 | Worktrees and parallel work                                       | Very large   | In progress; 11A implemented and verified locally                             |
 |        12 | Integrated terminal                                               | Large        | Planned                                                                        |
 |        13 | Integration discovery and compatibility                           | Very large   | Planned                                                                        |
 |        14 | Integration Center and installation workflows                     | Very large   | Planned                                                                        |
@@ -309,6 +312,30 @@ release remain separately gated. See
 
 Create/attach isolated worktrees, run concurrent threads, display status,
 detect conflicts, and make cleanup explicit and safe.
+
+Milestone 11A implements the managed-worktree foundation. A fixed native
+inventory command accepts only an app-owned project ID and normalizes
+`git worktree list --porcelain -z` without exposing object IDs, raw stderr, or
+Git configuration. Each managed or attached worktree is also an ordinary
+QuireForge project linked to its canonical source by schema migration 4.
+Externally discovered worktrees remain unselectable until the user chooses the
+exact directory with the native picker.
+
+Creation accepts only a bounded new branch name. Rust generates the destination
+beneath private app storage, captures source repository identity and current
+HEAD internally, disables hooks and configured checkout filters, and retains a
+five-minute one-use confirmation. Confirmation reserves every app-owned project
+in the source repository group, revalidates identity, HEAD, branch absence, and
+destination, then uses one fixed shell-free `git worktree add` workflow.
+Metadata registration is transactional. If Git succeeds and registration
+fails, the worktree is reported as recoverable and deliberately left in place.
+
+Milestone 11A has no remove, prune, cleanup, generic checkout, arbitrary ref,
+frontend path, cwd, executable, or argument-vector command. Milestone 11B must
+receive a fresh gate before adding parallel Codex execution and aggregated
+status/conflict presentation. Milestone 11C must receive its own data-loss-
+sensitive gate before any cleanup or recovery workflow. See
+[ADR 0014](DECISIONS/0014-managed-worktree-foundation.md).
 
 ### 12 — Integrated Terminal
 
