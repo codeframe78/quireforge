@@ -45,7 +45,7 @@ application package to install yet.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Completed milestone: Milestone 6 — projects and direct local-directory
-  attachment (verified locally; merge pending).
+  attachment (verified locally and merged to `main`).
 - Next gated milestone: Milestone 7 — conversation MVP.
 - Known limitations: no conversation execution, installable packages, releases,
   public deployment, or production Lighthouse evidence exists yet.

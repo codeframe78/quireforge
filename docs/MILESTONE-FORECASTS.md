@@ -173,7 +173,7 @@ intentionally excluded because they mutate external authentication state.
 | Calibrated Milestone 6B forecast | 1–2 active hours; 5–12 minutes of local commands; about 1.25–2.5 total elapsed hours; medium confidence |
 | Observed Milestone 6B execution | Approximately 35–55 active minutes through strict contract/UI implementation, tests, visual review, release/native verification, documentation, and final gates; approval delay excluded |
 | Milestone 6B command observations | Full non-browser gate 30.0 seconds at about 1.23 GiB peak RSS; combined browser gate 8.3 seconds at about 251 MiB; unbundled release build 67.0 seconds at about 1.36 GiB |
-| Completion status | Milestone 6 complete locally; publication and merge pending |
+| Completion status | Milestone 6 complete; merged to `main` in PR #3 |
 
 The Milestone 6A forecast overestimated implementation and command time. The
 accepted architecture, fast bundled-SQLite compilation, warm Tauri caches,

@@ -27,7 +27,7 @@ in-place GitHub repository rename, local working-copy handoff, and core vector
 brand sources are complete. Milestone 1 also established the Apache-2.0 license,
 repository guidance, contribution/security/conduct/support policies, issue and
 pull-request templates, dependency automation, and initial repository CI. The
-work through Milestone 5 is merged on `main`. Milestone 2 added the local static
+work through Milestone 6 is merged on `main`. Milestone 2 added the local static
 website, production web exports, and automated website quality gates without
 creating a Cloudflare project or deployment. Milestone 3 added the locally verified Tauri
 desktop foundation, narrow typed IPC contract, Linux app icons, and desktop
@@ -52,7 +52,7 @@ milestone- and approval-gated.
 | 3 | Desktop scaffold consolidation | Large | Complete; merged to `main`; not packaged |
 | 4 | Codex process adapter and contracts | Very large | Complete; merged to `main` |
 | 5 | Authentication and onboarding | Medium | Complete; merged to `main` |
-| 6 | Projects and direct local-directory attachment | Very large | Complete locally; merge pending |
+| 6 | Projects and direct local-directory attachment | Very large | Complete; merged to `main` |
 | 7 | Conversation MVP | Very large | Planned |
 | 8 | Session lifecycle and crash recovery | Large | Planned |
 | 9 | Approvals and command presentation | Large | Planned |
