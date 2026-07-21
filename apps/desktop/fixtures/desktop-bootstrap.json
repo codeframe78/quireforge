@@ -38,6 +38,12 @@
       "label": "Native conversation runtime",
       "state": "ready",
       "milestone": 7
+    },
+    {
+      "id": "integrated-terminal",
+      "label": "Integrated terminal",
+      "state": "ready",
+      "milestone": 12
     }
   ]
 }

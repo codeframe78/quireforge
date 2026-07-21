@@ -3,15 +3,15 @@ mod storage;
 pub mod types;
 
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     path::{Path, PathBuf},
     sync::Mutex,
 };
 
-pub(crate) use storage::StoredConversationReference;
 use storage::{
     ProjectRepository, StorageError, StoredAssociation, StoredProject, StoredWorktreeRelation,
 };
+pub(crate) use storage::{StoredConversationReference, StoredTerminalSession};
 use types::{
     DirectoryAccessibilityState, DirectorySummary, GitSummary, PendingAttachmentKind,
     PendingAttachmentPreview, ProjectDiagnosticCode, ProjectPreflightSnapshot, ProjectSummary,
@@ -36,6 +36,7 @@ pub struct ProjectService {
     repository: Mutex<Option<ProjectRepository>>,
     pending: Mutex<Option<PendingAttachment>>,
     active_executions: Mutex<HashSet<String>>,
+    active_terminals: Mutex<HashMap<String, usize>>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -117,6 +118,7 @@ impl ProjectService {
             repository: Mutex::new(None),
             pending: Mutex::new(None),
             active_executions: Mutex::new(HashSet::new()),
+            active_terminals: Mutex::new(HashMap::new()),
         }
     }
 
@@ -125,6 +127,7 @@ impl ProjectService {
             repository: Mutex::new(ProjectRepository::open(database_path).ok()),
             pending: Mutex::new(None),
             active_executions: Mutex::new(HashSet::new()),
+            active_terminals: Mutex::new(HashMap::new()),
         }
     }
 
@@ -134,6 +137,7 @@ impl ProjectService {
             repository: Mutex::new(ProjectRepository::in_memory().ok()),
             pending: Mutex::new(None),
             active_executions: Mutex::new(HashSet::new()),
+            active_terminals: Mutex::new(HashMap::new()),
         }
     }
 
@@ -620,7 +624,11 @@ impl ProjectService {
             .active_executions
             .lock()
             .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
-        if !active.insert(project_id.to_owned()) {
+        let terminals = self
+            .active_terminals
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        if terminals.contains_key(project_id) || !active.insert(project_id.to_owned()) {
             return Err(ProjectExecutionError::ProjectBusy);
         }
         Ok(())
@@ -629,6 +637,36 @@ impl ProjectService {
     pub(crate) fn release_execution(&self, project_id: &str) {
         if let Ok(mut active) = self.active_executions.lock() {
             active.remove(project_id);
+        }
+    }
+
+    pub(crate) fn reserve_terminal(&self, project_id: &str) -> Result<(), ProjectExecutionError> {
+        if !valid_id(project_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let active = self
+            .active_executions
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        if active.contains(project_id) {
+            return Err(ProjectExecutionError::ProjectBusy);
+        }
+        let mut terminals = self
+            .active_terminals
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        *terminals.entry(project_id.to_owned()).or_default() += 1;
+        Ok(())
+    }
+
+    pub(crate) fn release_terminal(&self, project_id: &str) {
+        if let Ok(mut terminals) = self.active_terminals.lock() {
+            if let Some(count) = terminals.get_mut(project_id) {
+                *count = count.saturating_sub(1);
+                if *count == 0 {
+                    terminals.remove(project_id);
+                }
+            }
         }
     }
 
@@ -746,6 +784,77 @@ impl ProjectService {
             .map_err(|_| ProjectExecutionError::MetadataUnavailable)
     }
 
+    pub(crate) fn record_terminal_start(
+        &self,
+        terminal_id: &str,
+        project_id: &str,
+        title: &str,
+        columns: u16,
+        rows: u16,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .insert_terminal_session(terminal_id, project_id, title, columns, rows)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn record_terminal_state(
+        &self,
+        terminal_id: &str,
+        status: &str,
+        columns: u16,
+        rows: u16,
+        exit_code: Option<i32>,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .update_terminal_session(terminal_id, status, columns, rows, exit_code)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn remove_terminal_record(
+        &self,
+        terminal_id: &str,
+    ) -> Result<(), ProjectExecutionError> {
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .delete_terminal_session(terminal_id)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn terminal_records(
+        &self,
+    ) -> Result<Vec<StoredTerminalSession>, ProjectExecutionError> {
+        let repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_ref()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .list_terminal_sessions()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
     fn prepare(
         &self,
         kind: PendingAttachmentKind,
@@ -837,10 +946,17 @@ impl ProjectService {
     }
 
     fn execution_active(&self, project_id: &str) -> bool {
-        self.active_executions
+        let execution_active = self
+            .active_executions
             .lock()
             .map(|active| active.contains(project_id))
-            .unwrap_or(true)
+            .unwrap_or(true);
+        execution_active
+            || self
+                .active_terminals
+                .lock()
+                .map(|active| active.contains_key(project_id))
+                .unwrap_or(true)
     }
 
     fn build_snapshot(
@@ -1338,6 +1454,42 @@ mod tests {
                 ProjectWorkspaceState::Empty
             );
         }
+    }
+
+    #[test]
+    fn terminal_and_controlled_execution_reservations_fail_closed() {
+        let service = ProjectService::in_memory();
+        let project_id = Uuid::now_v7().to_string();
+
+        service
+            .reserve_terminal(&project_id)
+            .expect("first terminal must reserve the project");
+        service
+            .reserve_terminal(&project_id)
+            .expect("multiple app-owned terminals may share a project");
+        assert_eq!(
+            service.reserve_execution(&project_id),
+            Err(ProjectExecutionError::ProjectBusy)
+        );
+
+        service.release_terminal(&project_id);
+        assert_eq!(
+            service.reserve_execution(&project_id),
+            Err(ProjectExecutionError::ProjectBusy)
+        );
+        service.release_terminal(&project_id);
+        service
+            .reserve_execution(&project_id)
+            .expect("controlled execution must proceed after terminal cleanup");
+        assert_eq!(
+            service.reserve_terminal(&project_id),
+            Err(ProjectExecutionError::ProjectBusy)
+        );
+        service.release_execution(&project_id);
+        service
+            .reserve_terminal(&project_id)
+            .expect("terminal must proceed after controlled execution cleanup");
+        service.release_terminal(&project_id);
     }
 
     #[test]
