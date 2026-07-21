@@ -186,6 +186,9 @@ released a usable application.
 
 ### Changed
 
+- Selected GLib's local filesystem backend at Linux process startup when the
+  caller has not provided an override, preventing harmless GVFS activation
+  warnings when the optional user service is masked.
 - Kept the exact Git index lock file handle open for the full lock lifetime so
   a replacement lock cannot be removed if an ephemeral filesystem immediately
   reuses the original inode number.
