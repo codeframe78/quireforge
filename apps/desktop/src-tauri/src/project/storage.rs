@@ -117,6 +117,28 @@ CREATE INDEX worktree_relations_source
     ON worktree_relations(source_project_id, created_at_ms, id);
 "#;
 
+const TERMINAL_SESSIONS_MIGRATION: &str = r#"
+CREATE TABLE terminal_sessions (
+    id TEXT PRIMARY KEY NOT NULL,
+    project_id TEXT NOT NULL,
+    title TEXT NOT NULL CHECK(length(title) BETWEEN 1 AND 80),
+    status TEXT NOT NULL CHECK(status IN (
+        'running', 'closing', 'exited', 'interrupted', 'failed'
+    )),
+    columns INTEGER NOT NULL CHECK(columns BETWEEN 2 AND 500),
+    rows INTEGER NOT NULL CHECK(rows BETWEEN 2 AND 200),
+    exit_code INTEGER,
+    created_at_ms INTEGER NOT NULL,
+    updated_at_ms INTEGER NOT NULL,
+    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE RESTRICT
+);
+
+CREATE INDEX terminal_sessions_recent
+    ON terminal_sessions(updated_at_ms DESC, id);
+CREATE INDEX terminal_sessions_project
+    ON terminal_sessions(project_id, updated_at_ms DESC, id);
+"#;
+
 const MIGRATIONS: &[(i64, &str, &str)] = &[
     (1, "projects-and-directory-associations", INITIAL_MIGRATION),
     (
@@ -126,6 +148,7 @@ const MIGRATIONS: &[(i64, &str, &str)] = &[
     ),
     (3, "session-lifecycle", SESSION_LIFECYCLE_MIGRATION),
     (4, "worktree-relations", WORKTREE_RELATIONS_MIGRATION),
+    (5, "terminal-sessions", TERMINAL_SESSIONS_MIGRATION),
 ];
 
 #[derive(Debug, Error)]
@@ -167,6 +190,17 @@ pub(crate) struct StoredAssociation {
     pub git_is_linked_worktree: bool,
     pub has_agents_guidance: bool,
     pub has_codex_config: bool,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub(crate) struct StoredTerminalSession {
+    pub id: String,
+    pub project_id: String,
+    pub title: String,
+    pub status: String,
+    pub columns: u16,
+    pub rows: u16,
+    pub exit_code: Option<i32>,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -262,6 +296,7 @@ impl ProjectRepository {
         apply_migrations(&mut connection)?;
         verify_schema(&connection)?;
         recover_interrupted_conversations(&connection)?;
+        recover_interrupted_terminals(&connection)?;
         Ok(Self { connection })
     }
 
@@ -739,6 +774,119 @@ impl ProjectRepository {
         Ok(())
     }
 
+    pub(crate) fn insert_terminal_session(
+        &mut self,
+        terminal_id: &str,
+        project_id: &str,
+        title: &str,
+        columns: u16,
+        rows: u16,
+    ) -> Result<(), StorageError> {
+        let timestamp = now_millis();
+        self.connection.execute(
+            "INSERT INTO terminal_sessions (
+                id, project_id, title, status, columns, rows, exit_code,
+                created_at_ms, updated_at_ms
+             ) VALUES (?1, ?2, ?3, 'running', ?4, ?5, NULL, ?6, ?6)",
+            params![terminal_id, project_id, title, columns, rows, timestamp],
+        )?;
+        Ok(())
+    }
+
+    pub(crate) fn update_terminal_session(
+        &mut self,
+        terminal_id: &str,
+        status: &str,
+        columns: u16,
+        rows: u16,
+        exit_code: Option<i32>,
+    ) -> Result<(), StorageError> {
+        if !matches!(
+            status,
+            "running" | "closing" | "exited" | "interrupted" | "failed"
+        ) {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        let updated = self.connection.execute(
+            "UPDATE terminal_sessions
+             SET status = ?1, columns = ?2, rows = ?3, exit_code = ?4,
+                 updated_at_ms = ?5
+             WHERE id = ?6",
+            params![status, columns, rows, exit_code, now_millis(), terminal_id],
+        )?;
+        if updated == 0 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn delete_terminal_session(
+        &mut self,
+        terminal_id: &str,
+    ) -> Result<(), StorageError> {
+        let updated = self
+            .connection
+            .execute("DELETE FROM terminal_sessions WHERE id = ?1", [terminal_id])?;
+        if updated == 0 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn list_terminal_sessions(
+        &self,
+    ) -> Result<Vec<StoredTerminalSession>, StorageError> {
+        let mut statement = self.connection.prepare(
+            "SELECT id, project_id, title, status, columns, rows, exit_code
+             FROM terminal_sessions
+             ORDER BY updated_at_ms, id
+             LIMIT 9",
+        )?;
+        let sessions = statement
+            .query_map([], |row| {
+                let columns = row.get::<_, i64>(4)?;
+                let rows = row.get::<_, i64>(5)?;
+                Ok((
+                    row.get::<_, String>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, String>(2)?,
+                    row.get::<_, String>(3)?,
+                    columns,
+                    rows,
+                    row.get::<_, Option<i32>>(6)?,
+                ))
+            })?
+            .map(|row| {
+                let (id, project_id, title, status, columns, rows, exit_code) = row?;
+                if !matches!(
+                    status.as_str(),
+                    "running" | "closing" | "exited" | "interrupted" | "failed"
+                ) {
+                    return Err(StorageError::InvalidStoredValue);
+                }
+                Ok(StoredTerminalSession {
+                    id,
+                    project_id,
+                    title,
+                    status,
+                    columns: u16::try_from(columns)
+                        .ok()
+                        .filter(|value| (2..=500).contains(value))
+                        .ok_or(StorageError::InvalidStoredValue)?,
+                    rows: u16::try_from(rows)
+                        .ok()
+                        .filter(|value| (2..=200).contains(value))
+                        .ok_or(StorageError::InvalidStoredValue)?,
+                    exit_code,
+                })
+            })
+            .collect::<Result<Vec<_>, StorageError>>()?;
+        if sessions.len() > 8 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        Ok(sessions)
+    }
+
     fn load_association(&self, association_id: &str) -> Result<StoredAssociation, StorageError> {
         self.connection
             .query_row(
@@ -844,6 +992,7 @@ fn verify_schema(connection: &Connection) -> Result<(), StorageError> {
         "directory_associations",
         "conversation_references",
         "worktree_relations",
+        "terminal_sessions",
     ] {
         let exists = connection
             .query_row(
@@ -867,6 +1016,16 @@ fn recover_interrupted_conversations(connection: &Connection) -> Result<(), Stor
          SET active_turn_id = NULL, status = 'interrupted', updated_at_ms = ?1
          WHERE status IN ('thread-started', 'running', 'stopping')",
         [timestamp],
+    )?;
+    Ok(())
+}
+
+fn recover_interrupted_terminals(connection: &Connection) -> Result<(), StorageError> {
+    connection.execute(
+        "UPDATE terminal_sessions
+         SET status = 'interrupted', exit_code = NULL, updated_at_ms = ?1
+         WHERE status IN ('running', 'closing')",
+        [now_millis()],
     )?;
     Ok(())
 }
@@ -1063,7 +1222,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_an_existing_project_database_through_worktree_relations() {
+    fn migrates_an_existing_project_database_through_terminal_sessions() {
         let connection = Connection::open_in_memory().expect("database must open");
         connection
             .execute_batch(
@@ -1094,12 +1253,13 @@ mod tests {
                 "SELECT COUNT(*) FROM schema_migrations
                  WHERE (version = 2 AND name = 'conversation-references')
                     OR (version = 3 AND name = 'session-lifecycle')
-                    OR (version = 4 AND name = 'worktree-relations')",
+                    OR (version = 4 AND name = 'worktree-relations')
+                    OR (version = 5 AND name = 'terminal-sessions')",
                 [],
                 |row| row.get(0),
             )
             .expect("migration ledger must be queryable");
-        assert_eq!(migrated, 3);
+        assert_eq!(migrated, 4);
         let lifecycle_columns: i64 = repository
             .connection
             .query_row(
@@ -1132,6 +1292,7 @@ mod tests {
                 "directory_associations".to_owned(),
                 "projects".to_owned(),
                 "schema_migrations".to_owned(),
+                "terminal_sessions".to_owned(),
                 "worktree_relations".to_owned(),
             ]
         );
@@ -1147,6 +1308,7 @@ mod tests {
             "projects",
             "directory_associations",
             "conversation_references",
+            "terminal_sessions",
             "worktree_relations",
         ] {
             let mut statement = repository
@@ -1299,5 +1461,57 @@ mod tests {
         assert_eq!(stored.status, "interrupted");
         assert!(stored.active_turn_id.is_none());
         assert_eq!(stored.codex_thread_id, thread_id);
+    }
+
+    #[test]
+    fn persists_only_bounded_terminal_metadata_and_interrupts_stale_sessions() {
+        let root =
+            std::env::temp_dir().join(format!("quireforge-terminal-storage-{}", Uuid::now_v7()));
+        let project = root.join("project");
+        let database = root.join("data/metadata.sqlite3");
+        fs::create_dir_all(&project).expect("project fixture must exist");
+        let identity = crate::project::identity::inspect_directory(&project)
+            .expect("project fixture must be inspectable");
+        let mut repository = ProjectRepository::open(&database).expect("metadata must open");
+        let project_id = repository
+            .insert_project("terminal project", &identity)
+            .expect("project must persist");
+        let terminal_id = Uuid::now_v7().to_string();
+        repository
+            .insert_terminal_session(&terminal_id, &project_id, "Terminal 1", 100, 30)
+            .expect("terminal metadata must persist");
+        drop(repository);
+
+        let reopened = ProjectRepository::open(&database).expect("metadata must reopen");
+        let sessions = reopened
+            .list_terminal_sessions()
+            .expect("terminal metadata must load");
+
+        assert_eq!(sessions.len(), 1);
+        assert_eq!(sessions[0].status, "interrupted");
+        assert_eq!(sessions[0].columns, 100);
+        assert_eq!(sessions[0].rows, 30);
+        let columns: Vec<String> = reopened
+            .connection
+            .prepare("PRAGMA table_info(terminal_sessions)")
+            .expect("terminal schema must be queryable")
+            .query_map([], |row| row.get(1))
+            .expect("terminal columns must be queryable")
+            .collect::<Result<_, _>>()
+            .expect("terminal columns must be valid");
+        for forbidden in [
+            "cwd",
+            "environment",
+            "input",
+            "output",
+            "pid",
+            "process_group",
+            "session_id",
+            "shell_history",
+        ] {
+            assert!(!columns.iter().any(|column| column == forbidden));
+        }
+        drop(reopened);
+        fs::remove_dir_all(root).expect("terminal storage fixture must be removed");
     }
 }

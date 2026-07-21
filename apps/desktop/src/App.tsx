@@ -5,6 +5,7 @@ import { ConversationWorkspace } from "./ConversationWorkspace";
 import { GitWorkspace } from "./GitWorkspace";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
+import { TerminalWorkspace } from "./TerminalWorkspace";
 import {
   WorktreeWorkspace,
   type WorktreeExecutionView,
@@ -44,12 +45,18 @@ import {
   startConversation,
   startCodexAuth,
   cancelWorktree,
+  closeTerminal,
   confirmWorktree,
+  loadTerminalStatus,
   loadWorktreeStatus,
   pickWorktreeAttach,
+  pollTerminal,
   previewWorktreeCreate,
   previewWorktreeRecover,
   previewWorktreeRemove,
+  resizeTerminal,
+  startTerminal,
+  writeTerminal,
 } from "./lib/bridge";
 import {
   scaffoldCodexAuth,
@@ -91,6 +98,16 @@ import {
   type SessionListRequest,
 } from "./lib/session";
 import {
+  scaffoldTerminalRegistry,
+  type TerminalCloseRequest,
+  type TerminalPollRequest,
+  type TerminalRegistrySnapshot,
+  type TerminalResizeRequest,
+  type TerminalSnapshot,
+  type TerminalStartRequest,
+  type TerminalWriteRequest,
+} from "./lib/terminal";
+import {
   scaffoldWorktreeWorkspace,
   type WorktreeConfirmationRequest,
   type WorktreeCreatePreviewRequest,
@@ -112,6 +129,7 @@ type GitViewState = "checking" | "native" | "preview";
 type WorktreeViewState = "checking" | "native" | "preview";
 type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
+type TerminalViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -197,6 +215,22 @@ interface AppProps {
   restoreConversationTask?: (
     conversationId: string,
   ) => Promise<SessionLifecycleSnapshot>;
+  loadTerminalsTask?: () => Promise<TerminalRegistrySnapshot>;
+  startTerminalTask?: (
+    request: TerminalStartRequest,
+  ) => Promise<TerminalSnapshot>;
+  pollTerminalTask?: (
+    request: TerminalPollRequest,
+  ) => Promise<TerminalSnapshot>;
+  writeTerminalTask?: (
+    request: TerminalWriteRequest,
+  ) => Promise<TerminalSnapshot>;
+  resizeTerminalTask?: (
+    request: TerminalResizeRequest,
+  ) => Promise<TerminalSnapshot>;
+  closeTerminalTask?: (
+    request: TerminalCloseRequest,
+  ) => Promise<TerminalRegistrySnapshot>;
 }
 
 interface TrackedConversation {
@@ -224,6 +258,13 @@ const navigation = [
     milestone: 11,
     icon: "git",
     target: "worktrees",
+    ready: true,
+  },
+  {
+    label: "Terminal",
+    milestone: 12,
+    icon: "terminal",
+    target: "terminal",
     ready: true,
   },
   {
@@ -376,6 +417,12 @@ export default function App({
   forkConversationTask = forkConversation,
   archiveConversationTask = archiveConversation,
   restoreConversationTask = restoreConversation,
+  loadTerminalsTask = loadTerminalStatus,
+  startTerminalTask = startTerminal,
+  pollTerminalTask = pollTerminal,
+  writeTerminalTask = writeTerminal,
+  resizeTerminalTask = resizeTerminal,
+  closeTerminalTask = closeTerminal,
 }: AppProps) {
   const [bootstrap, setBootstrap] =
     useState<DesktopBootstrap>(scaffoldBootstrap);
@@ -447,6 +494,13 @@ export default function App({
   const [sessionSearchTerm, setSessionSearchTerm] = useState<string | null>(
     null,
   );
+  const [terminals, setTerminals] = useState<TerminalRegistrySnapshot>(
+    scaffoldTerminalRegistry,
+  );
+  const [terminalState, setTerminalState] =
+    useState<TerminalViewState>("checking");
+  const [terminalBusy, setTerminalBusy] = useState(false);
+  const [terminalActionError, setTerminalActionError] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -699,6 +753,23 @@ export default function App({
       active = false;
     };
   }, [loadSessions]);
+
+  useEffect(() => {
+    let active = true;
+    void loadTerminalsTask()
+      .then((result) => {
+        if (!active) return;
+        setTerminals(result);
+        setTerminalState("native");
+      })
+      .catch(() => {
+        if (active) setTerminalState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadTerminalsTask]);
 
   useEffect(() => {
     if (authState !== "login-pending") return;
@@ -1354,6 +1425,89 @@ export default function App({
     }
   }
 
+  function trackTerminal(snapshot: TerminalSnapshot) {
+    if (!snapshot.terminalId) return;
+    setTerminals((current) => {
+      const reviewed = { ...snapshot, output: [] };
+      const index = current.terminals.findIndex(
+        (terminal) => terminal.terminalId === snapshot.terminalId,
+      );
+      const next = [...current.terminals];
+      if (index === -1) next.push(reviewed);
+      else next[index] = reviewed;
+      return { ...current, terminals: next, diagnosticCode: null };
+    });
+  }
+
+  async function beginTerminal(
+    request: TerminalStartRequest,
+  ): Promise<TerminalSnapshot> {
+    setTerminalBusy(true);
+    setTerminalActionError(false);
+    try {
+      const result = await startTerminalTask(request);
+      if (result.state === "unavailable") setTerminalActionError(true);
+      else trackTerminal(result);
+      return result;
+    } catch (error) {
+      setTerminalActionError(true);
+      throw error;
+    } finally {
+      setTerminalBusy(false);
+    }
+  }
+
+  async function pollActiveTerminal(
+    request: TerminalPollRequest,
+  ): Promise<TerminalSnapshot> {
+    try {
+      return await pollTerminalTask(request);
+    } catch (error) {
+      setTerminalActionError(true);
+      throw error;
+    }
+  }
+
+  async function writeActiveTerminal(
+    request: TerminalWriteRequest,
+  ): Promise<TerminalSnapshot> {
+    try {
+      return await writeTerminalTask(request);
+    } catch (error) {
+      setTerminalActionError(true);
+      throw error;
+    }
+  }
+
+  async function resizeActiveTerminal(
+    request: TerminalResizeRequest,
+  ): Promise<TerminalSnapshot> {
+    try {
+      return await resizeTerminalTask(request);
+    } catch (error) {
+      setTerminalActionError(true);
+      throw error;
+    }
+  }
+
+  async function endTerminal(
+    request: TerminalCloseRequest,
+  ): Promise<TerminalRegistrySnapshot> {
+    setTerminalBusy(true);
+    setTerminalActionError(false);
+    try {
+      const result = await closeTerminalTask(request);
+      setTerminals(result);
+      if (result.diagnosticCode) setTerminalActionError(true);
+      return result;
+    } catch (error) {
+      setTerminalActionError(true);
+      throw error;
+    } finally {
+      setTerminalBusy(false);
+    }
+  }
+
   const currentProject =
     projects.projects.find(
       (project) => project.id === selectedProjectId && !project.archived,
@@ -1486,7 +1640,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 11 parallel worktrees
+              Milestone 12 integrated terminal
             </span>
             <button
               className="theme-toggle"
@@ -1642,6 +1796,20 @@ export default function App({
                 0,
               );
             }}
+          />
+
+          <TerminalWorkspace
+            availability={terminalState}
+            registry={terminals}
+            projects={projects}
+            busy={terminalBusy}
+            actionError={terminalActionError}
+            onStart={beginTerminal}
+            onPoll={pollActiveTerminal}
+            onWrite={writeActiveTerminal}
+            onResize={resizeActiveTerminal}
+            onClose={endTerminal}
+            onSnapshot={trackTerminal}
           />
 
           <GitWorkspace

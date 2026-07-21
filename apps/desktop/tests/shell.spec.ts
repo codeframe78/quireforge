@@ -43,6 +43,12 @@ const nativeResponses = {
         state: "ready",
         milestone: 7,
       },
+      {
+        id: "integrated-terminal",
+        label: "Integrated terminal",
+        state: "ready",
+        milestone: 12,
+      },
     ],
   },
   codex_runtime_probe: {
@@ -295,6 +301,12 @@ const nativeResponses = {
     capacity: 4,
     conversations: [],
   },
+  terminal_status: {
+    schemaVersion: 1,
+    capacity: 8,
+    terminals: [],
+    diagnosticCode: null,
+  },
   conversation_sessions: {
     schemaVersion: 2,
     state: "ready",
@@ -328,6 +340,36 @@ const nativeResponses = {
     ],
     diagnosticCode: null,
   },
+} as const;
+
+const liveTerminalSnapshot = {
+  schemaVersion: 1,
+  state: "running",
+  terminalId: "018f0000-0000-7000-8000-000000000050",
+  projectId: "018f0000-0000-7000-8000-000000000001",
+  title: "Terminal 1",
+  live: true,
+  columns: 100,
+  rows: 30,
+  output: [],
+  firstSequence: 0,
+  lastSequence: 0,
+  truncated: false,
+  hasMore: false,
+  exitCode: null,
+  diagnosticCode: null,
+} as const;
+
+const nativeTerminalResponses = {
+  ...nativeResponses,
+  terminal_status: {
+    schemaVersion: 1,
+    capacity: 8,
+    terminals: [liveTerminalSnapshot],
+    diagnosticCode: null,
+  },
+  terminal_poll: liveTerminalSnapshot,
+  terminal_resize: liveTerminalSnapshot,
 } as const;
 
 async function installNativeFixture(
@@ -442,6 +484,11 @@ test("desktop preview renders the honest semantic shell", async ({ page }) => {
     ),
   ).toBeVisible();
   await expect(
+    page.getByText(
+      /Browser preview cannot start or simulate a native Linux shell/u,
+    ),
+  ).toBeVisible();
+  await expect(
     page.getByRole("button", { name: "Attach local project" }),
   ).toBeDisabled();
   await expect(
@@ -497,9 +544,40 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
   ).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Next task")).toBeVisible();
   await expect(page.getByRole("button", { name: "Resume" })).toBeDisabled();
+  await expect(
+    page.getByRole("heading", { name: "A real shell, rooted where you work." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "New terminal" }),
+  ).toBeEnabled();
+  await expect(page.getByText("No terminal open")).toBeVisible();
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("native terminal fixture mounts the app-owned xterm tab", async ({
+  page,
+}) => {
+  await installNativeFixture(page, nativeTerminalResponses);
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", { name: "A real shell, rooted where you work." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("tab", { name: /Terminal 1 Running/u }),
+  ).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator(".terminal-pane__viewport .xterm")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Close Terminal 1" }),
+  ).toBeVisible();
+  await expect(page.getByText(/Linux account privileges/u)).toBeVisible();
+
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );

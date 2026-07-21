@@ -77,6 +77,12 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 7,
                 },
+                CapabilitySummary {
+                    id: "integrated-terminal",
+                    label: "Integrated terminal",
+                    state: CapabilityState::Ready,
+                    milestone: 12,
+                },
             ],
         }
     }

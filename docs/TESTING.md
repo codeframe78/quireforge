@@ -1,10 +1,10 @@
 # Testing QuireForge
 
-Status: Milestones 2–11C establish repository, website, desktop frontend,
+Status: Milestones 2–12 establish repository, website, desktop frontend,
 native contract, Codex adapter, authentication, project attachment,
 conversation/runtime lifecycle, approvals, reviewed Git read/write checks, and
-managed worktrees with bounded parallel execution and safe cleanup/recovery.
-PTY fixtures arrive with their separately gated milestone.
+managed worktrees with bounded parallel execution and safe cleanup/recovery,
+plus a native PTY boundary and integrated terminal interface.
 
 ## Repository, website, and desktop checks
 
@@ -90,6 +90,36 @@ state. App/component/browser tests recover and poll multiple task IDs
 independently, show normalized changed-file/conflict counts, open the selected
 task's expandable activity, and verify both configured viewports with axe-core
 and overflow analysis.
+
+Terminal tests use temporary attached directories and real local PTYs without
+starting Codex or making a model call. Rust covers metadata migration/restart
+interruption, absence of content/process columns, exact project reservations,
+verified cwd startup, explicit noncredential environment inheritance,
+pre-decode input bounds, byte-preserving output and truncation, provisional
+capacity/title handling, unknown app-ID refusal, resize/write state, and
+foreground/background session cleanup. TypeScript shares strict empty-registry
+and capability fixtures, rejects unknown/path/process-bearing payloads before
+or after IPC as appropriate, and verifies exact fixed bridge calls. Component
+and browser tests cover native/preview honesty, project selection, live byte
+polling, responsive tabs, explicit process-ending confirmation, recovery copy,
+xterm layout, axe-core, and overflow at desktop and mobile viewports.
+
+## Manual Milestone 12 checklist
+
+- Use an isolated QuireForge data directory and a disposable attached project.
+  Open two tabs and verify each starts at the freshly revalidated project root,
+  accepts ordinary input, resizes with the window, and remains independently
+  selectable.
+- Produce UTF-8, ANSI color, split output, and a background `sleep` job. Confirm
+  rendering remains bounded and closing the tab requires explicit confirmation,
+  ends the foreground/background session, leaves project files untouched, and
+  leaves no QuireForge-owned process.
+- Relaunch after an intentionally interrupted app session. Confirm metadata is
+  shown as interrupted without invented scrollback or process ownership and can
+  be dismissed safely.
+- Confirm browser preview cannot start or simulate a shell, no clickable links
+  are synthesized from output, and the Linux-account privilege warning remains
+  distinct from Codex approvals.
 
 ## Manual Milestone 11C checklist
 

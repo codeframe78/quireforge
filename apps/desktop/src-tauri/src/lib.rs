@@ -2,6 +2,7 @@ mod codex;
 mod contract;
 mod git;
 mod project;
+mod terminal;
 mod worktree;
 
 use codex::{
@@ -26,6 +27,13 @@ use project::{
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
+use terminal::{
+    types::{
+        TerminalCloseRequest, TerminalPollRequest, TerminalRegistrySnapshot, TerminalResizeRequest,
+        TerminalSnapshot, TerminalStartRequest, TerminalWriteRequest,
+    },
+    TerminalService,
+};
 use worktree::{
     types::{
         WorktreeCancelRequest, WorktreeConfirmRequest, WorktreeCreatePreviewRequest,
@@ -404,6 +412,59 @@ async fn conversation_restore(
     Ok(service.restore(conversation_id, &projects).await)
 }
 
+#[tauri::command]
+async fn terminal_status(
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalRegistrySnapshot, ()> {
+    Ok(service.status(&projects).await)
+}
+
+#[tauri::command]
+async fn terminal_start(
+    request: TerminalStartRequest,
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalSnapshot, ()> {
+    Ok(service.start(request, &projects).await)
+}
+
+#[tauri::command]
+async fn terminal_poll(
+    request: TerminalPollRequest,
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalSnapshot, ()> {
+    Ok(service.poll(request, &projects).await)
+}
+
+#[tauri::command]
+async fn terminal_write(
+    request: TerminalWriteRequest,
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalSnapshot, ()> {
+    Ok(service.write(request, &projects).await)
+}
+
+#[tauri::command]
+async fn terminal_resize(
+    request: TerminalResizeRequest,
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalSnapshot, ()> {
+    Ok(service.resize(request, &projects).await)
+}
+
+#[tauri::command]
+async fn terminal_close(
+    request: TerminalCloseRequest,
+    service: tauri::State<'_, TerminalService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<TerminalRegistrySnapshot, ()> {
+    Ok(service.close(request.terminal_id, &projects).await)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -413,6 +474,7 @@ pub fn run() {
         .manage(CodexAuthService::default())
         .manage(ConversationService::default())
         .manage(GitService::default())
+        .manage(TerminalService::default())
         .setup(|app| {
             match app.path().app_data_dir() {
                 Ok(directory) => {
@@ -466,7 +528,13 @@ pub fn run() {
             conversation_resume,
             conversation_fork,
             conversation_archive,
-            conversation_restore
+            conversation_restore,
+            terminal_status,
+            terminal_start,
+            terminal_poll,
+            terminal_write,
+            terminal_resize,
+            terminal_close
         ])
         .run(tauri::generate_context!())
         .expect("failed to run QuireForge");

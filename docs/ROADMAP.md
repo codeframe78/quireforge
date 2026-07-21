@@ -67,32 +67,36 @@ Milestone 11C adds opaque recovery for retained app-managed worktrees and
 confirmed removal of clean, inactive, app-managed worktrees while preserving
 their branches. Attached worktrees, force removal, generic prune, direct
 directory deletion, and conflict resolution remain excluded.
+Milestone 12 adds a bounded native PTY registry, controlled shell environment,
+fresh project-cwd verification, tabbed xterm presentation, byte-preserving
+input/output, resize, background-job ownership, and metadata-only restart
+recovery without exposing raw paths or process identity to React.
 
 ## Status
 
-| Milestone | Scope                                                             | Size         | Status                                                                         |
-| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------ |
-|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                                     |
-|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                                     |
-|         2 | QuireForge brand and Cloudflare website foundation                | Large        | Complete; merged to `main`; not deployed                                       |
-|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                                       |
-|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                                     |
-|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                                     |
-|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                                     |
-|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                                     |
-|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                                     |
-|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history              |
-|        10 | Git status, diff review, and controlled mutations                  | Large        | Complete and verified; publication tracked by this milestone change             |
-|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                                      |
-|        12 | Integrated terminal                                               | Large        | Planned                                                                        |
-|        13 | Integration discovery and compatibility                           | Very large   | Planned                                                                        |
-|        14 | Integration Center and installation workflows                     | Very large   | Planned                                                                        |
-|        15 | File previews and desktop integration                             | Large        | Planned                                                                        |
-|        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                                        |
-|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                                       |
-|        18 | Security, accessibility, and performance hardening                | Very large   | Planned                                                                        |
-|        19 | Packaging and release automation                                  | Large        | Planned                                                                        |
-|        20 | Cloudflare Pages production deployment and beta release           | Very large   | Planned/approval-gated                                                         |
+| Milestone | Scope                                                             | Size         | Status                                                               |
+| --------: | ----------------------------------------------------------------- | ------------ | -------------------------------------------------------------------- |
+|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                           |
+|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                           |
+|         2 | QuireForge brand and Cloudflare website foundation                | Large        | Complete; merged to `main`; not deployed                             |
+|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                             |
+|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                           |
+|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                           |
+|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                           |
+|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                           |
+|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                           |
+|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history    |
+|        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change  |
+|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                            |
+|        12 | Integrated terminal                                               | Large        | Implemented; complete local and publication verification in progress |
+|        13 | Integration discovery and compatibility                           | Very large   | Planned                                                              |
+|        14 | Integration Center and installation workflows                     | Very large   | Planned                                                              |
+|        15 | File previews and desktop integration                             | Large        | Planned                                                              |
+|        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                              |
+|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                             |
+|        18 | Security, accessibility, and performance hardening                | Very large   | Planned                                                              |
+|        19 | Packaging and release automation                                  | Large        | Planned                                                              |
+|        20 | Cloudflare Pages production deployment and beta release           | Very large   | Planned/approval-gated                                               |
 
 ## Milestone definitions
 
@@ -376,6 +380,22 @@ deletion, conflict resolution, arbitrary Git arguments, and repository-wide
 
 Implement Rust PTY lifecycle, tabs, verified project cwd startup, resize/input,
 background processes, environment handling, and terminal safety tests.
+
+Implemented locally: a dedicated Rust `portable-pty` service owns up to eight
+app-generated UUIDv7 terminal sessions, starts only after project reservation
+and cwd identity revalidation, clears and reconstructs a narrow noncredential
+environment, transports bounded base64 bytes, applies typed resize/input, and
+ends the complete owned Linux session through bounded HUP/TERM/KILL cleanup.
+React uses stable xterm APIs with the DOM renderer, inaccessible browser-preview
+controls, responsive tabs, explicit close confirmation, and a visible warning
+that terminal commands run with the Linux account rather than Codex approval
+policy. SQLite migration 5 persists only presentation state and marks stale
+sessions interrupted; input, output, history, cwd, environment, TTY, and
+process/session IDs are never stored or exposed. Closing a tab does not delete
+project files. Daemons that deliberately create a new session, remote shells,
+shell selection, process inspection, command approvals, and terminal content
+recovery remain outside this milestone. See
+[ADR 0017](DECISIONS/0017-native-integrated-terminal.md).
 
 ### 13 — Integration Discovery and Compatibility Layer
 

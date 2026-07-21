@@ -1,6 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@xterm/xterm", () => ({ Terminal: class {} }));
+vi.mock("@xterm/addon-fit", () => ({ FitAddon: class {} }));
+
 import App from "./App";
 import { codexAuthSchema, scaffoldCodexAuth } from "./lib/auth";
 import { scaffoldCodexRuntime } from "./lib/codex";
@@ -106,7 +109,7 @@ describe("QuireForge desktop shell", () => {
     expect(
       await screen.findByRole("button", { name: "Continue in browser" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(5);
+    expect(screen.getAllByText("ready")).toHaveLength(6);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(

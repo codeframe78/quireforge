@@ -45,6 +45,9 @@ released a usable application.
   QuireForge icon exports.
 - Generalized local build-performance and milestone-forecast histories for
   system-calibrated planning.
+- A cumulative real-world milestone time ledger that reconstructs every prior
+  milestone with explicit evidence/confidence and prospectively separates
+  active, automated-wait, user-blocked, counted-project, and elapsed time.
 - A responsive, accessible light/dark desktop shell and one versioned
   `desktop_bootstrap` command validated against a shared Rust/TypeScript fixture.
 - Desktop type, lint, format, unit, native contract, Clippy, build, responsive,
@@ -102,6 +105,16 @@ released a usable application.
   metadata-only recovery, and post-Git metadata failure. Force removal, generic
   prune, branch deletion, direct directory deletion, and conflict resolution
   remain unavailable.
+- A native Milestone 12 PTY service with up to eight app-owned tabs, freshly
+  revalidated project cwd, controlled noncredential environment inheritance,
+  bounded byte-safe input/output and resize, Linux session-member cleanup, and
+  metadata-only restart recovery.
+- A strict terminal IPC/Zod contract and responsive accessible xterm interface
+  with independent tabs, honest browser preview, explicit foreground/background
+  process-ending confirmation, truncation/recovery notices, and a clear
+  Linux-account privilege boundary separate from Codex approvals. Shell input,
+  output, history, paths, environment, TTY, and process identity are neither
+  persisted nor exposed through the webview contract.
 - A serialized native Milestone 7A conversation service that revalidates the
   attached cwd, starts a supported Codex thread and turn with explicit model,
   reasoning, sandbox, and approval controls, normalizes bounded stream events,

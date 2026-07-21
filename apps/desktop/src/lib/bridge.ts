@@ -69,6 +69,22 @@ import {
   type WorktreeResultSnapshot,
   type WorktreeWorkspaceSnapshot,
 } from "./worktree";
+import {
+  terminalCloseRequestSchema,
+  terminalPollRequestSchema,
+  terminalRegistrySchema,
+  terminalResizeRequestSchema,
+  terminalSnapshotSchema,
+  terminalStartRequestSchema,
+  terminalWriteRequestSchema,
+  type TerminalCloseRequest,
+  type TerminalPollRequest,
+  type TerminalRegistrySnapshot,
+  type TerminalResizeRequest,
+  type TerminalSnapshot,
+  type TerminalStartRequest,
+  type TerminalWriteRequest,
+} from "./terminal";
 
 export const CODEX_RUNTIME_PROBE_COMMAND = "codex_runtime_probe";
 export const CODEX_AUTH_STATUS_COMMAND = "codex_auth_status";
@@ -111,6 +127,12 @@ export const CONVERSATION_RESUME_COMMAND = "conversation_resume";
 export const CONVERSATION_FORK_COMMAND = "conversation_fork";
 export const CONVERSATION_ARCHIVE_COMMAND = "conversation_archive";
 export const CONVERSATION_RESTORE_COMMAND = "conversation_restore";
+export const TERMINAL_STATUS_COMMAND = "terminal_status";
+export const TERMINAL_START_COMMAND = "terminal_start";
+export const TERMINAL_POLL_COMMAND = "terminal_poll";
+export const TERMINAL_WRITE_COMMAND = "terminal_write";
+export const TERMINAL_RESIZE_COMMAND = "terminal_resize";
+export const TERMINAL_CLOSE_COMMAND = "terminal_close";
 
 export type InvokeFunction = (
   command: string,
@@ -542,4 +564,66 @@ export function restoreConversation(
     conversationId,
     invokeFunction,
   );
+}
+
+export async function loadTerminalStatus(
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalRegistrySnapshot> {
+  const payload = await invokeFunction(TERMINAL_STATUS_COMMAND);
+  return terminalRegistrySchema.parse(payload);
+}
+
+export async function startTerminal(
+  request: TerminalStartRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalSnapshot> {
+  const reviewedRequest = terminalStartRequestSchema.parse(request);
+  const payload = await invokeFunction(TERMINAL_START_COMMAND, {
+    request: reviewedRequest,
+  });
+  return terminalSnapshotSchema.parse(payload);
+}
+
+export async function pollTerminal(
+  request: TerminalPollRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalSnapshot> {
+  const reviewedRequest = terminalPollRequestSchema.parse(request);
+  const payload = await invokeFunction(TERMINAL_POLL_COMMAND, {
+    request: reviewedRequest,
+  });
+  return terminalSnapshotSchema.parse(payload);
+}
+
+export async function writeTerminal(
+  request: TerminalWriteRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalSnapshot> {
+  const reviewedRequest = terminalWriteRequestSchema.parse(request);
+  const payload = await invokeFunction(TERMINAL_WRITE_COMMAND, {
+    request: reviewedRequest,
+  });
+  return terminalSnapshotSchema.parse(payload);
+}
+
+export async function resizeTerminal(
+  request: TerminalResizeRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalSnapshot> {
+  const reviewedRequest = terminalResizeRequestSchema.parse(request);
+  const payload = await invokeFunction(TERMINAL_RESIZE_COMMAND, {
+    request: reviewedRequest,
+  });
+  return terminalSnapshotSchema.parse(payload);
+}
+
+export async function closeTerminal(
+  request: TerminalCloseRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<TerminalRegistrySnapshot> {
+  const reviewedRequest = terminalCloseRequestSchema.parse(request);
+  const payload = await invokeFunction(TERMINAL_CLOSE_COMMAND, {
+    request: reviewedRequest,
+  });
+  return terminalRegistrySchema.parse(payload);
 }

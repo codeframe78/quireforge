@@ -1,9 +1,9 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and Milestones 3–7A desktop shell, Codex,
-authentication, project attachment, and native conversation runtime can be
-developed and built locally. An installable application package does not yet
-exist.
+Status: the Milestone 2 website and Milestones 3–12 desktop shell, Codex,
+authentication, project attachment, conversation/runtime lifecycle, reviewed
+Git/worktree workflows, and native integrated terminal can be developed and
+built locally. An installable application package does not yet exist.
 
 ## Supported development baseline
 
@@ -14,6 +14,10 @@ exist.
 - Tauri 2 Linux development packages listed below
 - Python 3 for the dependency-free repository validator
 - Git
+
+The integrated terminal is Linux-specific. Its native tests require `/proc`
+process identity and a working local PTY; they use temporary directories and do
+not need a live Codex session, network access, CUDA, or GPU rendering.
 
 Do not install dependencies with npm or commit an additional lockfile. The
 workspace uses the root `pnpm-lock.yaml` and rejects unreviewed dependency build
