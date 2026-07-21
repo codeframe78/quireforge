@@ -957,7 +957,11 @@ Git-success/metadata-failure split.
 | Expected total real-world elapsed | 6–10 hours, excluding unbounded user approval delay                                                                                                                                                                                                                                                                                                                         |
 | Expected user approval time       | Model/reasoning/start and publication approvals listed separately; not included in counted project time                                                                                                                                                                                                                                                                     |
 | Sessions and usage                | One or two recoverable sessions; high model intensity, moderate CPU, low-to-moderate memory, negligible GPU                                                                                                                                                                                                                                                                 |
-| Completion status                 | Implemented and fully verified locally on `feat/milestone-12-integrated-terminal`; publication pending                                                                                                                                                                                                                                                                      |
+| Observed active execution         | Approximately 1.16 hours, reconstructed from the complete elapsed interval after subtracting evidenced local and hosted automated waits                                                                                                                                                                                                                                     |
+| Observed automated wait           | Approximately 0.38 hour: at least 0.05 hour of timed local commands plus 0.16-hour pull-request and 0.16-hour `main` workflow critical paths                                                                                                                                                                                                                                |
+| Observed counted / elapsed        | 1.53 counted project hours / 1.53 total elapsed hours; no post-start user-blocked interval                                                                                                                                                                                                                                                                                  |
+| Forecast variance                 | Approximately 4.97 hours (76.4%) below the 6.5-hour active-forecast midpoint when compared with counted project time                                                                                                                                                                                                                                                        |
+| Completion status                 | Complete; merged by [PR #27](https://github.com/codeframe78/quireforge/pull/27) as `07ba046`, with successful PR and `main` repository checks                                                                                                                                                                                                                               |
 
 | Component                                               |        Duration range | Confidence | Primary uncertainty                                             | Resource class            | Safe overlap                              |
 | ------------------------------------------------------- | --------------------: | ---------- | --------------------------------------------------------------- | ------------------------- | ----------------------------------------- |
@@ -1013,3 +1017,13 @@ ordinary Rust/TypeScript builds are CPU/system-memory workloads.
 - All timed final gates reported zero swaps. No OOM, throttling, clean build,
   cache reset, user-repository mutation, live model call, CUDA, or GPU rendering
   occurred. Temporary launch and visual-capture data were removed.
+- Pull-request workflow `29796398390` passed with source validation in 6
+  seconds, the website gate in 1 minute 56 seconds, and the desktop gate in 9
+  minutes 46 seconds. After merge, `main` workflow `29796847052` passed with
+  source validation in 5 seconds, the website gate in 1 minute 50 seconds, and
+  the desktop gate in 9 minutes 33 seconds.
+- GitHub-hosted jobs receive fresh runner environments. The workflow already
+  restores pnpm dependencies, but it does not yet restore Cargo build outputs
+  or Playwright browser downloads. A credential-free, lockfile/toolchain-keyed
+  cache is a separately scoped optimization candidate rather than a Milestone
+  12 product change.

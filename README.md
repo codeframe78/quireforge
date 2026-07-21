@@ -85,8 +85,9 @@ deployed. There is no application package to install yet.
   integrated terminal.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 12 is implemented and undergoing its complete
-  local and publication verification gate.
+- Current milestone: Milestone 12 is complete, merged to `main`, and verified
+  by the repository, website, desktop, browser, native, and release-build gates.
+  Milestone 13 remains planned and requires a fresh reasoning/model/start gate.
 - Known limitations: concurrency is capped at four active worktree tasks;
   durable task recovery, automatic conflict resolution, attached-worktree
   cleanup, force/prune workflows, advanced remote operations, installable

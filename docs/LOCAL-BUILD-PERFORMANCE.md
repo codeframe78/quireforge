@@ -595,3 +595,12 @@ and left no QuireForge process. Controlled desktop/mobile fixture inspection
 showed a legible project selector, Linux-account warning, tab state, close
 affordance, cursor, terminal surface, and stacked mobile layout with no
 horizontal overflow. Temporary launch and capture data were removed.
+
+Publication used fresh GitHub-hosted runners. Pull-request workflow
+`29796398390` completed its source, website, and desktop jobs in 6 seconds, 1
+minute 56 seconds, and 9 minutes 46 seconds respectively. The corresponding
+`main` workflow `29796847052` completed them in 5 seconds, 1 minute 50 seconds,
+and 9 minutes 33 seconds. pnpm dependency caching was already enabled, while
+Cargo build outputs and Playwright browser downloads were not restored between
+hosts. Those two cold-host costs are candidates for a separately reviewed cache
+change; they are not evidence of local cache or resource pressure.

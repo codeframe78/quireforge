@@ -24,24 +24,24 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-20T19:37:19-07:00`
+Last updated: `2026-07-20T20:02:30-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                           |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Total milestones planned                  | 21 (Milestones 0–20)                                                                                                                                        |
-| Total milestones completed                | 12 (Milestones 0–11)                                                                                                                                        |
-| Milestones in progress                    | 1 (Milestone 12)                                                                                                                                            |
-| Reconstructed/estimated active execution  | Approximately 17.02–24.10 hours                                                                                                                             |
-| Reconstructed automated wait              | Approximately 5.40–6.29 hours; early uninstrumented waits excluded                                                                                          |
+| Total milestones completed                | 13 (Milestones 0–12)                                                                                                                                        |
+| Milestones in progress                    | 0                                                                                                                                                           |
+| Reconstructed/estimated active execution  | Approximately 18.18–25.26 hours                                                                                                                             |
+| Reconstructed automated wait              | Approximately 5.78–6.67 hours; early uninstrumented waits excluded                                                                                          |
 | Reconstructed user-blocked time           | At least 10.86 hours, plus unmeasured early approvals/prerequisites                                                                                         |
-| Counted project time                      | Approximately 22.42–30.39 hours                                                                                                                             |
-| Total elapsed across completed milestones | At least 29.22 evidenced hours; exact historical total is unknown                                                                                           |
-| Average counted time                      | Approximately 1.87–2.53 hours per completed milestone                                                                                                       |
-| Median counted time                       | Approximately 2.19 hours using reconstructed range midpoints                                                                                                |
+| Counted project time                      | Approximately 23.95–31.92 hours                                                                                                                             |
+| Total elapsed across completed milestones | At least 30.75 evidenced hours; exact historical total is unknown                                                                                           |
+| Average counted time                      | Approximately 1.84–2.46 hours per completed milestone                                                                                                       |
+| Median counted time                       | Approximately 1.85 hours using reconstructed range midpoints                                                                                                |
 | Longest completed milestone               | Milestone 11, approximately 5.45–7.72 counted hours                                                                                                         |
 | Shortest completed milestone              | Milestone 0, approximately 0.15 counted hours                                                                                                               |
-| Comparable forecast versus actual         | Milestones 3–11 forecast 63.00–108.50 active hours in aggregate and used approximately 18.89–26.86 counted hours, about 57%–83% below the forecast envelope |
-| Confidence classifications                | 0 Confirmed, 10 Reconstructed, 2 Estimated, 0 Unknown completed entries; Milestone 12 is in progress                                                        |
+| Comparable forecast versus actual         | Milestones 3–12 forecast 68.00–116.50 active hours in aggregate and used approximately 20.42–28.39 counted hours, about 58%–82% below the forecast envelope |
+| Confidence classifications                | 0 Confirmed, 11 Reconstructed, 2 Estimated, 0 Unknown completed entries                                                                                     |
 
 The cumulative active and automated ranges are derived from historical reports
 and workflow evidence that were recorded with different granularity. They are
@@ -51,21 +51,21 @@ range endpoints.
 
 ## Summary
 
-| Milestone | Status      | Started                     | Completed                   | Forecast                     |      Active | Automated Wait |              User-Blocked | Counted Project Time | Total Elapsed | Variance                        | Confidence                                  |
-| --------- | ----------- | --------------------------- | --------------------------- | ---------------------------- | ----------: | -------------: | ------------------------: | -------------------: | ------------: | ------------------------------- | ------------------------------------------- |
-| 0         | Complete    | `2026-07-19T08:52:30-07:00` | `2026-07-19T09:01:47-07:00` | Unknown                      |     ~0.15 h |    Unseparated |                   Unknown |              ~0.15 h |       ≥0.15 h | Unknown                         | Reconstructed                               |
-| 1         | Complete    | `2026-07-19T09:21:36-07:00` | `2026-07-19T12:37:30-07:00` | Unknown                      |     ~2.91 h |    Unseparated |                   Unknown |              ~2.91 h |       ≥3.27 h | Unknown                         | Estimated                                   |
-| 2         | Complete    | `2026-07-19T12:41:58-07:00` | `2026-07-19T13:10:15-07:00` | Unknown                      |     ~0.47 h |    Unseparated |                   Unknown |              ~0.47 h |       ≥0.47 h | Unknown                         | Reconstructed                               |
-| 3         | Complete    | `2026-07-19T13:29:01-07:00` | `2026-07-19T14:22:24-07:00` | 18–30 h active               | 0.58–0.92 h |    0.05–0.12 h |                   Unknown |          0.63–1.04 h |       ≥0.89 h | ~23.17 h / 96.5% below midpoint | Estimated                                   |
-| 4         | Complete    | `2026-07-19T14:34:03-07:00` | `2026-07-19T15:02:03-07:00` | 4–7 h active                 | 0.42–0.58 h |    0.03–0.07 h | 0 h after start evidenced |          0.45–0.65 h |       ≥0.47 h | ~4.95 h / 90.0% below midpoint  | Reconstructed                               |
-| 5         | Complete    | `2026-07-19T15:37:23-07:00` | `2026-07-19T16:05:45-07:00` | 2–4 h active                 | 0.42–0.67 h |    0.08–0.13 h | 0 h after start evidenced |          0.50–0.80 h |       ≥0.47 h | ~2.35 h / 78.3% below midpoint  | Reconstructed                               |
-| 6         | Complete    | `2026-07-19T16:24:44-07:00` | `2026-07-19T18:02:33-07:00` | 2.5–5 h active               | 1.33–2.08 h |    0.10–0.18 h |     Present; not measured |          1.43–2.26 h |       ≥1.63 h | ~1.91 h / 50.8% below midpoint  | Reconstructed                               |
-| 7         | Complete    | `2026-07-19T18:26:16-07:00` | `2026-07-19T20:11:20-07:00` | 4–7.5 h active               | 1.25–1.91 h |    0.91–0.98 h |                   ≥0.28 h |          2.16–2.89 h |       ≥1.75 h | ~3.23 h / 56.1% below midpoint  | Reconstructed                               |
-| 8         | Complete    | `2026-07-19T20:23:15-07:00` | `2026-07-19T22:17:24-07:00` | 5.5–10 h active              | 1.58–2.42 h |    0.73–0.81 h |                   ≥0.24 h |          2.31–3.23 h |       ≥1.90 h | ~4.98 h / 64.3% below midpoint  | Reconstructed                               |
-| 9         | Complete    | `2026-07-19T22:29:22-07:00` | `2026-07-20T05:00:25-07:00` | 6–11 h active                | 1.83–3.08 h |    1.07–1.17 h |                   ≥4.26 h |          2.90–4.25 h |       ≥6.52 h | ~4.93 h / 57.9% below midpoint  | Reconstructed                               |
-| 10        | Complete    | `2026-07-20T05:05:51-07:00` | `2026-07-20T12:10:43-07:00` | 8.5–13.5 h active            | 2.00–2.83 h |    1.06–1.19 h |                   ≥4.44 h |          3.06–4.02 h |       ≥7.08 h | ~7.46 h / 67.8% below midpoint  | Reconstructed                               |
-| 11        | Complete    | `2026-07-20T12:19:40-07:00` | `2026-07-20T16:56:33-07:00` | 12.5–20.5 h active           | 4.08–6.08 h |    1.37–1.64 h |                   ≥1.64 h |          5.45–7.72 h |       ≥4.61 h | ~9.91 h / 60.1% below midpoint  | Reconstructed                               |
-| 12        | In progress | `2026-07-20T18:27:06-07:00` | —                           | 5–8 h active; 6–10 h elapsed |   Measuring |      Measuring |                 Measuring |            Measuring |     Measuring | Pending                         | Reconstructed start; prospective completion |
+| Milestone | Status   | Started                     | Completed                   | Forecast                     |      Active | Automated Wait |              User-Blocked | Counted Project Time | Total Elapsed | Variance                        | Confidence    |
+| --------- | -------- | --------------------------- | --------------------------- | ---------------------------- | ----------: | -------------: | ------------------------: | -------------------: | ------------: | ------------------------------- | ------------- |
+| 0         | Complete | `2026-07-19T08:52:30-07:00` | `2026-07-19T09:01:47-07:00` | Unknown                      |     ~0.15 h |    Unseparated |                   Unknown |              ~0.15 h |       ≥0.15 h | Unknown                         | Reconstructed |
+| 1         | Complete | `2026-07-19T09:21:36-07:00` | `2026-07-19T12:37:30-07:00` | Unknown                      |     ~2.91 h |    Unseparated |                   Unknown |              ~2.91 h |       ≥3.27 h | Unknown                         | Estimated     |
+| 2         | Complete | `2026-07-19T12:41:58-07:00` | `2026-07-19T13:10:15-07:00` | Unknown                      |     ~0.47 h |    Unseparated |                   Unknown |              ~0.47 h |       ≥0.47 h | Unknown                         | Reconstructed |
+| 3         | Complete | `2026-07-19T13:29:01-07:00` | `2026-07-19T14:22:24-07:00` | 18–30 h active               | 0.58–0.92 h |    0.05–0.12 h |                   Unknown |          0.63–1.04 h |       ≥0.89 h | ~23.17 h / 96.5% below midpoint | Estimated     |
+| 4         | Complete | `2026-07-19T14:34:03-07:00` | `2026-07-19T15:02:03-07:00` | 4–7 h active                 | 0.42–0.58 h |    0.03–0.07 h | 0 h after start evidenced |          0.45–0.65 h |       ≥0.47 h | ~4.95 h / 90.0% below midpoint  | Reconstructed |
+| 5         | Complete | `2026-07-19T15:37:23-07:00` | `2026-07-19T16:05:45-07:00` | 2–4 h active                 | 0.42–0.67 h |    0.08–0.13 h | 0 h after start evidenced |          0.50–0.80 h |       ≥0.47 h | ~2.35 h / 78.3% below midpoint  | Reconstructed |
+| 6         | Complete | `2026-07-19T16:24:44-07:00` | `2026-07-19T18:02:33-07:00` | 2.5–5 h active               | 1.33–2.08 h |    0.10–0.18 h |     Present; not measured |          1.43–2.26 h |       ≥1.63 h | ~1.91 h / 50.8% below midpoint  | Reconstructed |
+| 7         | Complete | `2026-07-19T18:26:16-07:00` | `2026-07-19T20:11:20-07:00` | 4–7.5 h active               | 1.25–1.91 h |    0.91–0.98 h |                   ≥0.28 h |          2.16–2.89 h |       ≥1.75 h | ~3.23 h / 56.1% below midpoint  | Reconstructed |
+| 8         | Complete | `2026-07-19T20:23:15-07:00` | `2026-07-19T22:17:24-07:00` | 5.5–10 h active              | 1.58–2.42 h |    0.73–0.81 h |                   ≥0.24 h |          2.31–3.23 h |       ≥1.90 h | ~4.98 h / 64.3% below midpoint  | Reconstructed |
+| 9         | Complete | `2026-07-19T22:29:22-07:00` | `2026-07-20T05:00:25-07:00` | 6–11 h active                | 1.83–3.08 h |    1.07–1.17 h |                   ≥4.26 h |          2.90–4.25 h |       ≥6.52 h | ~4.93 h / 57.9% below midpoint  | Reconstructed |
+| 10        | Complete | `2026-07-20T05:05:51-07:00` | `2026-07-20T12:10:43-07:00` | 8.5–13.5 h active            | 2.00–2.83 h |    1.06–1.19 h |                   ≥4.44 h |          3.06–4.02 h |       ≥7.08 h | ~7.46 h / 67.8% below midpoint  | Reconstructed |
+| 11        | Complete | `2026-07-20T12:19:40-07:00` | `2026-07-20T16:56:33-07:00` | 12.5–20.5 h active           | 4.08–6.08 h |    1.37–1.64 h |                   ≥1.64 h |          5.45–7.72 h |       ≥4.61 h | ~9.91 h / 60.1% below midpoint  | Reconstructed |
+| 12        | Complete | `2026-07-20T18:27:06-07:00` | `2026-07-20T19:59:04-07:00` | 5–8 h active; 6–10 h elapsed |     ~1.16 h |        ~0.38 h |                    0.00 h |               1.53 h |        1.53 h | ~4.97 h / 76.4% below midpoint  | Reconstructed |
 
 Variance uses the midpoint of the historical forecast and counted-time ranges.
 It is included only where a recorded forecast exists and should not be read as
@@ -342,26 +342,50 @@ greater precision than the underlying ranges.
 - **Objective:** Add bounded native Linux PTYs with verified attached-project
   cwd, byte-safe output, input/resize, tabs, background-job ownership, and
   explicit cleanup without persisting shell content.
-- **Start:** `2026-07-20T18:27:06-07:00`, reconstructed from the branch creation
-  reflog after the approved start instruction.
-- **Completion:** In progress.
+- **Start / completion:** `2026-07-20T18:27:06-07:00` /
+  `2026-07-20T19:59:04-07:00`. The start is reconstructed from the branch
+  creation reflog after the approved start instruction; the completion is the
+  recorded successful `main` workflow result after merge.
 - **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
 - **Original forecast:** 5–8 active hours, 35–80 minutes of local commands, and
   6–10 total elapsed hours in one or two sessions; low-to-medium confidence.
-- **Active work interval:** Open from the recorded start. This ledger directive
-  arrived mid-milestone, so earlier Milestone 12 category splits will be
-  reconstructed from command timings and commentary checkpoints.
-- **Automated wait / user-blocked:** Measuring. No long post-start user block is
-  currently recorded.
-- **Counted / total elapsed / variance:** Pending completion.
-- **Evidence:** Branch `feat/milestone-12-integrated-terminal`, reflog, approved
-  reasoning/start messages, command timings, ADR 0017, and the eventual
-  commit/PR/workflow records.
-- **Confidence:** **Reconstructed** start; completion accounting will be
-  prospective from this ledger checkpoint.
-- **Forecasting lesson so far:** PTY dependency compilation remained below 1.82
-  GiB RSS and the final 39.01-second repository and 19.24-second browser gates
-  were short. The first optimized release compile took 88.76 seconds and crossed
-  its warm-baseline threshold without changing the overall forecast. The
-  Balanced CPU/system-memory profile remains appropriate, with zero swaps and
-  no GPU work.
+- **Active work intervals:** Approximately 1.16 hours across repository/system
+  inspection, PTY/security design, implementation, test hardening, visual and
+  native verification, documentation, review, and publication operations. The
+  ledger directive arrived mid-milestone, so this split is reconstructed by
+  subtracting evidenced automated intervals from the complete elapsed window.
+- **Automated wait intervals:** Approximately 0.38 hour: at least 0.05 hour of
+  individually timed local commands, 0.16 hour for the pull-request workflow
+  (`2026-07-20T19:39:17-07:00`–`19:49:05-07:00`), and 0.16 hour for the
+  successful `main` workflow (`19:49:28-07:00`–`19:59:04-07:00`). Concurrent
+  hosted jobs are counted by critical-path wall time rather than summed.
+- **User-blocked intervals:** 0.00 hour after the recorded execution start. All
+  model/reasoning/start approvals preceded it.
+- **Counted / total elapsed:** Approximately 1.53 counted hours and 1.53 total
+  elapsed hours. No post-start user-blocked interval is excluded. Independently
+  rounded category figures may not add exactly to the rounded total.
+- **Variance:** Approximately 4.97 hours, or 76.4%, below the 6.5-hour midpoint
+  of the original active forecast when compared with primary counted project
+  time. The original 6–10-hour elapsed forecast was also conservative.
+- **Evidence:** Branch `feat/milestone-12-integrated-terminal`; reflog; approved
+  reasoning/start messages; timed command records; ADR 0017; commits `d060e50`,
+  `bca2770`, and `f2e3fb2`; [PR #27](https://github.com/codeframe78/quireforge/pull/27);
+  merge commit `07ba046`; successful PR workflow
+  [29796398390](https://github.com/codeframe78/quireforge/actions/runs/29796398390);
+  and successful `main` workflow
+  [29796847052](https://github.com/codeframe78/quireforge/actions/runs/29796847052).
+- **Confidence:** **Reconstructed**. Durable start/completion and hosted-runner
+  timestamps exist, but active versus local-wait separation before the ledger
+  directive is not a prospective stopwatch record.
+- **Explanation of variance:** Existing project-reservation, typed bridge,
+  SQLite, fixture, and responsive-shell patterns were more reusable than the
+  low-confidence forecast assumed. The reviewed dependency set integrated
+  cleanly, real PTY tests exposed only a small test-import correction, and no
+  product defect required architectural rework.
+- **Forecasting lessons:** PTY compilation remained below 1.82 GiB RSS and the
+  Balanced four-Cargo/two-Playwright profile completed with zero swaps and no
+  GPU work. The first optimized local release compile took 88.76 seconds, but
+  fresh hosted runners spent about 9.5–9.8 minutes on each desktop gate. Future
+  forecasts should separate implementation uncertainty from repeated cold-host
+  compilation and evaluate credential-free Cargo/Playwright caches as their own
+  approved CI optimization.
