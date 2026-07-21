@@ -56,7 +56,10 @@ raw Codex and process identity remains native-only. Milestone 11C adds opaque
 recovery of retained app-managed checkouts and explicit removal of only clean,
 inactive, app-managed worktrees after confirmation-time identity and status
 revalidation. Cleanup preserves the branch and never offers force or generic
-prune behavior.
+prune behavior. Milestone 12 adds up to eight app-owned native PTY tabs rooted
+in freshly reverified attached projects, with byte-safe bounded output,
+input/resize, controlled environment inheritance, explicit process cleanup,
+and metadata-only recovery that never stores shell content or process identity.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -78,11 +81,12 @@ deployed. There is no application package to install yet.
   complete Milestone 10 reviewed Git status/diff and mutation workflows, plus
   the Milestone 11A managed-worktree inventory/create/attach foundation and
   Milestone 11B bounded parallel task monitor, retained-worktree recovery, and
-  Milestone 11C clean managed-worktree cleanup.
+  Milestone 11C clean managed-worktree cleanup, plus the Milestone 12 native
+  integrated terminal.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 11 is implemented and verified locally through
-  11C; Milestone 12 requires a fresh terminal-security reasoning gate.
+- Current milestone: Milestone 12 is implemented and undergoing its complete
+  local and publication verification gate.
 - Known limitations: concurrency is capped at four active worktree tasks;
   durable task recovery, automatic conflict resolution, attached-worktree
   cleanup, force/prune workflows, advanced remote operations, installable
@@ -103,6 +107,7 @@ deployed. There is no application package to install yet.
 - [Testing](docs/TESTING.md)
 - [Local build performance](docs/LOCAL-BUILD-PERFORMANCE.md)
 - [Milestone forecasts](docs/MILESTONE-FORECASTS.md)
+- [Milestone real-world time ledger](docs/MILESTONE_TIME_LEDGER.md)
 - [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)
@@ -110,6 +115,7 @@ deployed. There is no application package to install yet.
 - [Managed worktree foundation decision](docs/DECISIONS/0014-managed-worktree-foundation.md)
 - [Bounded parallel worktree execution decision](docs/DECISIONS/0015-bounded-parallel-worktree-execution.md)
 - [Safe managed-worktree cleanup decision](docs/DECISIONS/0016-safe-managed-worktree-cleanup.md)
+- [Native integrated terminal decision](docs/DECISIONS/0017-native-integrated-terminal.md)
 - [Brand sources and usage](assets/brand/README.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Changelog](CHANGELOG.md)

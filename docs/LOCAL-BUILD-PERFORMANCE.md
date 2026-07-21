@@ -337,7 +337,7 @@ was required.
 Approximately 44 GiB of RAM remained available around the gates. Swap stayed
 near 175 MiB, and timed commands reported zero swaps. The first aggregate gate
 ended after 16.54 seconds when its transient environment omitted
-`/home/jjennison/.cargo/bin` from `PATH`; the rerun explicitly preserved the
+the user-local Cargo bin directory from `PATH`; the rerun explicitly preserved the
 already-installed tool path and passed without changing persistent
 configuration. There was no OOM, throttling, dependency download, cache
 deletion, clean build, or competing QuireForge build.
@@ -394,17 +394,17 @@ and Playwright caches. No dependency installation, clean build, database
 migration, cache deletion, linker/tool change, or GPU workload was required.
 The Balanced profile kept four Cargo workers and two Playwright workers.
 
-| Operation                                            |                                  Observed wall time | Approximate peak RSS | Result                                                                                                                |
-| ---------------------------------------------------- | --------------------------------------------------: | -------------------: | --------------------------------------------------------------------------------------------------------------------- |
-| Focused native mutation tests                        |  about 3–5 seconds including incremental recompiles |       about 1.11 GiB | Passed strict fixtures/tokens, lock ownership, exact stage/unstage, revert/recovery, commit, scope, and secret cases   |
-| Desktop type/lint/component and bridge checkpoints   |                       about 12–15 seconds combined |     Not instrumented | Passed 70 tests across 13 files plus strict type and lint checks                                                       |
-| Desktop production build                             |        about 2–3 seconds overall; Vite phase 0.13 s |     Not instrumented | Passed, 121 modules                                                                                                   |
-| Complete non-browser repository gate                 |                                       43.16 seconds |       about 1.33 GiB | Passed 73 JavaScript and 86 Rust tests; 2 live probes ignored                                                         |
-| Combined desktop/website browser gate                |                                       12.31 seconds |        about 318 MiB | Passed all 20 desktop/mobile checks with axe and overflow analysis                                                    |
-| Warm unbundled native release build                  |                                       34.56 seconds |       about 1.77 GiB | Passed, including 30.45-second release compile/link                                                                   |
-| Isolated native release launch                       |                           3-second bounded launch | Low runtime pressure | Schema migrations 1–3, final `0700`/`0600` metadata, and no remaining QuireForge/Codex child                          |
-| Desktop/mobile rendered-state inspection             |                       Focused full-page captures | Low runtime pressure | Confirmation target and applied mutation state remained legible in two-column desktop and stacked mobile layouts      |
-| Post-merge index-lock correction gate                 |                                  11.35 seconds |     Not instrumented | Focused replacement-lock regression, all 88 native tests, rustfmt, and Clippy passed                                   |
+| Operation                                          |                                 Observed wall time | Approximate peak RSS | Result                                                                                                               |
+| -------------------------------------------------- | -------------------------------------------------: | -------------------: | -------------------------------------------------------------------------------------------------------------------- |
+| Focused native mutation tests                      | about 3–5 seconds including incremental recompiles |       about 1.11 GiB | Passed strict fixtures/tokens, lock ownership, exact stage/unstage, revert/recovery, commit, scope, and secret cases |
+| Desktop type/lint/component and bridge checkpoints |                       about 12–15 seconds combined |     Not instrumented | Passed 70 tests across 13 files plus strict type and lint checks                                                     |
+| Desktop production build                           |       about 2–3 seconds overall; Vite phase 0.13 s |     Not instrumented | Passed, 121 modules                                                                                                  |
+| Complete non-browser repository gate               |                                      43.16 seconds |       about 1.33 GiB | Passed 73 JavaScript and 86 Rust tests; 2 live probes ignored                                                        |
+| Combined desktop/website browser gate              |                                      12.31 seconds |        about 318 MiB | Passed all 20 desktop/mobile checks with axe and overflow analysis                                                   |
+| Warm unbundled native release build                |                                      34.56 seconds |       about 1.77 GiB | Passed, including 30.45-second release compile/link                                                                  |
+| Isolated native release launch                     |                            3-second bounded launch | Low runtime pressure | Schema migrations 1–3, final `0700`/`0600` metadata, and no remaining QuireForge/Codex child                         |
+| Desktop/mobile rendered-state inspection           |                         Focused full-page captures | Low runtime pressure | Confirmation target and applied mutation state remained legible in two-column desktop and stacked mobile layouts     |
+| Post-merge index-lock correction gate              |                                      11.35 seconds |     Not instrumented | Focused replacement-lock regression, all 88 native tests, rustfmt, and Clippy passed                                 |
 
 The complete gate was 36% slower than 10A's 31.72-second baseline and crossed
 the 25% measurement threshold. The changed assumption was that the final native
@@ -444,15 +444,15 @@ linker/tool, driver, CUDA, swap, or zram change. The Balanced profile retained
 four Cargo workers and two Playwright workers; Git fixture operations remained
 short, serialized, CPU/storage work.
 
-| Operation                                 | Observed wall time                                   | Approximate peak RSS | Result                                                                                                       |
-| ----------------------------------------- | ----------------------------------------------------: | -------------------: | ------------------------------------------------------------------------------------------------------------ |
-| Focused native worktree suite             | about 7–10 seconds including incremental compile/link |     Not instrumented | Passed inventory, source/subdirectory, create/attach, stale HEAD, token, hook/filter, and recovery fixtures  |
-| Desktop type/component/bridge suite       | about 6–10 seconds per combined checkpoint            |     Not instrumented | Passed 79 tests across 15 files                                                                               |
-| Complete non-browser repository gate      |                                         45.99 seconds |       about 1.27 GiB | Passed 82 JavaScript tests and 95 Rust tests; 2 deliberate live probes ignored                               |
-| Combined desktop/website browser gate     |                                         14.59 seconds |        about 337 MiB | Passed all 22 desktop/mobile checks with axe and overflow analysis                                            |
-| Warm unbundled native release build       |                                         33.98 seconds |       about 1.73 GiB | Passed, including a 29.93-second release compile/link                                                         |
-| Isolated native release launch            |                                       about 2 seconds | Low runtime pressure | Exact D-Bus identity, schema migrations 1–4, `0700`/`0600` metadata, and no remaining app/Codex process      |
-| Desktop/mobile worktree visual inspection |                      Focused rendered-state capture | Low runtime pressure | Create/attach controls, confirmation, source/external inventory, and stacked mobile layout remained legible |
+| Operation                                 |                                    Observed wall time | Approximate peak RSS | Result                                                                                                      |
+| ----------------------------------------- | ----------------------------------------------------: | -------------------: | ----------------------------------------------------------------------------------------------------------- |
+| Focused native worktree suite             | about 7–10 seconds including incremental compile/link |     Not instrumented | Passed inventory, source/subdirectory, create/attach, stale HEAD, token, hook/filter, and recovery fixtures |
+| Desktop type/component/bridge suite       |            about 6–10 seconds per combined checkpoint |     Not instrumented | Passed 79 tests across 15 files                                                                             |
+| Complete non-browser repository gate      |                                         45.99 seconds |       about 1.27 GiB | Passed 82 JavaScript tests and 95 Rust tests; 2 deliberate live probes ignored                              |
+| Combined desktop/website browser gate     |                                         14.59 seconds |        about 337 MiB | Passed all 22 desktop/mobile checks with axe and overflow analysis                                          |
+| Warm unbundled native release build       |                                         33.98 seconds |       about 1.73 GiB | Passed, including a 29.93-second release compile/link                                                       |
+| Isolated native release launch            |                                       about 2 seconds | Low runtime pressure | Exact D-Bus identity, schema migrations 1–4, `0700`/`0600` metadata, and no remaining app/Codex process     |
+| Desktop/mobile worktree visual inspection |                        Focused rendered-state capture | Low runtime pressure | Create/attach controls, confirmation, source/external inventory, and stacked mobile layout remained legible |
 
 The complete gate was about 7% slower than Milestone 10B's 43.16-second
 baseline, the combined browser gate about 19% slower than 12.31 seconds after
@@ -480,15 +480,15 @@ reset, linker/tool, driver, CUDA, swap, or zram change. The Balanced profile
 retained four Cargo workers and two Playwright workers; the RTX 3050 remained
 irrelevant to Rust, TypeScript, browser, and process-fixture work.
 
-| Operation                                      | Observed wall time                                         | Approximate peak RSS | Result                                                                                                                       |
-| ---------------------------------------------- | ----------------------------------------------------------: | -------------------: | ---------------------------------------------------------------------------------------------------------------------------- |
-| Focused native conversation suite              | 0.46 seconds final warm; about 7.6 seconds with earlier compile |        about 106 MiB | Passed 23 conversation/lifecycle/presentation tests, including exact interruption, provisional/four-task capacity, and reaping |
-| Desktop component/contract suite               | about 6.5 seconds                                           |     Not instrumented | Passed 83 tests across 15 files                                                                                              |
-| Complete non-browser repository gate           |                                               42.19 seconds |       about 1.27 GiB | Passed 86 JavaScript tests and 101 Rust tests; 2 deliberate live probes ignored                                             |
-| Combined desktop/website browser gate          |                                               19.29 seconds |        about 372 MiB | Passed all 24 desktop/mobile checks with expanded activity, axe, and overflow analysis                                      |
-| Warm unbundled native release build            |                                               35.73 seconds |       about 1.73 GiB | Passed, including a 31.53-second release compile/link                                                                        |
-| Isolated native release launch                 |                                             about 3 seconds | Low runtime pressure | Schema migrations 1–4, `0700`/`0600` metadata, no task start, and no remaining QuireForge process                           |
-| Desktop parallel-monitor visual inspection     | Focused rendered-state capture plus a 4.6-second browser run | Low runtime pressure | Approval/conflict monitor and expanded normalized live command detail were legible                                           |
+| Operation                                  |                                              Observed wall time | Approximate peak RSS | Result                                                                                                                         |
+| ------------------------------------------ | --------------------------------------------------------------: | -------------------: | ------------------------------------------------------------------------------------------------------------------------------ |
+| Focused native conversation suite          | 0.46 seconds final warm; about 7.6 seconds with earlier compile |        about 106 MiB | Passed 23 conversation/lifecycle/presentation tests, including exact interruption, provisional/four-task capacity, and reaping |
+| Desktop component/contract suite           |                                               about 6.5 seconds |     Not instrumented | Passed 83 tests across 15 files                                                                                                |
+| Complete non-browser repository gate       |                                                   42.19 seconds |       about 1.27 GiB | Passed 86 JavaScript tests and 101 Rust tests; 2 deliberate live probes ignored                                                |
+| Combined desktop/website browser gate      |                                                   19.29 seconds |        about 372 MiB | Passed all 24 desktop/mobile checks with expanded activity, axe, and overflow analysis                                         |
+| Warm unbundled native release build        |                                                   35.73 seconds |       about 1.73 GiB | Passed, including a 31.53-second release compile/link                                                                          |
+| Isolated native release launch             |                                                 about 3 seconds | Low runtime pressure | Schema migrations 1–4, `0700`/`0600` metadata, no task start, and no remaining QuireForge process                              |
+| Desktop parallel-monitor visual inspection |    Focused rendered-state capture plus a 4.6-second browser run | Low runtime pressure | Approval/conflict monitor and expanded normalized live command detail were legible                                             |
 
 The complete gate was about 8% faster than Milestone 11A's 45.99-second
 baseline, and the release build about 5% slower than 33.98 seconds. The final
@@ -519,15 +519,15 @@ reset, linker/tool, driver, CUDA, swap, or zram change. The Balanced profile
 retained four Cargo workers and two Playwright workers; filesystem-sensitive
 Git fixtures stayed serialized. The RTX 3050 was not applicable.
 
-| Operation                                      | Observed wall time                                   | Approximate peak RSS | Result                                                                                                                               |
-| ---------------------------------------------- | ---------------------------------------------------: | -------------------: | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Focused native worktree suite                  | about 7.6 seconds including incremental compile/link |     Not instrumented | Passed 19 worktree tests plus matched project coverage, including recovery, removal, races, filters, partial failure, and ownership |
-| Desktop component/contract suite               | about 6.4 seconds                                    |     Not instrumented | Passed 84 tests across 15 files                                                                                                      |
-| Complete non-browser repository gate           |                                        33.38 seconds |        about 891 MiB | Passed 87 JavaScript tests and 108 Rust tests; 106 Rust tests passed and 2 deliberate live probes were ignored                     |
-| Combined desktop/website browser gate          |                                        17.12 seconds |        about 370 MiB | Passed all 24 desktop/mobile checks with recovery/cleanup, axe, and overflow analysis                                               |
-| Warm unbundled native release build            |                                        31.31 seconds |       about 1.98 GiB | Passed, including a 27.20-second optimized compile/link                                                                               |
-| Isolated native release launch                 |                                      about 3 seconds | Low runtime pressure | Private isolated metadata, no task start, expected timeout, and no remaining QuireForge process                                     |
-| Desktop/mobile cleanup visual inspection       | Focused trace capture plus a 4.2-second browser run | Low runtime pressure | Destructive hierarchy, branch-preservation copy, recovery separation, controls, and stacked mobile layout were legible             |
+| Operation                                |                                   Observed wall time | Approximate peak RSS | Result                                                                                                                              |
+| ---------------------------------------- | ---------------------------------------------------: | -------------------: | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Focused native worktree suite            | about 7.6 seconds including incremental compile/link |     Not instrumented | Passed 19 worktree tests plus matched project coverage, including recovery, removal, races, filters, partial failure, and ownership |
+| Desktop component/contract suite         |                                    about 6.4 seconds |     Not instrumented | Passed 84 tests across 15 files                                                                                                     |
+| Complete non-browser repository gate     |                                        33.38 seconds |        about 891 MiB | Passed 87 JavaScript tests and 108 Rust tests; 106 Rust tests passed and 2 deliberate live probes were ignored                      |
+| Combined desktop/website browser gate    |                                        17.12 seconds |        about 370 MiB | Passed all 24 desktop/mobile checks with recovery/cleanup, axe, and overflow analysis                                               |
+| Warm unbundled native release build      |                                        31.31 seconds |       about 1.98 GiB | Passed, including a 27.20-second optimized compile/link                                                                             |
+| Isolated native release launch           |                                      about 3 seconds | Low runtime pressure | Private isolated metadata, no task start, expected timeout, and no remaining QuireForge process                                     |
+| Desktop/mobile cleanup visual inspection |  Focused trace capture plus a 4.2-second browser run | Low runtime pressure | Destructive hierarchy, branch-preservation copy, recovery separation, controls, and stacked mobile layout were legible              |
 
 The final complete gate was about 21% faster than Milestone 11B's 42.19-second
 baseline, the browser gate about 11% faster than 19.29 seconds, and the release
@@ -551,3 +551,47 @@ dependency download, clean build, cache reset, competing project build,
 user-repository mutation, live model call, or GPU-compute workload. Temporary
 launch and visual-capture files were removed after inspection; project and
 dependency caches were preserved.
+
+## Milestone 12 measurements
+
+The integrated-terminal milestone uses the Balanced profile with four Cargo
+workers and two Playwright workers. It preserves the warm Cargo, pnpm, Vite,
+Astro, and Playwright caches. The first locked dependency operation added
+`portable-pty`, base64/libc support, and stable xterm packages without changing
+the package manager, linker, compiler, swap, zram, driver, or GPU configuration.
+
+| Operation                                     | Observed wall time |                                           Approximate peak RSS | Result                                                                                                                |
+| --------------------------------------------- | -----------------: | -------------------------------------------------------------: | --------------------------------------------------------------------------------------------------------------------- |
+| Warm desktop TypeScript preflight             |       1.66 seconds |                                                  about 265 MiB | Passed before implementation                                                                                          |
+| Warm native `cargo check` preflight           |        0.30 second |                                                  about 225 MiB | Passed before implementation                                                                                          |
+| Locked dependency installation                |       6.38 seconds |                                                 about 1.04 GiB | Added only reviewed locked terminal dependencies; cache preserved                                                     |
+| Focused terminal native suite after hardening |       6.40 seconds |                 Not separately instrumented on the final rerun | Passed 9 real/local PTY and contract tests; incremental compile dominated                                             |
+| Complete desktop type/lint/unit pass          | about 17.7 seconds | Typecheck subprocess about 142 MiB; aggregate not instrumented | Passed 97 tests across 18 files plus typecheck and lint                                                               |
+| Complete repository gate                      |      39.01 seconds |                                                  about 929 MiB | Passed 100 JavaScript tests and 119 Rust tests; 117 passed and 2 deliberate live probes were ignored                  |
+| Combined browser gate                         |      19.24 seconds |                                                  about 393 MiB | Passed all 26 desktop/mobile checks, including the mounted xterm tab, axe, and overflow analysis                      |
+| Warm unbundled native release build           |      88.76 seconds |                                                 about 1.82 GiB | Passed after the first optimized compile of newly added PTY dependency edges                                          |
+| Isolated native PTY launch and visual review  |    about 6 seconds |                                           Low runtime pressure | Private metadata at mode `0600`, no GVFS noise, no remaining process; desktop/mobile terminal composition was legible |
+
+One focused native attempt failed after about 5.8 seconds at roughly 1.31 GiB
+RSS because newly added tests omitted three test-module imports. The corrected
+suite passed; this was a source-level test wiring issue, not OOM, swapping, PTY
+failure, or a product runtime defect. A later security review added native
+pre-decode input bounds and canonical UUIDv7 checks before the final focused
+rerun. The RTX 3050 remains inapplicable: the selected DOM renderer and all
+ordinary Rust/TypeScript work use CPU, system RAM, and storage.
+
+The release build was about 184% slower than Milestone 11C's 31.31-second warm
+baseline and crossed the dynamic-update threshold. The changed assumption was
+release-cache warmth after introducing native PTY and GTK dependency edges; the
+1.82 GiB peak remained below the earlier 1.98 GiB peak, and the operation still
+fit inside the approved 35–80-minute aggregate command allowance. The overall
+milestone forecast therefore remained unchanged with medium confidence.
+
+Final validation reused the warmed dependency graph: the complete repository
+gate took 39.01 seconds at about 929 MiB and the browser gate took 19.24 seconds
+at about 393 MiB. All timed final gates reported zero swaps. The isolated
+release launch emitted no earlier GVFS warning, created only private test state,
+and left no QuireForge process. Controlled desktop/mobile fixture inspection
+showed a legible project selector, Linux-account warning, tab state, close
+affordance, cursor, terminal surface, and stacked mobile layout with no
+horizontal overflow. Temporary launch and capture data were removed.

@@ -1,9 +1,8 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the website foundation and
-desktop work implemented locally through Milestone 11C. Terminal, packaging,
-deployment, and integration interfaces remain subject to separately gated
-milestones.
+desktop work implemented locally through Milestone 12. Packaging, deployment,
+and integration interfaces remain subject to separately gated milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -579,6 +578,32 @@ preflight and inherits a controlled environment. GUI-launched Linux apps often
 do not inherit shell dotfile `PATH`; Codex discovery and shell environment
 handling must therefore use explicit, documented resolution rules.
 
+Milestone 12 implements that boundary with `portable-pty` and stable xterm
+packages. Native code owns each PTY master, writer, child handle, Linux session
+identity, output window, and project reservation. React receives only an
+app-owned UUIDv7, project ID, title, state, dimensions, exit code, bounded
+base64 chunks, and stable diagnostics; it cannot select or observe the cwd,
+shell, environment, TTY, PID, process group, or session ID. Eight live or
+recoverable tabs are allowed. Each live tab retains at most one MiB/512 chunks,
+and a poll returns at most 128 KiB/64 chunks with explicit truncation state.
+
+The child environment is cleared and rebuilt from a fixed system `PATH`,
+terminal identity, and a narrow desktop/session allowlist. Credential-shaped
+variables, SSH/GPG agent sockets, and Codex/QuireForge process configuration
+are not inherited. User shell startup files may intentionally add environment
+after launch. Closing a tab sends bounded HUP, TERM, and KILL phases only to
+processes whose numeric `/proc` records still belong to the owned session,
+then waits on the retained child handle. A process that deliberately creates a
+new session is outside the tab ownership boundary.
+
+SQLite migration 5 stores only the tab ID, project ID, title, state,
+dimensions, exit code, and timestamps. Running/closing records become
+interrupted on restart; QuireForge does not claim to recover process ownership
+and never persists input, output, scrollback, history, cwd, environment, or
+process identity. Integrated terminal input uses the Linux account's ordinary
+privileges and remains separate from Codex approval semantics. See
+[ADR 0017](DECISIONS/0017-native-integrated-terminal.md).
+
 ## Git and worktrees
 
 Git commands use argv arrays, explicit cwd, bounded output, and no shell
@@ -648,7 +673,6 @@ Most tests require neither model calls nor third-party authorization.
 ## Open architecture decisions
 
 - Oldest supported Ubuntu packaging baseline.
-- PTY implementation and terminal renderer.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or
   only through Codex-supported configuration RPCs.

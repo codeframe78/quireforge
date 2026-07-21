@@ -4,9 +4,10 @@ Status: initial Milestone 0 model with the Milestone 3 frontend/native boundary,
 Milestone 4 Codex process adapter, Milestone 5 authentication controls, and
 Milestone 6 native directory-attachment controls, Milestone 7 native
 conversation controls, Milestone 8A native lifecycle/recovery controls, and
-Milestone 9 approval/activity controls, Milestone 10 reviewed Git controls, and
-Milestone 11A–11C managed-worktree/parallel-execution/cleanup controls applied.
-It must be revisited before integrations, packaging, and release milestones.
+Milestone 9 approval/activity controls, Milestone 10 reviewed Git controls,
+Milestone 11A–11C managed-worktree/parallel-execution/cleanup controls, and
+Milestone 12 native PTY controls applied. It must be revisited before
+integrations, packaging, and release milestones.
 
 ## Assets
 
@@ -147,9 +148,27 @@ escalation.
 Controls:
 
 - Prefer argv arrays and avoid shell interpolation.
-- Sanitize rendered terminal/control sequences where not handled by the terminal
-  emulator.
-- Bound captured output and process lifetime.
+- Keep PTY ownership native. React may submit only an app-owned UUIDv7, bounded
+  base64 input, output cursor, or bounded dimensions; never cwd, shell,
+  environment, TTY, PID, process group, session ID, signal, or executable.
+- Use the stable xterm DOM renderer without link/WebGL/proposed-API addons.
+  Keep terminal escape handling inside the emulator and never project terminal
+  content into ordinary trusted application markup.
+- Bound each live output window to one MiB/512 chunks, each poll to 128 KiB/64
+  chunks, each input to 64 KiB after a pre-decode encoded-size check, terminal
+  dimensions, the registry to eight entries, and cleanup phases to fixed waits.
+- Clear the child environment and reconstruct only a fixed system `PATH`,
+  terminal identity, and narrow desktop/session allowlist. Do not inherit
+  credential/API variables, SSH/GPG agent sockets, or Codex/QuireForge process
+  configuration.
+- Retain the session-leader child handle and start time. Before signaling,
+  enumerate only numeric `/proc` stat identity and require exact owned-session
+  membership; never read arguments or environments. Send bounded HUP/TERM/KILL,
+  reap the child, and keep a cleanup failure visible rather than silently
+  dropping ownership.
+- Persist only bounded presentation metadata. Mark stale live records
+  interrupted on restart and do not persist terminal input, output, scrollback,
+  shell history, cwd, environment, TTY, or process/session identity.
 - Correlate approvals to exact command/cwd/turn.
 - Correlate approval responses to the native request while accepting only an
   app-owned approval UUID from React.
@@ -158,6 +177,9 @@ Controls:
 - Buffer command output to a line boundary before redaction so credential
   assignments split across chunks are not exposed.
 - Keep integrated terminals separate from Codex approval semantics.
+- Warn that terminal input runs with the user's Linux-account privileges and
+  require explicit confirmation before ending the owned foreground/background
+  session. Closing a terminal never becomes filesystem deletion.
 - Never offer bypass modes as an innocuous default.
 - Reject the `danger-full-access` plus `never` approval combination and validate
   model/reasoning choices against the live supported catalog.
