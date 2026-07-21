@@ -2,8 +2,4 @@ self-hosted-runner:
   labels:
     - upcloud
     - ubuntu-24.04
-    - android
-    - gradle
-    - rust
-    - node
-    - docker
+    - build
