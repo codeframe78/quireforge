@@ -16,7 +16,8 @@ concurrency:
 jobs:
   validate:
     name: Validate tracked sources
-    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 10
     steps:
       - name: Check out repository
@@ -30,7 +31,8 @@ jobs:
 
   website:
     name: Website quality gate
-    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 20
     steps:
       - name: Check out repository
@@ -48,6 +50,12 @@ jobs:
           node-version: 22.22.1
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Rust formatting component
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: stable
+          components: rustfmt
 
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
@@ -71,32 +79,19 @@ jobs:
         run: pnpm validate:dist
 
       - name: Install Chromium for browser checks
-        run: pnpm --filter @quireforge/website exec playwright install --with-deps chromium
+        run: pnpm --filter @quireforge/website exec playwright install chromium
 
       - name: Run responsive and accessibility checks
         run: pnpm --filter @quireforge/website test:e2e
 
   desktop:
     name: Desktop quality gate
-    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 35
     steps:
       - name: Check out repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
-      - name: Install Tauri Linux prerequisites
-        run: |
-          sudo apt-get update
-          sudo apt-get install --yes \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
 
       - name: Install pnpm
         uses: pnpm/action-setup@008330803749db0355799c700092d9a85fd074e9 # v6.0.9
@@ -112,7 +107,10 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
 
       - name: Install Rust with formatting and linting components
-        run: rustup toolchain install stable --profile minimal --component rustfmt,clippy
+        uses: dtolnay/rust-toolchain@4cda84d5c5c54efe2404f9d843567869ab1699d4 # stable
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
 
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
@@ -133,7 +131,7 @@ jobs:
         run: pnpm --filter @quireforge/desktop build
 
       - name: Install Chromium for desktop browser checks
-        run: pnpm --filter @quireforge/desktop exec playwright install --with-deps chromium
+        run: pnpm --filter @quireforge/desktop exec playwright install chromium
 
       - name: Run desktop accessibility and responsive checks
         run: pnpm --filter @quireforge/desktop test:e2e
