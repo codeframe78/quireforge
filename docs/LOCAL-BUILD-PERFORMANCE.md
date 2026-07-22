@@ -862,9 +862,10 @@ expected attachment surface and all final checks passed.
 ## Milestone 15C measurements
 
 The reviewed desktop-integration checkpoint reused warm Cargo, pnpm, Vite,
-Astro, and browser caches. It added Tauri's official Rust notification plugin;
-no clean build, cache reset, schema migration, linker, driver, CUDA, swap, or
-zram change was made, and the RTX 3050 remained unused.
+Astro, and browser caches. It added Tauri's official Rust notification plugin
+and later made the already-transitive GTK binding direct for a path-private
+Linux drop fallback; no clean build, cache reset, schema migration, linker,
+driver, CUDA, swap, or zram change was made, and the RTX 3050 remained unused.
 
 | Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                                   |
 | ----------------------------------------------- | -----------------: | -------------------: | -------------------------------------------------------------------------------------------------------- |
@@ -880,6 +881,9 @@ zram change was made, and the RTX 3050 remained unused.
 | Post-probe complete default `pnpm validate` gate |      74.35 seconds |       about 1.62 GiB | Passed 142 frontend tests and 166 default-feature Rust tests; 163 passed and 3 live probes were ignored   |
 | Post-probe desktop Playwright regression        |      27.47 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
 | Post-probe website Playwright regression        |       7.25 seconds |        about 253 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
+| Post-X11-fix complete default `pnpm validate`    |      62.29 seconds |       about 1.34 GiB | Passed 143 frontend tests and 167 Rust tests; 164 passed and 3 deliberate live probes were ignored       |
+| Post-X11-fix desktop Playwright regression       |      27.18 seconds |        about 443 MiB | Passed 24 desktop/mobile checks, including attachment metadata, accessibility, and overflow              |
+| Post-X11-fix website Playwright regression       |       7.02 seconds |        about 250 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
 
 Every resource-timed final operation reported zero swaps. The desktop bundle
 is 788.43 kB/211.88 kB gzip and retains the existing chunk-size warning. The
@@ -892,5 +896,15 @@ provided the accepted native artifact. Routine tests made no personal Codex-
 state read/mutation, live/billable model call, package, release, deployment, or
 hosting change. The native probe delivered only fixed production copy through
 the GNOME Wayland notification service, and the normal artifact replaced it
-immediately afterward. Interactive Wayland picker/attachment and true X11-login
-evidence remain open.
+immediately afterward.
+
+The later true-X11 QA pass reused the guest's warm target and pnpm stores. The
+corrected production build compiled in 37.38 seconds, the feature-gated probe
+in 40.15 seconds, and the restored normal build in 37.94 seconds. The pass used
+an Ubuntu 24.04 GNOME 46 Xorg guest and the attached repository via virtiofs;
+it caught and corrected WebKitGTK's empty HTML `FileList` for Nautilus drops.
+The corrected host gates and both browser suites then passed with zero swaps as
+recorded above. A final configured build of the exact reviewed tree compiled in
+37.81 seconds and again excluded the probe-only markers. No package, release,
+deployment, host desktop-package change, or live model call was made.
+Interactive Wayland picker/attachment evidence remains open.

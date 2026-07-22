@@ -254,13 +254,16 @@ released a usable application.
   packages, releases, and deployments remain excluded. UTF-8 markup can appear
   only as inert normalized text.
 - The Milestone 15B bounded conversation-image attachment flow: explicit native
-  picker and browser drag/drop sources; strict PNG/JPEG byte, dimension, name,
-  count, and total limits; private mode-`0700`/`0600` staging; opaque one-use
-  UUIDv7 draft IDs; cancellation, expiry, startup, failure, and terminal-turn
-  cleanup; and documented `localImage` inputs on start, resume, and fork. Raw
-  source/staging paths never cross IPC or persist in QuireForge metadata.
-  Generic files, browser path events, arbitrary filesystem reads, live model
-  calls in routine tests, packages, releases, and deployments remain excluded.
+  picker, bounded browser-byte drop, and native-only Linux file-manager drop
+  sources; strict PNG/JPEG byte, dimension, name, count, and total limits;
+  private mode-`0700`/`0600` staging; opaque one-use UUIDv7 draft IDs;
+  cancellation, expiry, startup, failure, and terminal-turn cleanup; and
+  documented `localImage` inputs on start, resume, and fork. Tauri's
+  path-bearing events remain disabled; a short-lived GTK URI capture fixes
+  WebKitGTK's empty HTML `FileList` without sending source/staging paths through
+  IPC or persisting them in QuireForge metadata. Generic files, browser path
+  events, arbitrary filesystem reads, live model calls in routine tests,
+  packages, releases, and deployments remain excluded.
 - The Milestone 15C reviewed desktop-integration checkpoint: five-minute,
   one-use UUIDv7 preview handoffs; confirmation that names the relative file and
   fixed system-default-application destination; fresh attachment, containment,
@@ -270,9 +273,10 @@ released a usable application.
   provide neither a path nor an application/command, the webview receives no
   direct opener/notification plugin permission, and full display-session
   acceptance remains separately evidenced. The configured production artifact
-  now has a verified native Wayland launch and complete XWayland picker,
-  preview, confirmation, default-application, and consumed-action path; true
-  X11-login and interactive Wayland picker/attachment evidence remain open. A
+  now has a verified native Wayland launch and complete XWayland and true-X11
+  picker, preview, confirmation, default-application, attachment, and
+  consumed-action paths; interactive Wayland picker/attachment evidence remains
+  open. A
   disabled-by-default native-only probe verifies real desktop notification
   delivery with fixed production copy and no webview command or arbitrary
   content; the normal artifact is rebuilt without that feature after the probe.

@@ -3,8 +3,8 @@
 Status: desktop work through Milestone 15B is implemented and verified on the
 discovery host. Milestone 15C's reviewed handoff and notification code is
 implemented; its production Wayland launch and fixed-copy notification delivery
-plus the complete XWayland handoff path are verified, while interactive Wayland
-picker/attachment and true X11-login acceptance remain open.
+plus the complete XWayland and true-X11 handoff/attachment paths are verified,
+while interactive Wayland picker/attachment acceptance remains open.
 Milestone 13 defines the Codex 0.145.0 integration contract and read-only
 catalog; Milestones 14A–14C add fixed integration workflows, and Milestones
 15A–15C add bounded local-file, conversation-image, and desktop-integration
@@ -248,10 +248,13 @@ Codex attachments.
 Native picker selections may come from outside an attached project only through
 an explicit dialog choice; QuireForge copies validated bytes into private app
 data and does not retain the source path. Browser drag/drop uses HTML `File`
-bytes with Tauri default file-drop events disabled, so WebKitGTK does not become
-a native path bridge. Source and staged paths remain native-only. Interactive
-picker/drop behavior on both target Wayland and X11 sessions remains part of
-the 15C manual compatibility gate.
+bytes with Tauri default file-drop events disabled. On the Ubuntu X11 QA guest,
+WebKitGTK produced an empty HTML `FileList` for a real Nautilus drop. The
+corrected Linux path captures the GTK URI list for at most 30 seconds in Rust
+and consumes it once through a path-free fixed command from the visible drop
+zone. Source and staged paths remain native-only; React receives only normalized
+metadata. Interactive Wayland picker/drop behavior remains part of the 15C
+manual compatibility gate.
 
 ## Desktop handoff and notification compatibility
 
@@ -279,7 +282,19 @@ against disposable QuireForge app data. The registered host viewer received
 the revalidated file. A raw `cargo build --release` diagnostic artifact was not
 accepted because it retained Tauri's development URL and therefore attempted
 `127.0.0.1:1420`; rebuilding through the configured Tauri command corrected
-that launch before evidence was recorded. No true X11 login was available.
+that launch before evidence was recorded. No true X11 login was available on
+the discovery host.
+
+A separate Ubuntu 24.04 GNOME 46 QA guest supplied that missing session without
+changing host desktop packages. GDM selected `ubuntu-xorg`; `loginctl` reported
+`Type=x11`, `/usr/lib/xorg/Xorg` owned `DISPLAY=:0`, and the shell environment
+contained no `WAYLAND_DISPLAY`. The guest mounted the attached repository in
+place through virtiofs. The configured production artifact completed project
+attachment review, README selection and bounded preview, the separate system-
+default-application confirmation and viewer launch, native image picking, and a
+real Nautilus image drop. Virtio graphics required
+`WEBKIT_DISABLE_DMABUF_RENDERER=1` plus `LIBGL_ALWAYS_SOFTWARE=1`; this is a QA
+VM rendering workaround, not a product support claim.
 
 The disabled-by-default `manual-notification-probe` Cargo feature supplied the
 missing non-billable delivery check without creating a conversation or adding a
@@ -289,12 +304,15 @@ through GNOME's Freedesktop notification service under `GDK_BACKEND=wayland`.
 A filtered D-Bus capture contained only the `quireforge` application identity,
 `Codex task completed`, and `Return to QuireForge to review the result.` The
 configured normal build then replaced the probe artifact; a binary string check
-confirmed that neither the probe flag nor its delivery log remained. This is
-Wayland notification-service evidence, not a substitute for the still-open
-interactive picker/attachment flow or a true X11 login. The discovery host has
-no installed `/usr/share/xsessions` session descriptor, so a true X11 pass
-requires a separately prepared supported host/session rather than relabeling
-the available XWayland display.
+confirmed that neither the probe flag nor its delivery log remained.
+
+The same fixed-copy probe also delivered through the true X11 guest's
+Freedesktop service. Its filtered D-Bus capture contained the `quireforge`
+identity and the same fixed title/body; session evidence was recorded alongside
+the active Xorg process. The normal production artifact was rebuilt afterward
+and excluded the probe-only flag and log marker. This closes the true-X11
+manual gate without relabeling XWayland. The interactive Wayland picker/
+attachment pass remains open.
 
 ## Website-host compatibility
 
@@ -307,7 +325,8 @@ GitHub Pages remains disabled and is not a production fallback.
 
 ## Known discovery limitations
 
-- Only one local Linux environment and one Codex account were inspected.
+- One physical Linux discovery host, one dedicated local X11 QA guest, and one
+  Codex account were inspected; this is not a distribution-support matrix.
 - No real connector authorization or plugin installation was performed.
 - No administrator-managed workspace was available for live policy tests.
 - App-server protocol contracts can change with the installed Codex version.

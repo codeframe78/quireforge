@@ -390,12 +390,17 @@ See [ADR 0021](DECISIONS/0021-safe-project-file-previews.md).
 
 ### Milestone 15B conversation-image boundary
 
-`ConversationAttachmentService` accepts either explicit paths returned by the
-native picker or bounded PNG/JPEG bytes from an HTML drag/drop event. Tauri's
-default file-drop handling is disabled so the webview never receives native
-filesystem paths. Picker paths remain in Rust; dropped browser `File` objects
-are read only after an explicit user gesture and carry bytes, a safe display
-name, and a declared image type to the fixed staging command.
+`ConversationAttachmentService` accepts explicit paths returned by the native
+picker, bounded PNG/JPEG bytes from an HTML drag/drop event, or a one-use Linux
+file-manager drop captured by GTK. Tauri's default file-drop handling remains
+disabled so the webview never receives native filesystem paths. Picker paths
+remain in Rust; dropped browser `File` objects are read only after an explicit
+user gesture and carry bytes, a safe display name, and a declared image type to
+the fixed staging command. When WebKitGTK supplies an empty HTML `FileList`, a
+Linux-only GTK signal retains at most five file URIs (four allowed plus one
+overflow sentinel) in process memory for 30 seconds. The drop zone invokes a
+separate path-free claim command, after which Rust consumes the slot and applies
+the normal file/content limits.
 
 Rust independently validates the real PNG/JPEG structure, dimensions, MIME,
 4 MiB per-file and four-file/16 MiB aggregate limits, refuses symlinks and

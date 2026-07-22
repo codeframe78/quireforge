@@ -501,8 +501,11 @@ Controls:
   regular non-symlink state, descriptor path, and the previewed device/inode.
   Consume the action once and cap/expire all pending handoffs.
 - Disable Tauri's default path-bearing file-drop events. Treat browser drops as
-  explicit bounded byte inputs only; picker paths remain native and are never
-  returned to React.
+  explicit bounded byte inputs. If WebKitGTK supplies an empty HTML `FileList`,
+  retain at most five Linux file URIs (four allowed plus one overflow sentinel)
+  in a 30-second native-only one-use slot and let the visible drop zone claim it
+  through a path-free fixed command. Picker/captured paths remain native and
+  are never returned to React.
 - Accept only structurally validated PNG/JPEG conversation images: four files,
   4 MiB each/16 MiB aggregate, safe display names, and bounded dimensions.
   Refuse text, PDF, SVG, generic binary, mismatched declared type, symlinks, and

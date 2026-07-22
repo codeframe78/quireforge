@@ -32,6 +32,7 @@ const MAX_ATTACHMENT_BYTES: usize = 4 * 1024 * 1024;
 const MAX_TOTAL_BYTES: usize = MAX_CONVERSATION_ATTACHMENTS * MAX_ATTACHMENT_BYTES;
 const MAX_BASE64_BYTES: usize = MAX_ATTACHMENT_BYTES.div_ceil(3) * 4;
 const ATTACHMENT_TTL: Duration = Duration::from_secs(15 * 60);
+const NATIVE_DROP_TTL: Duration = Duration::from_secs(30);
 
 pub struct ConversationAttachmentService {
     staging_root: Option<PathBuf>,
@@ -42,6 +43,12 @@ pub struct ConversationAttachmentService {
 struct AttachmentState {
     pending: Vec<StagedAttachment>,
     in_flight: HashMap<String, Vec<StagedAttachment>>,
+    native_drop: Option<CapturedNativeDrop>,
+}
+
+struct CapturedNativeDrop {
+    paths: Vec<PathBuf>,
+    captured_at: Instant,
 }
 
 #[derive(Clone)]
@@ -158,7 +165,7 @@ impl ConversationAttachmentService {
         }
         let prepared = selected_paths
             .iter()
-            .map(|path| prepare_picker_attachment(path))
+            .map(|path| prepare_path_attachment(path, ConversationAttachmentSource::NativePicker))
             .collect::<Result<Vec<_>, _>>();
         match prepared {
             Ok(prepared) => self.stage_prepared(project_id, prepared),
@@ -177,6 +184,12 @@ impl ConversationAttachmentService {
                 project_for_error(&project_id, code),
                 code,
             );
+        }
+        if let Ok(mut state) = self.state.lock() {
+            // Some WebKitGTK versions expose both browser bytes and the GTK
+            // URI selection. A successful byte-route attempt consumes the
+            // corresponding native fallback so it cannot be replayed.
+            state.native_drop = None;
         }
         if request.files.is_empty() || request.files.len() > MAX_CONVERSATION_ATTACHMENTS {
             return ConversationAttachmentSnapshot::unavailable(
@@ -212,6 +225,68 @@ impl ConversationAttachmentService {
                     height: image.height,
                 })
             })
+            .collect::<Result<Vec<_>, _>>();
+        match prepared {
+            Ok(prepared) => self.stage_prepared(project_id, prepared),
+            Err(code) => ConversationAttachmentSnapshot::unavailable(Some(project_id), code),
+        }
+    }
+
+    pub fn capture_native_drop(&self, paths: Vec<PathBuf>) {
+        let Ok(mut state) = self.state.lock() else {
+            return;
+        };
+        state.native_drop = Some(CapturedNativeDrop {
+            paths: paths
+                .into_iter()
+                .take(MAX_CONVERSATION_ATTACHMENTS + 1)
+                .collect(),
+            captured_at: Instant::now(),
+        });
+    }
+
+    pub fn stage_native_drop(
+        &self,
+        project_id: String,
+        projects: &ProjectService,
+    ) -> ConversationAttachmentSnapshot {
+        if let Err(code) = validate_project(&project_id, projects) {
+            return ConversationAttachmentSnapshot::unavailable(
+                project_for_error(&project_id, code),
+                code,
+            );
+        }
+        let capture = match self.state.lock() {
+            Ok(mut state) => state.native_drop.take(),
+            Err(_) => {
+                return ConversationAttachmentSnapshot::unavailable(
+                    Some(project_id),
+                    ConversationAttachmentDiagnosticCode::StagingUnavailable,
+                )
+            }
+        };
+        let Some(capture) =
+            capture.filter(|capture| capture.captured_at.elapsed() <= NATIVE_DROP_TTL)
+        else {
+            return ConversationAttachmentSnapshot::unavailable(
+                Some(project_id),
+                ConversationAttachmentDiagnosticCode::InvalidRequest,
+            );
+        };
+        if capture.paths.is_empty() || capture.paths.len() > MAX_CONVERSATION_ATTACHMENTS {
+            return ConversationAttachmentSnapshot::unavailable(
+                Some(project_id),
+                if capture.paths.is_empty() {
+                    ConversationAttachmentDiagnosticCode::InvalidRequest
+                } else {
+                    ConversationAttachmentDiagnosticCode::TooManyFiles
+                },
+            );
+        }
+        let prepared = capture
+            .paths
+            .iter()
+            .map(|path| prepare_path_attachment(path, ConversationAttachmentSource::DragDrop))
             .collect::<Result<Vec<_>, _>>();
         match prepared {
             Ok(prepared) => self.stage_prepared(project_id, prepared),
@@ -490,8 +565,9 @@ fn valid_staged_filename(value: &str) -> bool {
     valid_uuid_v7(id) && matches!(extension, "png" | "jpg")
 }
 
-fn prepare_picker_attachment(
+fn prepare_path_attachment(
     selected_path: &Path,
+    source: ConversationAttachmentSource,
 ) -> Result<PreparedAttachment, ConversationAttachmentDiagnosticCode> {
     if !selected_path.is_absolute() {
         return Err(ConversationAttachmentDiagnosticCode::InvalidRequest);
@@ -546,11 +622,42 @@ fn prepare_picker_attachment(
     let image = validate_attachment_image(&bytes).map_err(map_preview_error)?;
     Ok(PreparedAttachment {
         display_name,
-        source: ConversationAttachmentSource::NativePicker,
+        source,
         mime_type: image.mime_type,
         bytes,
         width: image.width,
         height: image.height,
+    })
+}
+
+#[cfg(target_os = "linux")]
+pub fn install_native_drop_capture(app: &tauri::AppHandle) -> tauri::Result<()> {
+    use gtk::prelude::*;
+    use tauri::Manager;
+
+    let Some(webview) = app.get_webview_window("main") else {
+        return Err(tauri::Error::WindowNotFound);
+    };
+    let handle = app.clone();
+    webview.with_webview(move |platform_webview| {
+        // WebKitGTK can deliver an empty HTML FileList for a real file-manager
+        // drop. Capture only file URIs in native process memory; the drop-zone
+        // command can claim them without serializing a source path to React.
+        platform_webview
+            .inner()
+            .connect_drag_data_received(move |_, _, _, _, data, _, _| {
+                let paths = data
+                    .uris()
+                    .into_iter()
+                    .filter_map(|uri| url::Url::parse(uri.as_str()).ok())
+                    .filter_map(|uri| uri.to_file_path().ok())
+                    .collect::<Vec<_>>();
+                if !paths.is_empty() {
+                    handle
+                        .state::<ConversationAttachmentService>()
+                        .capture_native_drop(paths);
+                }
+            });
     })
 }
 
@@ -922,6 +1029,45 @@ mod tests {
         assert_eq!(
             text_result.diagnostic_code,
             Some(ConversationAttachmentDiagnosticCode::UnsupportedType)
+        );
+
+        fs::remove_dir_all(project_directory).expect("project fixture must be removed");
+        fs::remove_dir_all(source_directory).expect("source fixture must be removed");
+        fs::remove_dir_all(staging_parent).expect("staging fixture must be removed");
+    }
+
+    #[test]
+    fn native_drop_capture_is_one_use_and_never_serializes_its_source_path() {
+        let project_directory = temporary_directory("native-drop-project");
+        let source_directory = temporary_directory("native-drop-source");
+        let staging_parent = temporary_directory("native-drop-staging");
+        let image = source_directory.join("dropped.png");
+        fs::write(&image, png_fixture()).expect("image fixture must be written");
+        let (projects, project_id) = attached_project(&project_directory);
+        let service = ConversationAttachmentService::open(staging_parent.join("staged"));
+
+        service.capture_native_drop(vec![image.clone()]);
+        let accepted = service.stage_native_drop(project_id.clone(), &projects);
+        assert_eq!(accepted.state, ConversationAttachmentState::Ready);
+        assert_eq!(accepted.attachments.len(), 1);
+        assert_eq!(
+            accepted.attachments[0].source,
+            ConversationAttachmentSource::DragDrop
+        );
+        let serialized = serde_json::to_string(&accepted).expect("snapshot must serialize");
+        assert!(!serialized.contains(source_directory.to_string_lossy().as_ref()));
+
+        let replay = service.stage_native_drop(project_id.clone(), &projects);
+        assert_eq!(
+            replay.diagnostic_code,
+            Some(ConversationAttachmentDiagnosticCode::InvalidRequest)
+        );
+
+        service.capture_native_drop(vec![image; MAX_CONVERSATION_ATTACHMENTS + 1]);
+        let overflow = service.stage_native_drop(project_id, &projects);
+        assert_eq!(
+            overflow.diagnostic_code,
+            Some(ConversationAttachmentDiagnosticCode::TooManyFiles)
         );
 
         fs::remove_dir_all(project_directory).expect("project fixture must be removed");

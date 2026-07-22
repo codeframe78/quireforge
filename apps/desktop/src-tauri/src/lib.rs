@@ -468,6 +468,15 @@ fn conversation_attachment_stage_drop(
 }
 
 #[tauri::command]
+fn conversation_attachment_stage_native_drop(
+    project_id: String,
+    service: tauri::State<'_, ConversationAttachmentService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> ConversationAttachmentSnapshot {
+    service.stage_native_drop(project_id, &projects)
+}
+
+#[tauri::command]
 fn conversation_attachment_cancel(
     request: ConversationAttachmentCancelRequest,
     service: tauri::State<'_, ConversationAttachmentService>,
@@ -905,6 +914,8 @@ pub fn run() {
                     app.manage(ConversationAttachmentService::unavailable());
                 }
             }
+            #[cfg(target_os = "linux")]
+            attachment::install_native_drop_capture(app.handle())?;
             #[cfg(feature = "manual-notification-probe")]
             if desktop::manual_notification_probe_requested() {
                 let notifications = app.state::<DesktopNotificationService>();
@@ -960,6 +971,7 @@ pub fn run() {
             conversation_attachment_status,
             conversation_attachment_pick,
             conversation_attachment_stage_drop,
+            conversation_attachment_stage_native_drop,
             conversation_attachment_cancel,
             worktree_status,
             worktree_create_preview,

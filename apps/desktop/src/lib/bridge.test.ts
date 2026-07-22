@@ -34,6 +34,7 @@ import {
   CONVERSATION_ATTACHMENT_CANCEL_COMMAND,
   CONVERSATION_ATTACHMENT_PICK_COMMAND,
   CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND,
+  CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND,
   CONVERSATION_ATTACHMENT_STATUS_COMMAND,
   CONVERSATION_ACTIVE_COMMAND,
   CONVERSATION_INTERRUPT_COMMAND,
@@ -446,6 +447,9 @@ describe("desktop bridge", () => {
       stageDroppedConversationAttachments(dropRequest, invoke),
     ).resolves.toEqual(sharedConversationAttachmentFixture);
     await expect(
+      stageDroppedConversationAttachments({ projectId, files: [] }, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+    await expect(
       cancelConversationAttachments(cancelRequest, invoke),
     ).resolves.toEqual(sharedConversationAttachmentFixture);
 
@@ -453,6 +457,7 @@ describe("desktop bridge", () => {
       [CONVERSATION_ATTACHMENT_STATUS_COMMAND, { projectId }],
       [CONVERSATION_ATTACHMENT_PICK_COMMAND, { projectId }],
       [CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND, { request: dropRequest }],
+      [CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND, { projectId }],
       [CONVERSATION_ATTACHMENT_CANCEL_COMMAND, { request: cancelRequest }],
     ]);
     expect(JSON.stringify(invoke.mock.calls)).not.toContain("/private/");

@@ -164,9 +164,12 @@ interrupt accept only QuireForge's application conversation ID.
 Conversation start/resume/fork may additionally carry at most four opaque
 attachment UUIDv7s. `conversation_attachment_pick` owns its native picker path;
 `conversation_attachment_stage_drop` accepts only bounded PNG/JPEG bytes and
-safe display metadata; status/cancel commands expose no path. Native code
+safe display metadata. On Linux,
+`conversation_attachment_stage_native_drop` claims only the current one-use,
+30-second GTK file-manager capture for an opaque project ID; no source path is
+an IPC field or response. Status/cancel commands expose no path. Native code
 revalidates private staged copies and constructs documented `localImage` turn
-inputs. Tauri default drag/drop path events are disabled. Generic file
+inputs. Tauri default drag/drop path events remain disabled. Generic file
 attachments and arbitrary filesystem reads are not exposed.
 
 `file_preview_pick` also accepts only an opaque project ID. The file path comes

@@ -87,9 +87,10 @@ metadata-only PDF state. Active HTML/SVG rendering, APNG, unknown binary
 content, oversized files, and browser-side local selection remain unavailable;
 UTF-8 markup can appear only as inert normalized text. Milestone 15B adds
 explicit PNG/JPEG conversation attachments through the documented Codex
-`localImage` turn input. Native picker selections and browser drag/drop bytes
-are revalidated into private, short-lived app-owned copies; React receives only
-opaque IDs and normalized metadata. Generic file attachments and path-bearing
+`localImage` turn input. Native picker selections, bounded browser drop bytes,
+and Linux file-manager drops captured only in Rust are revalidated into
+private, short-lived app-owned copies; React receives only opaque IDs and
+normalized metadata. Generic file attachments and path-bearing frontend
 drag/drop remain unavailable. Milestone 15C adds a separately confirmed,
 one-use default-application handoff for a revalidated preview plus fixed-copy
 background approval/completion/failure notifications. React receives no
@@ -134,8 +135,8 @@ deployed. There is no application package to install yet.
   15B conversation-image attachment checkpoints are implemented and verified
   locally; the 15C handoff/notification code checkpoint is implemented and its
   production Wayland launch, fixed-copy notification delivery, and complete
-  XWayland handoff path are verified. Interactive Wayland picker/attachment and
-  true X11-login evidence remain open. Unsupported generic openers, file
+  XWayland and true-X11 handoff paths are verified. Interactive Wayland
+  picker/attachment evidence remains open. Unsupported generic openers, file
   attachments, and integration-management paths remain unavailable.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and

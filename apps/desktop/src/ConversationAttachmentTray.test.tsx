@@ -71,6 +71,18 @@ describe("ConversationAttachmentTray", () => {
     );
   });
 
+  it("claims a native-only drop when WebKitGTK supplies no browser files", async () => {
+    const { onDrop } = renderTray({
+      snapshot: scaffoldConversationAttachments,
+    });
+    const zone = screen.getByText("Drop PNG/JPEG images here").parentElement!;
+    fireEvent.drop(zone, { dataTransfer: { files: [] } });
+    await waitFor(() =>
+      expect(onDrop).toHaveBeenCalledWith({ projectId, files: [] }),
+    );
+    expect(document.body.textContent).not.toContain("/mnt/");
+  });
+
   it("keeps browser preview and oversized drops unavailable", () => {
     const { onDrop } = renderTray({
       availability: "preview",

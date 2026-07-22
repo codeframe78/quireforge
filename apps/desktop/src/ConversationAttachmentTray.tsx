@@ -82,7 +82,15 @@ export function ConversationAttachmentTray({
     setDropError(null);
     if (!enabled || !projectId) return;
     const files = [...event.dataTransfer.files];
-    if (files.length === 0 || files.length + attachments.length > 4) {
+    if (files.length === 0) {
+      try {
+        await onDrop({ projectId, files: [] });
+      } catch {
+        // App state owns the native-capture failure message.
+      }
+      return;
+    }
+    if (files.length + attachments.length > 4) {
       setDropError("Drop one to four images; a turn can hold four total.");
       return;
     }

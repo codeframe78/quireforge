@@ -555,8 +555,9 @@ reviewable:
   count limits, cancellation, and cleanup without turning drag/drop into a
   general path bridge. The implemented checkpoint accepts only PNG/JPEG,
   disables Tauri's default path-bearing drag/drop events, stages validated
-  bytes in private app data, sends only native `localImage` paths, and retains
-  each consumed copy until its turn is terminal. See
+  browser bytes or one-use native-captured Linux file drops in private app
+  data, sends only native `localImage` paths, and retains each consumed copy
+  until its turn is terminal. See
   [ADR 0022](DECISIONS/0022-bounded-conversation-image-attachments.md).
 - **15C — desktop handoffs and Linux verification:** add notifications and
   reviewed editor/open-with behavior, then verify native picker/handoff behavior
@@ -568,13 +569,14 @@ reviewable:
   [ADR 0023](DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md).
 
 Milestones 15A and 15B are implemented and verified locally. The 15C handoff
-and notification code checkpoint is implemented with one official Rust desktop
-dependency and no source-path persistence, unrelated user-file access, billable
-model call, package, release, or deployment. Its production Wayland launch and
-fixed-copy notification delivery plus the complete XWayland picker/preview/
-default-application handoff are verified on the attached discovery repository.
-The broader Milestone 15 acceptance remains open until an interactive Wayland
-picker/attachment pass and true X11-login verification are complete.
+and notification code checkpoint is implemented with the official Tauri
+notification plugin, a Linux binding already present in the Tauri stack, and no
+source-path persistence, unrelated user-file access, billable model call,
+package, release, or deployment. Its production Wayland launch and fixed-copy
+notification delivery plus the complete XWayland and true-X11 picker/preview/
+default-application/attachment paths are verified against the attached
+discovery repository. The broader Milestone 15 acceptance remains open only
+for an interactive Wayland picker/attachment pass.
 
 ### 16 — Complete Cloudflare Pages Website
 

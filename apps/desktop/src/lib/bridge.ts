@@ -165,6 +165,8 @@ export const CONVERSATION_ATTACHMENT_PICK_COMMAND =
   "conversation_attachment_pick";
 export const CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND =
   "conversation_attachment_stage_drop";
+export const CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND =
+  "conversation_attachment_stage_native_drop";
 export const CONVERSATION_ATTACHMENT_CANCEL_COMMAND =
   "conversation_attachment_cancel";
 export const WORKTREE_STATUS_COMMAND = "worktree_status";
@@ -503,6 +505,16 @@ export async function stageDroppedConversationAttachments(
   request: ConversationAttachmentDropRequest,
   invokeFunction: InvokeFunction = invokeTauri,
 ): Promise<ConversationAttachmentSnapshot> {
+  if (request.files.length === 0) {
+    const projectId = conversationStartRequestSchema.shape.projectId.parse(
+      request.projectId,
+    );
+    const payload = await invokeFunction(
+      CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND,
+      { projectId },
+    );
+    return conversationAttachmentSnapshotSchema.parse(payload);
+  }
   const reviewedRequest =
     conversationAttachmentDropRequestSchema.parse(request);
   const payload = await invokeFunction(

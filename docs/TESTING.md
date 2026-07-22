@@ -182,15 +182,15 @@ and overflow. They never read a user's project files.
 
 Milestone 15B adds a strict shared Rust/TypeScript conversation-attachment
 fixture. Native tests use temporary images and app-data roots to cover native
-picker and dragged-byte sources, symlink/name/type/size refusal, private file
-permissions, expiry, cancellation, tamper detection, one-use claim,
-path-free serialization, startup reconciliation, documented `localImage`
-construction, and terminal-turn cleanup. TypeScript rejects unknown fields,
-unsafe names, non-PNG/JPEG types, malformed IDs/base64, and inconsistent
-states. Bridge, component, application, and browser tests cover the four fixed
-commands, explicit start/resume/fork IDs, browser drag/drop/picker honesty,
-responsive layout, axe-core, and overflow. They use deterministic mock
-app-server processes and make no live model call.
+picker, dragged-byte, and one-use native-capture sources, symlink/name/type/size
+refusal, private file permissions, expiry, cancellation, tamper detection, one-
+use claim, path-free serialization, startup reconciliation, documented
+`localImage` construction, and terminal-turn cleanup. TypeScript rejects
+unknown fields, unsafe names, non-PNG/JPEG types, malformed IDs/base64, and
+inconsistent states. Bridge, component, application, and browser tests cover
+the five fixed commands, explicit start/resume/fork IDs, browser drag/drop/
+picker honesty, responsive layout, axe-core, and overflow. They use
+deterministic mock app-server processes and make no live model call.
 
 ## Milestone 13A contract checklist
 
@@ -323,7 +323,9 @@ app-server processes and make no live model call.
 
 - Confirm Tauri default file-drop events are disabled, picker paths stay native,
   and browser drops transmit only explicitly read bounded bytes plus a safe
-  name and declared PNG/JPEG type.
+  name and declared PNG/JPEG type. On Linux, confirm an empty WebKitGTK HTML
+  `FileList` claims only a 30-second native GTK capture through the fixed path-
+  free command, consumes it once, and returns no source path.
 - Confirm Rust independently validates real type/structure, dimensions, names,
   4 MiB per-file, four-file, and 16 MiB aggregate limits before creating
   mode-`0600` UUIDv7 copies under a mode-`0700` app-data root.
@@ -375,19 +377,23 @@ app-server processes and make no live model call.
   inspect unrelated user files, start a live model turn, or create a package,
   release, deployment, or hosting change.
 
-Current discovery-host evidence: the configured unbundled Tauri production
-artifact starts under native Wayland. The same artifact completed the attached-
-project picker, file picker, bounded README preview, second confirmation,
-system-default opener, and consumed-action state under XWayland with disposable
-app data. Desktop Playwright passed 24/24 and website Playwright passed 8/8.
-The feature-gated native probe delivered the fixed completed-task copy through
-the GNOME Wayland Freedesktop notification service; a filtered D-Bus capture
+Current display evidence: the configured unbundled Tauri production artifact
+starts under native Wayland. It completed the attached-project picker, file
+picker, bounded README preview, second confirmation, system-default opener, and
+consumed-action state under XWayland with disposable app data. In a separate
+Ubuntu 24.04 GNOME 46 `ubuntu-xorg` QA guest, `loginctl` reported `Type=x11`, an
+Xorg server owned display `:0`, and the shell environment had no
+`WAYLAND_DISPLAY`. Against the attached repository mounted in place, the
+production artifact completed project attach/review, README picker/preview/
+default-app handoff, attachment picker, and a real Nautilus image drop. That
+drop initially exposed an empty WebKitGTK HTML `FileList`; after the native-only
+GTK capture correction, the UI staged normalized `drag drop` metadata without
+a source path. The feature-gated probe delivered the fixed completed-task copy
+through the X11 session's Freedesktop service, and a filtered D-Bus capture
 contained only QuireForge identity plus the fixed title/body. The normal
 artifact was rebuilt afterward and contains no probe flag or delivery string.
-Interactive Wayland picker/attachment flow and a true X11 login remain
-unchecked; the host's XWayland display is not recorded as true X11 evidence.
-No `/usr/share/xsessions` descriptor is installed on the discovery host, so the
-X11 gate requires a separately prepared supported host/session.
+Interactive Wayland picker/attachment flow remains unchecked; XWayland is still
+recorded separately and was not relabeled as true X11.
 
 ## Planned manual Milestone 18 checklist
 
