@@ -822,7 +822,8 @@ fn apply_notification(
             return apply_server_request(active, request).map(|event| (Some(event), None));
         }
         AppServerNotification::AccountLoginCompleted { .. }
-        | AppServerNotification::AccountUpdated => return Ok((None, None)),
+        | AppServerNotification::AccountUpdated
+        | AppServerNotification::IntegrationRefresh(_) => return Ok((None, None)),
     };
     match notification {
         ConversationNotification::ThreadStarted { thread_id } => {

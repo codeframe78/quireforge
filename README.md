@@ -63,9 +63,12 @@ and metadata-only recovery that never stores shell content or process identity.
 Milestone 13A refreshed the Codex 0.145.0 protocol evidence and added strict
 shared contracts for connector, plugin, marketplace, skill, MCP, policy,
 requirement, scope, health, and app-owned dynamic-tool discovery. The contract
-preserves blocked, degraded, and unknown states while keeping every integration
-operation contract-only until the Milestone 13B native discovery service is
-implemented. Milestone 13A is merged and verified on `main`.
+preserves blocked, degraded, and unknown states. Milestone 13B adds the live
+read-only native catalog: supported app-server reads for connectors, skills,
+MCP, and policy; stable CLI JSON reads for plugins and marketplaces; strict
+normalization, version gating, cache invalidation, partial-failure handling, and
+one narrow typed IPC command. Installation, authorization, configuration
+mutation, and Integration Center UI remain Milestone 14 work.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -78,8 +81,8 @@ deployed. There is no application package to install yet.
 - Integration support: runtime compatibility retains Codex CLI 0.144.6
   fixtures and now includes a reviewed 0.145.0 integration schema subset.
   Account status and Codex-managed authentication are implemented; the 13A
-  catalog/dynamic-tool contract is complete, while live discovery and
-  integration workflows remain planned.
+  catalog/dynamic-tool contract and 13B native read-only discovery service are
+  complete, while user-facing integration workflows remain planned.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
@@ -90,13 +93,13 @@ deployed. There is no application package to install yet.
   the Milestone 11A managed-worktree inventory/create/attach foundation and
   Milestone 11B bounded parallel task monitor, retained-worktree recovery, and
   Milestone 11C clean managed-worktree cleanup, plus the Milestone 12 native
-  integrated terminal.
+  integrated terminal, plus the Milestone 13B normalized read-only integration
+  catalog boundary.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 13A protocol refresh and integration contract
-  architecture is complete, merged, and verified on `main`. Milestone 13B live
-  read-only discovery is next and requires a fresh reasoning/model/start gate
-  before implementation.
+- Current milestone: Milestone 13B live read-only integration discovery is
+  implemented and locally verified. Milestone 14 Integration Center and
+  mutation workflows require a fresh reasoning/model/start gate.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own

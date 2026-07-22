@@ -24,13 +24,13 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-21T20:21:58-07:00`
+Last updated: `2026-07-21T20:39:50-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                           |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Total milestones planned                  | 22 major milestones (0–21); Milestone 13 is split into 13A and 13B                                                                                          |
 | Total milestone entries completed         | 14 (Milestones 0–12 and 13A); 13 major roadmap milestones complete through the 13A checkpoint                                                               |
-| Milestones in progress                    | 0; Milestone 13 remains incomplete pending 13B                                                                                                               |
+| Milestones in progress                    | 1 (Milestone 13B)                                                                                                                                            |
 | Confirmed/reconstructed active execution  | Approximately 18.61–25.69 hours                                                                                                                             |
 | Confirmed/reconstructed automated wait    | Approximately 5.92–6.81 hours; early uninstrumented waits excluded                                                                                          |
 | Reconstructed user-blocked time           | At least 10.86 hours, plus unmeasured early approvals/prerequisites                                                                                         |
@@ -67,6 +67,7 @@ range endpoints.
 | 11        | Complete | `2026-07-20T12:19:40-07:00` | `2026-07-20T16:56:33-07:00` | 12.5–20.5 h active           | 4.08–6.08 h |    1.37–1.64 h |                   ≥1.64 h |          5.45–7.72 h |       ≥4.61 h | ~9.91 h / 60.1% below midpoint  | Reconstructed |
 | 12        | Complete | `2026-07-20T18:27:06-07:00` | `2026-07-20T19:59:04-07:00` | 5–8 h active; 6–10 h elapsed |     ~1.16 h |        ~0.38 h |                    0.00 h |               1.53 h |        1.53 h | ~4.97 h / 76.4% below midpoint  | Reconstructed |
 | 13A       | Complete | `2026-07-21T19:41:14-07:00` | `2026-07-21T20:21:58-07:00` | 3.5–6 h active; 4.5–7.5 h elapsed | 0.43 h | 0.14 h | 0.00 h | 0.57 h | 0.68 h | ~4.18 h / 88.0% below midpoint | Confirmed |
+| 13B       | In progress | `2026-07-21T20:39:50-07:00` | — | 2.5–4.25 h active; 3–5 h elapsed | Measuring | Measuring | 0.00 h to date | Measuring | Measuring | Pending | Prospective |
 
 Variance uses the midpoint of the historical forecast and counted-time ranges.
 It is included only where a recorded forecast exists and should not be read as
@@ -467,3 +468,30 @@ greater precision than the underlying ranges.
 - **Publication:** Implementation commit `bc98ee3` merged through PR #32 as
   `7bc5f5f`. No integration was installed or authorized, and no package,
   release, or deployment was produced.
+
+## Milestone 13B — Live read-only integration discovery
+
+- **Objective:** Implement the read-only native discovery and normalization
+  service, strict IPC, version/capability routing, bounded invalidation refresh,
+  and deterministic partial-failure handling against `codex-integration-v1`.
+- **Start:** `2026-07-21T20:39:50-07:00`, immediately after the calibrated
+  forecast and explicit user approval. Planning and calibration time before
+  this timestamp is excluded.
+- **Completion:** In progress.
+- **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
+- **Original preliminary forecast:** 2.5–4.5 active hours, 15–35 minutes of
+  local commands, and 3–5.5 total elapsed hours.
+- **Calibrated forecast:** 2.5–4.25 active hours, 12–30 minutes of local
+  commands, and 3–5 total elapsed hours in one or possibly two sessions;
+  medium confidence.
+- **Preflight evidence:** Clean synchronized `main` at `2833436`; Codex CLI
+  0.145.0; approximately 43 GiB available RAM and 720 GiB free ext4 storage;
+  warm 17 GiB Cargo target and pnpm caches. Desktop TypeScript checking passed
+  in 1.62 seconds at about 262 MiB RSS and four-worker `cargo check --locked`
+  passed in 1.30 seconds at about 478 MiB RSS. Both reported zero swaps.
+- **Active intervals:** Opened at `2026-07-21T20:39:50-07:00` on branch
+  `feat/milestone-13b-integration-discovery`.
+- **Automated wait / user-blocked:** Measuring / 0.00 hour after start to date.
+- **Counted / total elapsed:** Measuring prospectively.
+- **Confidence:** **Prospective**; start and subsequent intervals are being
+  recorded as the work occurs.

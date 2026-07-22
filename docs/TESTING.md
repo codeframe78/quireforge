@@ -6,8 +6,9 @@ conversation/runtime lifecycle, approvals, reviewed Git read/write checks, and
 managed worktrees with bounded parallel execution and safe cleanup/recovery,
 plus a native PTY boundary and integrated terminal interface.
 
-Milestone 13A adds versioned integration and dynamic-tool contract tests; live
-integration discovery is not implemented yet.
+Milestone 13A adds versioned integration and dynamic-tool contract tests.
+Milestone 13B adds live read-only native discovery, strict CLI/app-server
+normalization, invalidation, partial-failure, version-gate, and IPC tests.
 
 ## Repository, website, and desktop checks
 
@@ -119,6 +120,17 @@ Schema refresh uses only `codex --version` and local
 `codex app-server generate-json-schema --experimental`; it performs no account
 request or model call.
 
+Milestone 13B native tests use deterministic app-server shell fixtures and
+sanitized CLI JSON values. They verify connector list/installed state, stable
+CLI plugin and marketplace projection, skill/MCP/policy reads, category-only
+invalidation refresh, independent source failure, exact 0.145.x version gating,
+unknown-field/enum refusal, display sanitization, bounded identifiers, and the
+absence of raw paths, URLs, configuration, tool arguments, and upstream errors
+from serialized snapshots. The TypeScript bridge test validates the one fixed
+`integration_catalog_read` command against the same strict schema. No routine
+test reads a personal integration catalog, installs an integration, starts an
+authorization flow, changes Codex configuration, or makes a model call.
+
 ## Milestone 13A contract checklist
 
 - Confirm the generated manifest identifies CLI 0.145.0, hashes every selected
@@ -134,6 +146,25 @@ request or model call.
 - Run strict TypeScript/Rust contract tests, repository validation, complete
   non-browser gates, and a warm release build. A browser or native visual run
   is unnecessary because 13A introduces no user-facing surface.
+
+## Milestone 13B discovery checklist
+
+- Confirm the native service rejects CLI versions outside reviewed minor
+  0.145.x before starting discovery.
+- Confirm connectors, skills, MCP, and policy use only reviewed app-server
+  reads; plugin and marketplace reads use bounded stable CLI JSON rather than
+  under-development plugin RPCs.
+- Confirm app, skill, MCP-startup, config-warning, and account events retain
+  only closed refresh reasons and never their raw payloads.
+- Confirm a malformed or unavailable source degrades only its capabilities and
+  preserves independently discovered categories.
+- Confirm the sole frontend bridge is fixed-purpose and read-only; all mutation,
+  authorization, prompt-mention, and dynamic-tool capabilities remain
+  contract-only.
+- Run the complete non-browser gate, both Playwright viewport profiles, and a
+  warm unbundled native release build. No new visual surface is expected, so
+  browser verification is regression coverage rather than a new screenshot
+  approval.
 
 ## Planned manual Milestone 18 checklist
 

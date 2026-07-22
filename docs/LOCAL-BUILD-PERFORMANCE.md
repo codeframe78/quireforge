@@ -641,3 +641,29 @@ persistent host and retained dependency/compiler/browser caches removed the
 roughly 9.5-minute cold desktop path observed for Milestone 12. No additional
 cache action, clean build, or runner configuration change was made by Milestone
 13A.
+
+## Milestone 13B measurements
+
+The live read-only discovery checkpoint used the Balanced profile with four
+Cargo workers and two Playwright workers. It preserved the warm Cargo, pnpm,
+Vite, Astro, and browser caches and added no dependency, clean build, cache
+reset, schema migration, linker, driver, CUDA, swap, or zram change. The RTX
+3050 remained unused because discovery normalization, Rust/TypeScript builds,
+and browser regression tests are CPU/system-memory workloads.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+| --- | ---: | ---: | --- |
+| Desktop TypeScript preflight | 1.62 seconds | about 262 MiB | Passed with zero swaps |
+| Four-worker Cargo preflight | 1.30 seconds | about 478 MiB | Passed with zero swaps |
+| Final focused integration service suite | 10.29 seconds | about 1.41 GiB | Passed 7 discovery/version/failure tests |
+| Complete non-browser `pnpm validate` gate | 37.82 seconds | about 940 MiB | Passed 104 JavaScript tests and 129 Rust tests; 127 Rust tests passed and 2 deliberate live probes were ignored |
+| Desktop and website Playwright regression | 24.23 seconds | about 386 MiB | Passed 26 tests across desktop/mobile viewport profiles |
+| Final warm unbundled native release build | 40.35 seconds | about 1.85 GiB | Passed, including a 35.72-second optimized compile/link |
+
+All timed final gates reported zero swaps. Approximately 43 GiB RAM and 720
+GiB NVMe were available; no competing project build, OOM event, throttling,
+dependency download, personal integration inventory read, user-repository
+mutation, integration installation/authorization, model call, or GPU workload
+occurred. The service correction from experimental plugin RPCs to stable CLI
+JSON reused warm artifacts and did not require a clean rebuild. Browser tests
+were regression coverage because 13B adds no user-facing Integration Center.

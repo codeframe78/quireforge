@@ -133,6 +133,7 @@ REQUIRED_PATHS = (
     "apps/desktop/src-tauri/tauri.conf.json",
     "apps/desktop/src-tauri/src/codex/app_server.rs",
     "apps/desktop/src-tauri/src/codex/integration.rs",
+    "apps/desktop/src-tauri/src/codex/integration_service.rs",
     "apps/desktop/src-tauri/src/codex/conversation/lifecycle.rs",
     "apps/desktop/src-tauri/src/codex/auth/mod.rs",
     "apps/desktop/src-tauri/src/codex/auth/types.rs",
@@ -213,6 +214,8 @@ IDENTITY_EXPECTATIONS = {
     "apps/desktop/src-tauri/src/lib.rs": (
         "codex_runtime_probe",
         "CodexRuntimeService::default()",
+        "integration_catalog_read",
+        "IntegrationCatalogService::default()",
         "codex_auth_status",
         "codex_auth_start",
         "codex_auth_cancel",

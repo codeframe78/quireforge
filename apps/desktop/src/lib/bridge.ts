@@ -29,6 +29,10 @@ import {
 import { codexRuntimeSchema, type CodexRuntimeSnapshot } from "./codex";
 import { desktopBootstrapSchema, type DesktopBootstrap } from "./contract";
 import {
+  integrationCatalogSchema,
+  type IntegrationCatalogSnapshot,
+} from "./integration";
+import {
   conversationSnapshotSchema,
   conversationRegistrySchema,
   conversationStartRequestSchema,
@@ -94,6 +98,7 @@ export const CODEX_AUTH_CANCEL_COMMAND = "codex_auth_cancel";
 export const CODEX_AUTH_LOGOUT_COMMAND = "codex_auth_logout";
 export const CODEX_AUTH_OPEN_BROWSER_COMMAND = "codex_auth_open_browser";
 export const DESKTOP_BOOTSTRAP_COMMAND = "desktop_bootstrap";
+export const INTEGRATION_CATALOG_READ_COMMAND = "integration_catalog_read";
 export const PROJECT_WORKSPACE_STATUS_COMMAND = "project_workspace_status";
 export const PROJECT_PICK_DIRECTORY_COMMAND = "project_pick_directory";
 export const PROJECT_PICK_RELINK_COMMAND = "project_pick_relink";
@@ -154,6 +159,13 @@ export async function loadCodexRuntime(
 ): Promise<CodexRuntimeSnapshot> {
   const payload = await invokeFunction(CODEX_RUNTIME_PROBE_COMMAND);
   return codexRuntimeSchema.parse(payload);
+}
+
+export async function loadIntegrationCatalog(
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<IntegrationCatalogSnapshot> {
+  const payload = await invokeFunction(INTEGRATION_CATALOG_READ_COMMAND);
+  return integrationCatalogSchema.parse(payload);
 }
 
 export async function loadCodexAuth(

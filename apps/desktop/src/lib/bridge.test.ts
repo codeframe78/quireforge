@@ -87,9 +87,12 @@ import {
   startCodexAuth,
   startConversation,
   interruptConversation,
+  INTEGRATION_CATALOG_READ_COMMAND,
+  loadIntegrationCatalog,
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
 import { scaffoldProjectWorkspace } from "./project";
+import { scaffoldIntegrationCatalog } from "./integration";
 import {
   scaffoldWorktreeWorkspace,
   worktreePreviewSchema,
@@ -119,6 +122,21 @@ describe("desktop bridge", () => {
       scaffoldCodexRuntime,
     );
     expect(invoke).toHaveBeenCalledWith(CODEX_RUNTIME_PROBE_COMMAND);
+  });
+
+  it("loads only the strict normalized integration catalog", async () => {
+    const invoke = vi.fn().mockResolvedValue(scaffoldIntegrationCatalog);
+
+    await expect(loadIntegrationCatalog(invoke)).resolves.toEqual(
+      scaffoldIntegrationCatalog,
+    );
+    expect(invoke).toHaveBeenCalledWith(INTEGRATION_CATALOG_READ_COMMAND);
+
+    invoke.mockResolvedValueOnce({
+      ...scaffoldIntegrationCatalog,
+      rawProtocolPayload: { accountId: "private" },
+    });
+    await expect(loadIntegrationCatalog(invoke)).rejects.toThrow();
   });
 
   it("uses fixed typed authentication commands", async () => {
