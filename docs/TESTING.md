@@ -6,6 +6,9 @@ conversation/runtime lifecycle, approvals, reviewed Git read/write checks, and
 managed worktrees with bounded parallel execution and safe cleanup/recovery,
 plus a native PTY boundary and integrated terminal interface.
 
+Milestone 13A adds versioned integration and dynamic-tool contract tests; live
+integration discovery is not implemented yet.
+
 ## Repository, website, and desktop checks
 
 Run these commands from the repository root after installing locked
@@ -103,6 +106,34 @@ or after IPC as appropriate, and verifies exact fixed bridge calls. Component
 and browser tests cover native/preview honesty, project selection, live byte
 polling, responsive tabs, explicit process-ending confirmation, recovery copy,
 xterm layout, axe-core, and overflow at desktop and mobile viewports.
+
+Milestone 13A integration tests share one deterministic catalog between Rust
+and TypeScript. They require category-preserving connector, plugin,
+marketplace, skill, and MCP entries; closed scope/source/state enums; unique
+capability references; confirmation for every mutation; consistent health and
+diagnostic states; and a contract-only dynamic-tool lifecycle. Strict Zod
+validation rejects raw protocol payloads, account identity, dangling
+capabilities, unconfirmed mutations, unsafe display characters, oversized
+collections, and any claim that the executing turn can change its own model.
+Schema refresh uses only `codex --version` and local
+`codex app-server generate-json-schema --experimental`; it performs no account
+request or model call.
+
+## Milestone 13A contract checklist
+
+- Confirm the generated manifest identifies CLI 0.145.0, hashes every selected
+  schema, and retains the prior 0.144.6 fixture set.
+- Confirm connector/app, plugin, marketplace, skill, MCP, policy,
+  permission-profile, invalidation, and dynamic-tool schemas are represented.
+- Confirm every deterministic capability remains `contract-only`; no UI,
+  bridge command, installation, authorization, or configuration mutation is
+  implied by this checkpoint.
+- Confirm `thread/start` registration, `item/tool/call` invocation, exact JSON-
+  RPC correlation, and bounded result content are documented while the
+  executing turn's model remains immutable.
+- Run strict TypeScript/Rust contract tests, repository validation, complete
+  non-browser gates, and a warm release build. A browser or native visual run
+  is unnecessary because 13A introduces no user-facing surface.
 
 ## Planned manual Milestone 18 checklist
 

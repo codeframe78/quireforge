@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -44,6 +45,7 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/desktop-bootstrap.json",
     "apps/desktop/fixtures/codex-model-list-response.json",
     "apps/desktop/fixtures/codex-runtime.json",
+    "apps/desktop/fixtures/integration-catalog.json",
     "apps/desktop/fixtures/codex-auth.json",
     "apps/desktop/fixtures/conversation.json",
     "apps/desktop/fixtures/session-lifecycle.json",
@@ -105,6 +107,15 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/ServerRequestResolvedNotification.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/ItemCompletedNotification.json",
     "apps/desktop/fixtures/codex-schema/0.144.6/v2/ErrorNotification.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/manifest.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/DynamicToolCallParams.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/DynamicToolCallResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/AppsListResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/PluginListResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/SkillsListResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/ListMcpServerStatusResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/ConfigRequirementsReadResponse.json",
+    "apps/desktop/fixtures/codex-schema/0.145.0/v2/PermissionProfileListResponse.json",
     "apps/desktop/package.json",
     "apps/desktop/src/App.tsx",
     "apps/desktop/src/ProjectWorkspace.tsx",
@@ -112,6 +123,7 @@ REQUIRED_PATHS = (
     "apps/desktop/src/lib/bridge.ts",
     "apps/desktop/src/lib/auth.ts",
     "apps/desktop/src/lib/codex.ts",
+    "apps/desktop/src/lib/integration.ts",
     "apps/desktop/src/lib/conversation.ts",
     "apps/desktop/src/lib/session.ts",
     "apps/desktop/src/lib/project.ts",
@@ -120,6 +132,7 @@ REQUIRED_PATHS = (
     "apps/desktop/src-tauri/capabilities/main.json",
     "apps/desktop/src-tauri/tauri.conf.json",
     "apps/desktop/src-tauri/src/codex/app_server.rs",
+    "apps/desktop/src-tauri/src/codex/integration.rs",
     "apps/desktop/src-tauri/src/codex/conversation/lifecycle.rs",
     "apps/desktop/src-tauri/src/codex/auth/mod.rs",
     "apps/desktop/src-tauri/src/codex/auth/types.rs",
@@ -146,6 +159,7 @@ REQUIRED_PATHS = (
     "docs/DECISIONS/0008-native-conversation-runtime.md",
     "docs/DECISIONS/0011-native-approvals-and-activity-contract.md",
     "docs/DECISIONS/0012-read-only-git-review-boundary.md",
+    "docs/DECISIONS/0018-normalized-integration-contracts.md",
     "scripts/generate_codex_schema_fixtures.py",
 )
 
@@ -427,6 +441,62 @@ def validate() -> list[str]:
             if digest != actual:
                 errors.append(f"Codex schema hash mismatch: {relative}")
 
+    generator_path = ROOT / "scripts/generate_codex_schema_fixtures.py"
+    current_schema_root = ROOT / "apps/desktop/fixtures/codex-schema/0.145.0"
+    current_manifest_path = current_schema_root / "manifest.json"
+    if generator_path.is_file() and current_manifest_path.is_file():
+        generator_tree = ast.parse(generator_path.read_text(encoding="utf-8"))
+        selection_node = next(
+            (
+                node.value
+                for node in generator_tree.body
+                if isinstance(node, ast.Assign)
+                and any(
+                    isinstance(target, ast.Name)
+                    and target.id == "SELECTED_SCHEMAS"
+                    for target in node.targets
+                )
+            ),
+            None,
+        )
+        if selection_node is None:
+            errors.append("Codex schema generator must define SELECTED_SCHEMAS")
+            current_expected_paths: set[str] = set()
+        else:
+            current_expected_paths = set(ast.literal_eval(selection_node))
+
+        current_manifest = json.loads(
+            current_manifest_path.read_text(encoding="utf-8")
+        )
+        current_manifest_files = current_manifest.get("files", [])
+        current_recorded_paths = {
+            entry.get("path")
+            for entry in current_manifest_files
+            if isinstance(entry, dict)
+        }
+        if current_manifest.get("codexCliVersion") != "0.145.0":
+            errors.append("Current Codex schema manifest must record CLI 0.145.0")
+        if current_recorded_paths != current_expected_paths:
+            errors.append(
+                "Current Codex schema manifest must match the reviewed generator subset"
+            )
+
+        for entry in current_manifest_files:
+            if not isinstance(entry, dict):
+                errors.append("Current Codex schema manifest contains a malformed entry")
+                continue
+            relative = entry.get("path")
+            digest = entry.get("sha256")
+            if not isinstance(relative, str) or relative not in current_expected_paths:
+                continue
+            current_schema_path = current_schema_root / relative
+            if not current_schema_path.is_file():
+                errors.append(f"Current Codex schema is missing: {relative}")
+                continue
+            actual = hashlib.sha256(current_schema_path.read_bytes()).hexdigest()
+            if digest != actual:
+                errors.append(f"Current Codex schema hash mismatch: {relative}")
+
     runtime_fixture_path = ROOT / "apps/desktop/fixtures/codex-runtime.json"
     if runtime_fixture_path.is_file():
         runtime_fixture = json.loads(runtime_fixture_path.read_text(encoding="utf-8"))
@@ -448,6 +518,29 @@ def validate() -> list[str]:
         ):
             if forbidden_field in serialized_fixture:
                 errors.append(f"Codex auth fixture contains raw field: {forbidden_field}")
+
+    integration_fixture_path = ROOT / "apps/desktop/fixtures/integration-catalog.json"
+    if integration_fixture_path.is_file():
+        integration_fixture = json.loads(
+            integration_fixture_path.read_text(encoding="utf-8")
+        )
+        serialized_fixture = json.dumps(integration_fixture)
+        for forbidden_field in (
+            "accountId",
+            "authorizationUrl",
+            "accessToken",
+            "apiKey",
+            "rawProtocolPayload",
+            "arguments",
+            "threadId",
+            "turnId",
+            "requestId",
+            "marketplacePath",
+        ):
+            if forbidden_field in serialized_fixture:
+                errors.append(
+                    f"Integration fixture contains raw field: {forbidden_field}"
+                )
 
     conversation_fixture_path = ROOT / "apps/desktop/fixtures/conversation.json"
     if conversation_fixture_path.is_file():

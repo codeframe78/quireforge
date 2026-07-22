@@ -251,6 +251,17 @@ Controls:
 - Require explicit trust for plugin hooks; official docs state installation does
   not automatically trust them.
 - Run non-destructive health checks and confirm installed/auth state afterward.
+- Normalize discovery into category, scope, source, installation, enablement,
+  authentication, permission, requirement, policy, and health enums. Never
+  pass raw app-server or CLI JSON to React.
+- Track upstream availability separately from QuireForge implementation so an
+  advertised experimental method cannot appear as a completed feature.
+- Reduce marketplace loader failures, MCP startup failures, policy warnings,
+  and unsupported schema changes to bounded diagnostic codes; preserve partial
+  and unknown states instead of silently dropping entries.
+- Treat dynamic tool arguments as native-only untrusted input. Correlate the
+  exact thread, turn, request, namespace, and tool; validate one closed
+  app-owned schema; and return only bounded result content.
 
 ### MCP and connector tool side effects
 

@@ -1,0 +1,399 @@
+{
+  "schemaVersion": 1,
+  "adapterVersion": "codex-integration-v1",
+  "cliVersion": "0.145.0",
+  "catalogState": "degraded",
+  "capabilities": [
+    {
+      "id": "connector.catalog",
+      "domain": "connector",
+      "operation": "discover",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "connector.installed",
+      "domain": "connector",
+      "operation": "health",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "plugin.catalog",
+      "domain": "plugin",
+      "operation": "discover",
+      "route": "app-server",
+      "stability": "experimental",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "plugin.install",
+      "domain": "plugin",
+      "operation": "install",
+      "route": "cli",
+      "stability": "stable",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": true,
+      "requiresConfirmation": true,
+      "diagnosticCode": null
+    },
+    {
+      "id": "plugin.remove",
+      "domain": "plugin",
+      "operation": "remove",
+      "route": "cli",
+      "stability": "stable",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": true,
+      "requiresConfirmation": true,
+      "diagnosticCode": null
+    },
+    {
+      "id": "marketplace.catalog",
+      "domain": "marketplace",
+      "operation": "discover",
+      "route": "app-server",
+      "stability": "experimental",
+      "availability": "degraded",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": "fixture-source-warning"
+    },
+    {
+      "id": "marketplace.configure",
+      "domain": "marketplace",
+      "operation": "configure",
+      "route": "cli",
+      "stability": "stable",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": true,
+      "requiresConfirmation": true,
+      "diagnosticCode": null
+    },
+    {
+      "id": "skill.catalog",
+      "domain": "skill",
+      "operation": "discover",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "skill.configure",
+      "domain": "skill",
+      "operation": "configure",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": true,
+      "requiresConfirmation": true,
+      "diagnosticCode": null
+    },
+    {
+      "id": "mcp.health",
+      "domain": "mcp",
+      "operation": "health",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "mcp.authorize",
+      "domain": "mcp",
+      "operation": "authorize",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": true,
+      "requiresConfirmation": true,
+      "diagnosticCode": null
+    },
+    {
+      "id": "policy.requirements",
+      "domain": "policy",
+      "operation": "inspect",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "permission.profiles",
+      "domain": "policy",
+      "operation": "inspect",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "dynamic-tool.lifecycle",
+      "domain": "dynamic-tool",
+      "operation": "invoke",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    }
+  ],
+  "entries": [
+    {
+      "id": "connector:fixture-calendar",
+      "kind": "connector",
+      "displayName": "Fixture calendar connector",
+      "summary": "Deterministic connector metadata used only to exercise the normalized contract.",
+      "scope": "account",
+      "source": "official",
+      "installation": "installed",
+      "enablement": "enabled",
+      "authentication": "connected",
+      "version": null,
+      "publisher": "Fixture publisher",
+      "capabilityIds": ["connector.catalog", "connector.installed"],
+      "permissions": [
+        {
+          "kind": "account",
+          "access": "read",
+          "target": "Calendar records",
+          "required": true
+        }
+      ],
+      "requirements": [
+        {
+          "kind": "authentication",
+          "name": "Connector authorization",
+          "state": "satisfied",
+          "detail": null
+        }
+      ],
+      "policy": {
+        "state": "allowed",
+        "managed": false,
+        "reason": null
+      },
+      "health": {
+        "state": "ready",
+        "diagnosticCodes": []
+      }
+    },
+    {
+      "id": "plugin:fixture-review",
+      "kind": "plugin",
+      "displayName": "Fixture review plugin",
+      "summary": "Mock marketplace plugin with an explicit hook permission and confirmation gate.",
+      "scope": "user",
+      "source": "marketplace",
+      "installation": "available",
+      "enablement": "disabled",
+      "authentication": "not-applicable",
+      "version": "1.0.0",
+      "publisher": "Fixture publisher",
+      "capabilityIds": ["plugin.catalog", "plugin.install", "plugin.remove"],
+      "permissions": [
+        {
+          "kind": "hook",
+          "access": "execute",
+          "target": "Reviewed plugin hook",
+          "required": true
+        }
+      ],
+      "requirements": [
+        {
+          "kind": "policy",
+          "name": "Plugin trust confirmation",
+          "state": "satisfied",
+          "detail": "Confirmation remains required before installation."
+        }
+      ],
+      "policy": {
+        "state": "approval-required",
+        "managed": false,
+        "reason": "Executable hook requires explicit trust."
+      },
+      "health": {
+        "state": "ready",
+        "diagnosticCodes": []
+      }
+    },
+    {
+      "id": "marketplace:fixture-project",
+      "kind": "marketplace",
+      "displayName": "Fixture project marketplace",
+      "summary": "Mock repository marketplace with a normalized source warning and no exposed path.",
+      "scope": "project",
+      "source": "repository",
+      "installation": "installed",
+      "enablement": "enabled",
+      "authentication": "not-applicable",
+      "version": null,
+      "publisher": null,
+      "capabilityIds": ["marketplace.catalog", "marketplace.configure"],
+      "permissions": [
+        {
+          "kind": "filesystem",
+          "access": "read",
+          "target": "Marketplace manifest",
+          "required": true
+        }
+      ],
+      "requirements": [
+        {
+          "kind": "configuration",
+          "name": "Marketplace manifest",
+          "state": "unknown",
+          "detail": "Raw loader output is reduced to a stable diagnostic."
+        }
+      ],
+      "policy": {
+        "state": "allowed",
+        "managed": false,
+        "reason": null
+      },
+      "health": {
+        "state": "degraded",
+        "diagnosticCodes": ["fixture-source-warning"]
+      }
+    },
+    {
+      "id": "skill:fixture-project-checks",
+      "kind": "skill",
+      "displayName": "Fixture project checks",
+      "summary": "Mock project skill blocked by a missing normalized binary requirement.",
+      "scope": "project",
+      "source": "repository",
+      "installation": "installed",
+      "enablement": "blocked",
+      "authentication": "not-applicable",
+      "version": null,
+      "publisher": null,
+      "capabilityIds": ["skill.catalog", "skill.configure"],
+      "permissions": [
+        {
+          "kind": "filesystem",
+          "access": "read",
+          "target": "Attached project",
+          "required": true
+        }
+      ],
+      "requirements": [
+        {
+          "kind": "binary",
+          "name": "fixture-checker",
+          "state": "missing",
+          "detail": "Required executable is unavailable."
+        }
+      ],
+      "policy": {
+        "state": "allowed",
+        "managed": false,
+        "reason": null
+      },
+      "health": {
+        "state": "blocked",
+        "diagnosticCodes": ["dependency-missing"]
+      }
+    },
+    {
+      "id": "mcp:fixture-knowledge",
+      "kind": "mcp-server",
+      "displayName": "Fixture knowledge server",
+      "summary": "Mock MCP server awaiting an official authorization handoff.",
+      "scope": "user",
+      "source": "configuration",
+      "installation": "installed",
+      "enablement": "enabled",
+      "authentication": "required",
+      "version": null,
+      "publisher": null,
+      "capabilityIds": ["mcp.health", "mcp.authorize"],
+      "permissions": [
+        {
+          "kind": "network",
+          "access": "connect",
+          "target": "Configured MCP endpoint",
+          "required": true
+        }
+      ],
+      "requirements": [
+        {
+          "kind": "authentication",
+          "name": "MCP authorization",
+          "state": "missing",
+          "detail": "Authorization must use the official returned URL."
+        }
+      ],
+      "policy": {
+        "state": "approval-required",
+        "managed": true,
+        "reason": "Administrator policy requires authorization review."
+      },
+      "health": {
+        "state": "degraded",
+        "diagnosticCodes": ["authorization-required"]
+      }
+    }
+  ],
+  "policy": {
+    "state": "ready",
+    "source": "config-requirements",
+    "permissionProfiles": "ready",
+    "managedRequirementsPresent": true,
+    "mutationConfirmationRequired": true,
+    "installation": "approval-required"
+  },
+  "dynamicTool": {
+    "state": "ready",
+    "route": "app-server",
+    "registrationMethod": "thread/start",
+    "invocationMethod": "item/tool/call",
+    "responseCorrelation": "json-rpc-request-id",
+    "registrationScope": "thread",
+    "supportsNamespaces": true,
+    "outputContentKinds": ["text", "image", "audio"],
+    "currentTurnModelMutable": false,
+    "diagnosticCode": null
+  },
+  "refreshReasons": [
+    "app-list-updated",
+    "skills-changed",
+    "mcp-status-updated",
+    "config-warning"
+  ]
+}

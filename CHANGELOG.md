@@ -196,9 +196,22 @@ released a usable application.
   with per-file controls, commit preview, destructive revert labeling, focus
   containment, exact-token confirmation, recovery, browser-preview honesty,
   desktop/mobile overflow checks, and axe-core coverage.
+- A reviewed Codex CLI 0.145.0 schema subset covering connector/app,
+  plugin/marketplace, skill, MCP, configuration-requirement,
+  permission-profile, invalidation, and client-owned dynamic-tool contracts
+  while retaining the 0.144.6 compatibility fixtures.
+- The Milestone 13A `codex-integration-v1` Rust/TypeScript contract,
+  deterministic category-preserving mock catalog, strict partial-failure,
+  confirmation, and raw-field tests, and ADR 0018. Every capability remains
+  explicitly contract-only; live discovery, installation, authorization, and
+  UI are not claimed.
 
 ### Changed
 
+- Validated the documented app-owned dynamic-tool lifecycle through
+  `thread/start` registration and correlated `item/tool/call` requests, giving
+  Milestone 18 a supported next-turn control dependency without web automation,
+  private endpoints, or mid-turn model replacement.
 - Reserved Milestone 18 for app-owned, policy-bounded Codex selection of the
   next turn's model and reasoning level, after integration discovery and the
   intervening product milestones. Integration discovery remains Milestone 13;

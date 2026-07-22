@@ -73,10 +73,11 @@ input/output, resize, background-job ownership, and metadata-only restart
 recovery without exposing raw paths or process identity to React.
 Agent-directed model and reasoning selection is deliberately deferred to
 Milestone 18. The current conversation runtime validates a user-selected model
-and effort, but it does not yet advertise an app-owned selector tool or own a
-validated tool-result lifecycle. Milestones 13–17 establish the integration,
-compatibility, product-surface, and advanced-feature evidence required before
-that control is designed for implementation.
+and effort, while Milestone 13A confirms the app-owned dynamic-tool
+registration, invocation, and result lifecycle needed for a future selector
+control. Milestones 13B–17 still need to establish the live integration,
+product-surface, and advanced-feature prerequisites before that control is
+implemented.
 
 ## Status
 
@@ -95,7 +96,7 @@ that control is designed for implementation.
 |        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change |
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
-|        13 | Integration discovery and compatibility                           | Very large   | Planned                                                             |
+|        13 | Integration discovery and compatibility                           | Very large   | 13A implemented and locally verified; 13B planned                   |
 |        14 | Integration Center and installation workflows                     | Very large   | Planned                                                             |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
@@ -413,6 +414,20 @@ pull-request and `main` repository checks. No package or release was produced.
 Normalize apps/connectors, plugins, marketplaces, skills, MCP, policy, runtime
 requirements, scopes, and health. Use stable routes and deterministic mock
 catalogs; preserve unknown/blocked/degraded states.
+
+Milestone 13A refreshes the installed Codex 0.145.0 schema evidence and accepts
+the category-preserving `codex-integration-v1` contract. It distinguishes
+upstream availability from QuireForge implementation, defines bounded scope,
+permission, requirement, policy, and health states, and validates a documented
+client-owned dynamic-tool lifecycle through `thread/start` and
+`item/tool/call`. This checkpoint is contract-only: it does not expose a live
+catalog, install or authorize integrations, register the selector tool, or add
+an Integration Center UI. See
+[ADR 0018](DECISIONS/0018-normalized-integration-contracts.md).
+
+Milestone 13B implements the read-only native discovery/normalization service,
+strict IPC, version/capability routing, invalidation refresh, and deterministic
+partial-failure tests against these contracts. Mutation remains Milestone 14.
 
 ### 14 — Integration Center and Installation Workflows
 

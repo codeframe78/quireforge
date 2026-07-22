@@ -5,6 +5,8 @@ mod project;
 mod terminal;
 mod worktree;
 
+pub use codex::integration;
+
 use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
     CodexRuntimeService, ConversationApprovalDecisionRequest, ConversationContinueRequest,

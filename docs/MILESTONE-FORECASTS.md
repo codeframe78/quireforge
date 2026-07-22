@@ -1028,6 +1028,32 @@ ordinary Rust/TypeScript builds are CPU/system-memory workloads.
   cache is a separately scoped optimization candidate rather than a Milestone
   12 product change.
 
+## Milestone 13A — Protocol refresh and integration contract architecture
+
+| Field | Record |
+| --- | --- |
+| Forecast date | 2026-07-21 |
+| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
+| Preliminary forecast | Approximately 3.5–5.5 active hours; 25–60 minutes of local commands; 4.5–7 total elapsed hours; medium confidence |
+| Calibrated forecast | Approximately 3.5–6 active hours; 20–50 minutes of local commands; 4.5–7.5 total elapsed hours across one or two sessions; medium confidence |
+| Calibration basis | Clean `main` at `3ce57b9`; Codex CLI 0.145.0 versus 0.144.6 fixtures; 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm caches; four Cargo workers; no GPU work |
+| Current local checkpoint | Contract implementation, documentation, complete non-browser gate, and release build passed; publication verification pending |
+| Observed local command time | About 5.2 measured minutes through security hardening and the final complete/release reruns |
+| Resource observations | Final complete gate 37.77 seconds/about 935 MiB RSS; final release build 38.41 seconds/about 1.81 GiB RSS; zero swaps |
+
+Critical path: installed schema inventory → route/stability classification →
+category-preserving normalized contract → dynamic-tool lifecycle decision →
+strict Rust/TypeScript fixture tests → complete repository/release gates →
+security/diff review → publication and successful `main` CI. The local work
+found the required dynamic-tool lifecycle in the installed documented schemas,
+so the recommendation-only fallback is not currently required for Milestone
+18. Runtime registration remains dependency-gated and unimplemented.
+
+The calibrated forecast was conservative because this checkpoint intentionally
+stopped at contract architecture, reused established strict fixture patterns,
+added no dependency or user-facing UI, and needed no protocol debugging. Final
+variance will be recorded after publication and hosted-runner waits complete.
+
 ## Milestone 18 — Agent-directed model and reasoning selection
 
 Status: deferred and dependency-gated behind Milestones 13–17. This section

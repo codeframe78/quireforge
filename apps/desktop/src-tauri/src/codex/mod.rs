@@ -3,6 +3,7 @@ mod auth;
 mod backend;
 mod conversation;
 mod error;
+pub mod integration;
 #[cfg(test)]
 mod mock;
 mod probe;

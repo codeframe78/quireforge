@@ -1,9 +1,8 @@
 # Compatibility
 
-Status: Milestone 0 discovery with desktop work through Milestone 10
-implemented and verified on the discovery host, including the versioned Codex
-boundary, direct project attachment, conversation/session/approval workflows,
-and reviewed Git status/diff/mutation workflows.
+Status: desktop work through Milestone 12 is implemented and verified on the
+discovery host. Milestone 13A refreshes the Codex 0.145.0 protocol evidence and
+defines the integration contract; live integration discovery remains 13B.
 
 ## Identity compatibility contract
 
@@ -58,7 +57,7 @@ identity.
 | ------------------------------- | -------------------------------------- | --------------------------------------- |
 | Operating system                | Ubuntu 26.04 LTS, x86_64               | Discovery only                          |
 | Desktop session                 | GNOME on Wayland with XWayland display | Available                               |
-| Codex CLI                       | 0.144.6 standalone Linux build         | Available/current at inspection         |
+| Codex CLI                       | 0.145.0 standalone Linux build         | Current refresh; 0.144.6 fixtures retained |
 | Codex authentication            | ChatGPT-managed                        | Available                               |
 | Active/default model            | GPT-5.6 Sol                            | Discovered from app-server              |
 | Node.js / npm                   | 22.22.1 / 9.2.0                        | Available                               |
@@ -82,12 +81,12 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 
 ## Codex feature compatibility
 
-| Capability                                 | CLI 0.144.6          | Intended application route                                                    | Classification                        |
+| Capability                                 | CLI 0.145.0          | Intended application route                                                    | Classification                        |
 | ------------------------------------------ | -------------------- | ----------------------------------------------------------------------------- | ------------------------------------- |
 | Detect version                             | Implemented          | Fixed `codex --version` probe                                                 | Stable official                       |
 | List account-visible models/efforts        | Implemented          | Bounded `model/list` normalization                                            | Stable method on experimental server  |
 | Apply model/effort to the next turn        | Yes                  | Revalidated `turn/start` model/effort overrides                               | Stable method on experimental server  |
-| Agent-directed selector request lifecycle  | Present in schemas   | Milestone 13 discovery before a typed app-owned control in Milestone 18       | Experimental/dependency-gated         |
+| Agent-directed selector request lifecycle  | Contract validated   | `thread/start` dynamic-tool registration plus correlated `item/tool/call`; implementation remains Milestone 18 | Stable methods on experimental server |
 | Start in an absolute local cwd             | Yes                  | `thread/start` / `turn/start`; CLI fallback                                   | Stable method + stable CLI            |
 | Additional writable roots                  | Yes                  | sandbox `writableRoots`; CLI `--add-dir`                                      | Stable official                       |
 | Stream turns, commands, plans, diffs       | Yes                  | app-server events                                                             | Stable methods on experimental server |
@@ -107,6 +106,8 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 | Plugin app-server management               | Present              | Disabled in production                                                        | Under development                     |
 | Marketplace add/list/upgrade/remove        | Yes                  | CLI adapter initially                                                         | Supported CLI                         |
 | Managed policy read                        | Yes                  | `configRequirements/read`                                                     | Stable method on experimental server  |
+| Permission profile discovery               | Yes                  | `permissionProfile/list` with bounded summaries                               | Stable method on experimental server  |
+| Client-owned dynamic tools                 | Contract validated   | `thread/start` registration and correlated `item/tool/call` server request     | Stable methods on experimental server |
 | Integrated process API                     | Present              | Do not use as default terminal                                                | Experimental/outside Codex sandbox    |
 | Scheduled hosted tasks                     | Not established      | Defer                                                                         | Unsupported until discovered          |
 | Repository status and staged/worktree diff | Git 2.53.0 available | Fixed native shell-free Git service over a revalidated attachment             | Implemented locally in Milestone 10A  |
@@ -123,6 +124,11 @@ The same sanitized snapshot validated cwd-visible skill, configured
 marketplace, available/installed plugin, and configured MCP collections. No
 managed configuration requirements were returned. Counts, names, endpoints,
 paths, and account metadata are intentionally omitted.
+
+Milestone 13A did not repeat account-scoped catalog calls. Its 0.145.0 refresh
+used local CLI help and generated schemas only, then validated deterministic
+mock contracts. No personal connector, plugin, marketplace, skill, MCP,
+configuration, permission-profile, or account record was captured.
 
 Milestones 4–5 commit only the CLI 0.144.6 initialize, `model/list`, and stable
 account-lifecycle generated schemas, their hashes, and sanitized deterministic

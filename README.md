@@ -60,6 +60,11 @@ prune behavior. Milestone 12 adds up to eight app-owned native PTY tabs rooted
 in freshly reverified attached projects, with byte-safe bounded output,
 input/resize, controlled environment inheritance, explicit process cleanup,
 and metadata-only recovery that never stores shell content or process identity.
+Milestone 13A refreshes the Codex 0.145.0 protocol evidence and adds strict
+shared contracts for connector, plugin, marketplace, skill, MCP, policy,
+requirement, scope, health, and app-owned dynamic-tool discovery. The contract
+preserves blocked, degraded, and unknown states while keeping every integration
+operation contract-only until the native discovery service is implemented.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -69,9 +74,11 @@ deployed. There is no application package to install yet.
 - Installation: not available before the packaging milestone.
 - Website: the Astro site builds and passes local responsive/accessibility
   checks for `https://quireforge.jamesjennison.net`; it is not deployed.
-- Integration support: the local adapter is validated against Codex CLI
-  0.144.6; account status and Codex-managed authentication are implemented,
-  while integration workflows remain planned.
+- Integration support: runtime compatibility retains Codex CLI 0.144.6
+  fixtures and now includes a reviewed 0.145.0 integration schema subset.
+  Account status and Codex-managed authentication are implemented; the 13A
+  catalog/dynamic-tool contract is complete, while live discovery and
+  integration workflows remain planned.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
@@ -85,10 +92,10 @@ deployed. There is no application package to install yet.
   integrated terminal.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 12 is complete, merged to `main`, and verified
-  by the repository, website, desktop, browser, native, and release-build gates.
-  Milestone 13 is integration discovery and compatibility; it remains planned
-  and requires a fresh reasoning/model/start gate before work begins.
+- Current milestone: Milestone 13A protocol refresh and integration contract
+  architecture is implemented and fully verified locally; publication
+  verification is in progress. Milestone 13B live read-only discovery requires
+  a fresh reasoning/model/start gate after 13A completion.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own
@@ -113,6 +120,7 @@ deployed. There is no application package to install yet.
 - [Local build performance](docs/LOCAL-BUILD-PERFORMANCE.md)
 - [Milestone forecasts](docs/MILESTONE-FORECASTS.md)
 - [Milestone real-world time ledger](docs/MILESTONE_TIME_LEDGER.md)
+- [Normalized integration contracts decision](docs/DECISIONS/0018-normalized-integration-contracts.md)
 - [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)

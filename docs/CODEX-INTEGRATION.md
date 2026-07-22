@@ -1,9 +1,10 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery with the Milestones 4–5 versioned runtime-probe
-and authentication subsets implemented and validated locally
-Observed: 2026-07-19
-Installed CLI: `codex-cli 0.144.6`
+Status: Milestone 0 discovery with implementation through Milestone 12 and the
+Milestone 13A integration/dynamic-tool contracts validated locally
+Observed: initial discovery 2026-07-19; protocol refresh 2026-07-21
+Installed CLI evidence: `codex-cli 0.144.6` baseline and `codex-cli 0.145.0`
+current refresh
 Platform: Ubuntu 26.04 LTS, x86_64, GNOME Wayland
 
 This document records observed interfaces. It is not a promise that every
@@ -57,6 +58,37 @@ through OpenAI's supported known-client process.
 
 The application must probe the installed CLI at runtime and must not treat this
 snapshot as a permanent API contract.
+
+## Milestone 13A protocol refresh
+
+The 0.145.0 refresh generated 95 reviewed schema files while retaining the
+0.144.6 compatibility baseline. The selected evidence now includes app
+catalog/read/installed state, plugins and marketplaces, skills, MCP status and
+OAuth, configuration requirements, permission profiles, invalidation events,
+and the client-owned dynamic-tool lifecycle. Schema generation reads no Codex
+account data and makes no model call.
+
+The stable plugin CLI continues to provide JSON for catalog, install, remove,
+and marketplace operations. The app-server provides richer read/status events,
+but plugin management and `app/read` remain experimental. QuireForge therefore
+selects a route per operation and records method stability separately from
+upstream availability and application implementation.
+
+The accepted `codex-integration-v1` contract keeps connector, plugin,
+marketplace, skill, and MCP-server categories distinct. It exposes bounded
+scope, source, installation, enablement, authentication, permission,
+requirement, policy, and health values; it never exposes raw protocol/CLI JSON,
+absolute paths, account identity, authorization state, credentials, managed
+configuration, or tool arguments. All 13A capability rows are deliberately
+`contract-only`; live discovery and IPC remain Milestone 13B.
+
+The refreshed `ThreadStartParams` schema accepts bounded function or namespace
+definitions in `dynamicTools`. The server invokes a registered client-owned
+tool with `item/tool/call`, including a correlated request ID plus native
+thread/turn/call identity, and accepts a bounded success/content response. This
+is the supported dependency for Milestone 18. It can stage an app-owned model
+selection for the next turn but cannot replace the currently executing model.
+See [ADR 0018](DECISIONS/0018-normalized-integration-contracts.md).
 
 ## Required CLI inspection
 

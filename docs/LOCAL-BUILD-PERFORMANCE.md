@@ -604,3 +604,28 @@ and 9 minutes 33 seconds. pnpm dependency caching was already enabled, while
 Cargo build outputs and Playwright browser downloads were not restored between
 hosts. Those two cold-host costs are candidates for a separately reviewed cache
 change; they are not evidence of local cache or resource pressure.
+
+## Milestone 13A measurements
+
+The protocol/contract checkpoint used the Balanced profile with four Cargo
+workers. It retained warm Cargo, pnpm, Vite, Astro, and dependency caches and
+added no package, schema migration, clean build, cache reset, linker, driver,
+CUDA, swap, or zram change. Generated schema work and ordinary Rust/TypeScript
+validation are CPU/system-memory tasks; the RTX 3050 was correctly unused.
+
+| Operation | Observed wall time | Approximate peak RSS | Result |
+| --- | ---: | ---: | --- |
+| Local 0.145.0 schema inventory generation | 0.36 second | about 45 MiB | Generated the full temporary protocol inventory for read-only inspection |
+| Reviewed 0.145.0 fixture refresh | 0.42 second | about 46 MiB | Generated and hashed 95 selected schemas while retaining 0.144.6 |
+| Contract frontend suite | 8.65 seconds | about 264 MiB | Passed 100 desktop tests across 19 files, including 3 integration contract tests |
+| Contract native suite | 11.72 seconds | about 1.44 GiB | Passed the shared Rust contract after incremental compilation |
+| Repository/type/lint/Clippy preflight | 17.36 seconds | about 937 MiB | Passed with warnings denied |
+| Final complete non-browser repository gate | 37.77 seconds | about 935 MiB | Passed 103 JavaScript tests and 121 Rust tests; 119 Rust tests passed and 2 deliberate live probes were ignored |
+| Final warm unbundled native release build | 38.41 seconds | about 1.81 GiB | Passed, including a 34.22-second optimized compile/link |
+
+All final timed gates reported zero swaps. About 43 GiB RAM and 720 GiB NVMe
+were available before the complete gate. There was no OOM, throttling,
+dependency download, personal integration read, user-repository mutation, live
+model call, browser run, or GPU workload. Browser, native launch, and visual
+checks were deliberately omitted because Milestone 13A introduces no
+user-facing or runtime integration surface.

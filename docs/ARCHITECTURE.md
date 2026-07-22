@@ -452,6 +452,24 @@ contract tests.
 - `IntegrationPolicyService`: workspace/admin and requested-permission rules.
 - `IntegrationHealthService`: non-destructive status checks.
 
+Milestone 13A fixes the shared `codex-integration-v1` boundary before those
+services become runtime IPC. Capabilities carry domain, operation, official
+route, method stability, upstream availability, independent QuireForge
+implementation state, mutation/confirmation policy, and stable diagnostics.
+Entries retain their connector, plugin, marketplace, skill, or MCP-server
+category and expose only bounded display metadata plus normalized scope,
+source, installation, enablement, authentication, permissions, requirements,
+policy, and health. Raw paths, URLs, configuration, managed requirements,
+account identity, credentials, tool arguments, and protocol payloads remain
+native-only.
+
+The future app-owned dynamic-tool boundary registers a closed schema through
+`thread/start`, accepts only the correlated `item/tool/call` server request,
+and returns a bounded response. Registration, invocation, and response IDs are
+native-owned. Milestone 13A marks the lifecycle contract-only; Milestone 18 may
+use it to stage a policy-valid model choice for the next turn, never to replace
+the executing turn's model.
+
 ## Project and directory data model
 
 Identifiers are UUIDv7 or equivalent stable, opaque IDs. Directory names and

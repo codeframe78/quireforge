@@ -24,13 +24,13 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-21T19:08:53-07:00`
+Last updated: `2026-07-21T20:16:36-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                           |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Total milestones planned                  | 22 (Milestones 0–21)                                                                                                                                        |
 | Total milestones completed                | 13 (Milestones 0–12)                                                                                                                                        |
-| Milestones in progress                    | 0                                                                                                                                                           |
+| Milestones in progress                    | 1 (Milestone 13A)                                                                                                                                           |
 | Reconstructed/estimated active execution  | Approximately 18.18–25.26 hours                                                                                                                             |
 | Reconstructed automated wait              | Approximately 5.78–6.67 hours; early uninstrumented waits excluded                                                                                          |
 | Reconstructed user-blocked time           | At least 10.86 hours, plus unmeasured early approvals/prerequisites                                                                                         |
@@ -66,6 +66,7 @@ range endpoints.
 | 10        | Complete | `2026-07-20T05:05:51-07:00` | `2026-07-20T12:10:43-07:00` | 8.5–13.5 h active            | 2.00–2.83 h |    1.06–1.19 h |                   ≥4.44 h |          3.06–4.02 h |       ≥7.08 h | ~7.46 h / 67.8% below midpoint  | Reconstructed |
 | 11        | Complete | `2026-07-20T12:19:40-07:00` | `2026-07-20T16:56:33-07:00` | 12.5–20.5 h active           | 4.08–6.08 h |    1.37–1.64 h |                   ≥1.64 h |          5.45–7.72 h |       ≥4.61 h | ~9.91 h / 60.1% below midpoint  | Reconstructed |
 | 12        | Complete | `2026-07-20T18:27:06-07:00` | `2026-07-20T19:59:04-07:00` | 5–8 h active; 6–10 h elapsed |     ~1.16 h |        ~0.38 h |                    0.00 h |               1.53 h |        1.53 h | ~4.97 h / 76.4% below midpoint  | Reconstructed |
+| 13A       | In progress | `2026-07-21T19:41:14-07:00` | — | 3.5–6 h active; 4.5–7.5 h elapsed | Measuring | Measuring | 0.00 h to date | Measuring | Measuring | Pending | Prospective |
 
 Variance uses the midpoint of the historical forecast and counted-time ranges.
 It is included only where a recorded forecast exists and should not be read as
@@ -389,3 +390,52 @@ greater precision than the underlying ranges.
   forecasts should separate implementation uncertainty from repeated cold-host
   compilation and evaluate credential-free Cargo/Playwright caches as their own
   approved CI optimization.
+
+## Milestone 13A — Protocol refresh and integration contract architecture
+
+- **Objective:** Refresh the installed Codex protocol inventory and define
+  strict normalized contracts for apps/connectors, plugins, marketplaces,
+  skills, MCP, policy, requirements, scopes, health, and the future
+  dynamic-tool dependency.
+- **Start:** `2026-07-21T19:41:14-07:00`, immediately after the calibrated
+  forecast and explicit user approval.
+- **Completion:** In progress.
+- **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
+- **Original preliminary forecast:** 3.5–5.5 active hours, 25–60 minutes of
+  local commands, and 4.5–7 elapsed hours.
+- **Calibrated forecast:** 3.5–6 active hours, 20–50 minutes of local commands,
+  and 4.5–7.5 total elapsed hours across one or two sessions; medium
+  confidence.
+- **Preflight evidence:** Clean `main` at `3ce57b9`; Codex CLI 0.145.0 against
+  repository fixtures pinned to 0.144.6; 43 GiB available RAM and 720 GiB free
+  NVMe; warm 16 GiB Cargo target and pnpm cache. Warm `cargo check --locked`
+  passed in 1.42 seconds at about 450 MiB peak RSS, and desktop TypeScript
+  checking passed in 1.67 seconds at about 262 MiB peak RSS. Both reported zero
+  swaps.
+- **Active intervals:** `2026-07-21T19:41:14-07:00` to
+  `2026-07-21T19:42:01-07:00`; resumed at
+  `2026-07-21T19:48:28-07:00` after writable Git metadata was confirmed and
+  remains open.
+- **Automated wait:** At least 0.087 hour through the local security/verification
+  checkpoint: 0.36-second temporary schema generation, 0.42-second reviewed
+  fixture refresh, 8.65-second frontend contract suite, 11.72-second native
+  contract suite, 17.36-second repository/type/lint/Clippy preflight,
+  47.45-second initial complete gate, 37.00-second initial release build,
+  26.41-second hardened contract gate, 39.41-second intermediate complete gate,
+  and 37.45-second intermediate release build, followed by an 11.21-second
+  parser-focused gate,
+  the final 37.77-second complete gate, and the final 38.41-second release
+  build.
+- **User-blocked:** 0.00 hour after start to date.
+- **Environment-blocked interval:** Paused at `2026-07-21T19:42:01-07:00`
+  because the managed session exposed `.git` as read-only and could not create
+  the required feature branch. Resumed at `2026-07-21T19:48:28-07:00` after
+  the user enabled full access and branch creation succeeded. The 6 minute 27
+  second interval is excluded from active and counted project time.
+- **Counted / total elapsed:** At the `2026-07-21T20:16:36-07:00` local
+  security/verification checkpoint, approximately 0.39 active hour plus 0.087
+  measured automated hour produced about 0.48 counted project hour and 0.59
+  total elapsed hour. The 0.11-hour environment block is included only in total
+  elapsed. Final publication and hosted-runner intervals remain pending.
+- **Confidence:** **Prospective**; timestamps and intervals are recorded as the
+  work occurs.
