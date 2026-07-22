@@ -1210,7 +1210,7 @@ larger security and interface-uncertainty allowance.
 | Calibrated forecast  | Approximately 4.5–8 active hours; 15–40 minutes of local commands; 4–10 minutes hosted CI critical path; 5–9.5 total elapsed hours across one or two sessions; medium confidence                                |
 | Calibration basis    | Synchronized `main` at `91e256a`; reviewed Codex CLI 0.145.0 routes and fresh official manual; 43 GiB available RAM and 718 GiB free storage; low load; warm Cargo/pnpm caches; four Cargo workers; no GPU work |
 | Preflight commands   | Desktop TypeScript check 1.68 seconds/about 263 MiB; four-worker Cargo check 1.42 seconds/about 502 MiB; both passed with zero swaps                                                                            |
-| Current status       | Implementation and all required local repository, browser, visual, and release checks complete on `feat/milestone-14c-integration-control`; publication and hosted checks remain pending                        |
+| Current status       | Complete and merged through PR #41 as `e4d8333`; local gates and pull-request/main repository checks passed                                                                                                     |
 | Observed local work  | Approximately 0.68 active hour and 0.18 automated hour from branch creation through the verified local checkpoint; 0.86 hour total elapsed and no user-blocked interval                                         |
 | Acceptance timings   | Full validation 40.98 seconds/about 997 MiB; combined browser suites 23.62 seconds/about 447 MiB; warm unbundled desktop release build 36.38 seconds/about 2.23 GiB; zero test failures                         |
 
@@ -1236,6 +1236,21 @@ hour, approximately 5.57 hours or 89.1% below the 6.25-hour calibrated active
 midpoint. Existing closed contracts and warm caches compressed implementation;
 strict lint and Clippy still caught one React state-derivation issue and two
 Rust representation issues before acceptance.
+
+Milestone 14C completed at `2026-07-22T12:30:42-07:00`, the successful
+post-merge `main` workflow endpoint. It used approximately 0.70 active hour,
+0.24 automated-wait hour, 0.87 user-blocked hour, 0.94 counted hour, and 1.81
+total elapsed hours. Active execution was approximately 5.55 hours or 88.8%
+below the 6.25-hour calibrated midpoint; total elapsed was approximately 5.44
+hours or 75.0% below the 7.25-hour calibrated midpoint. The user-blocked
+interval between local completion and publication approval is excluded from
+counted project time. Pull-request workflow
+[`29950963936`](https://github.com/James-Jennison/quireforge/actions/runs/29950963936)
+and post-merge `main` workflow
+[`29951143628`](https://github.com/James-Jennison/quireforge/actions/runs/29951143628)
+passed. Existing closed contracts and warm caches compressed the implementation
+path, while strict lint and Clippy found the remaining state-derivation and Rust
+representation issues before publication.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

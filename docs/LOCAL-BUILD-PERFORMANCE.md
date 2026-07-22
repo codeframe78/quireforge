@@ -773,3 +773,32 @@ seconds with the existing caches. A native screenshot verified the workspace,
 navigation, project controls, and status content at the production custom-
 protocol origin. The fix changes no dependency, IPC route, capability, CSP,
 credential behavior, personal integration state, package, or deployment.
+
+## Milestone 14C measurements
+
+The confirmed integration-control checkpoint preserved the warm Cargo, pnpm,
+Vite, Astro, and browser caches. It added no dependency, clean build, cache
+reset, linker, driver, CUDA, swap, or zram change, and the RTX 3050 remained
+unused.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                  |
+| ----------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.68 seconds |        about 263 MiB | Passed with zero swaps                                                                  |
+| Four-worker Cargo preflight                     |       1.42 seconds |        about 502 MiB | Passed with zero swaps                                                                  |
+| Complete desktop unit suite                     |      10.27 seconds |                  n/a | Passed 118 tests across 20 files                                                        |
+| Final complete non-browser `pnpm validate` gate |      40.98 seconds |        about 997 MiB | Passed 118 frontend tests and 146 Rust tests; 143 passed and 3 live probes were ignored |
+| Final desktop and website Playwright regression |      23.62 seconds |        about 447 MiB | Passed 28 desktop/mobile checks, including authorization, accessibility, and overflow   |
+| Final warm unbundled native release build       |      36.38 seconds |       about 2.23 GiB | Passed, including a 32.15-second optimized compile/link                                 |
+
+Strict lint and Clippy caught one effect-driven React state update and two Rust
+representation warnings before the final green gates. Routine tests used only
+deterministic fixtures and performed no personal integration read/mutation,
+real authorization, billable model call, package, release, deployment, or
+hosting change. Pull-request workflow
+[`29950963936`](https://github.com/James-Jennison/quireforge/actions/runs/29950963936)
+completed the source, website, and desktop jobs in 6 seconds, 1 minute 19
+seconds, and 1 minute 55 seconds. Post-merge `main` workflow
+[`29951143628`](https://github.com/James-Jennison/quireforge/actions/runs/29951143628)
+completed them in 7 seconds, 1 minute 18 seconds, and 1 minute 40 seconds. Both
+hosted gates passed without a cache, workflow, runner, or host configuration
+change.

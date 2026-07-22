@@ -80,9 +80,8 @@ Milestone 14A establishes the confirmed native plugin and marketplace mutation
 boundary. Milestone 14B adds the user-facing Integration Center over that
 boundary without broadening it. Milestone 14C adds only reviewed connector/MCP
 authorization, skill enablement, refresh, and connector prompt mentions. Later
-Milestone 14 work and Milestones 15–17 still need to establish remaining
-supported management and advanced-feature prerequisites before that control is
-implemented.
+Milestones 15–17 still need to establish the remaining desktop and advanced-
+feature prerequisites before that control is implemented.
 
 ## Status
 
@@ -102,7 +101,7 @@ implemented.
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A/14B merged, 14C implemented locally                |
+|        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                 |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
@@ -530,8 +529,14 @@ arbitrary health repair, and generic config writes remain unavailable. Routine
 tests use deterministic fixtures only and do not read or mutate personal Codex
 or integration state. See
 [ADR 0020](DECISIONS/0020-confirmed-integration-authorization-and-controls.md).
-Implementation and local verification are complete on the milestone branch;
-publication and hosted checks remain pending.
+Publication completed through
+[PR #41](https://github.com/James-Jennison/quireforge/pull/41), implementation
+commit `86a114d`, merge commit `e4d8333`, successful pull-request workflow
+[`29950963936`](https://github.com/James-Jennison/quireforge/actions/runs/29950963936),
+and post-merge `main` workflow
+[`29951143628`](https://github.com/James-Jennison/quireforge/actions/runs/29951143628).
+No personal integration or account state was read or mutated, and no package,
+release, deployment, or hosting change was made.
 
 ### 15 — File Previews and Desktop Integration
 

@@ -93,9 +93,8 @@ deployed. There is no application package to install yet.
   fixtures and now includes a reviewed 0.145.0 integration schema subset.
   Account status and Codex-managed authentication are implemented; the 13A
   catalog/dynamic-tool contract, 13B native read-only discovery service, and
-  14A native plugin/marketplace lifecycle and 14B Integration Center are
-  complete and merged. Milestone 14C authorization, skill controls, refresh,
-  and prompt mentions are implemented locally; publication remains pending.
+  14A native plugin/marketplace lifecycle, 14B Integration Center, and 14C
+  authorization/control boundary are complete, merged, and verified on `main`.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
@@ -109,13 +108,13 @@ deployed. There is no application package to install yet.
   integrated terminal, the Milestone 13B normalized read-only integration
   catalog boundary, the Milestone 14A confirmed native plugin/marketplace
   mutation boundary, the Milestone 14B accessible Integration Center, and the
-  locally implemented Milestone 14C confirmed authorization/control boundary.
+  Milestone 14C confirmed authorization/control boundary.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 14C's supported connector/MCP authorization,
-  skill enablement, catalog refresh, and connector prompt-mention work is
-  implemented and verified locally; publication is pending. Remaining
-  unsupported integration-management paths require separate future gates.
+- Current milestone: Milestone 14 is complete through 14C and verified on
+  `main`. Milestone 15 file previews and desktop integration require a fresh
+  reasoning, model, forecast, and start gate. Unsupported generic integration-
+  management paths remain unavailable.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own
