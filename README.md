@@ -90,8 +90,8 @@ deployed. There is no application package to install yet.
   Account status and Codex-managed authentication are implemented; the 13A
   catalog/dynamic-tool contract, 13B native read-only discovery service, and
   14A native plugin/marketplace lifecycle are complete and merged. The 14B
-  Integration Center is implemented and verified locally; publication is
-  pending, and later authorization/configuration workflows remain gated.
+  Integration Center is complete, merged, and verified on `main`; later
+  authorization/configuration workflows remain gated.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
@@ -108,9 +108,9 @@ deployed. There is no application package to install yet.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Current milestone: Milestone 14B's user-facing Integration Center is
-  implemented and verified locally on its feature branch; publication is
-  pending. Later Milestone 14 authorization, configuration, health, and prompt-
-  mention work requires a separate reasoning/model/start gate.
+  complete, merged, and verified on `main`. Later Milestone 14 authorization,
+  configuration, health, and prompt-mention work requires a separate
+  reasoning/model/start gate.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own

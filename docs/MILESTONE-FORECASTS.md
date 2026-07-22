@@ -1153,7 +1153,7 @@ allowance for interface drift, source-security discoveries, and cache misses.
 | Calibrated forecast  | Approximately 2–3.75 active hours; 5–15 minutes of local commands; 3–8 minutes hosted CI critical path; 2.25–4.25 total elapsed hours in one session; medium confidence                                   |
 | Calibration basis    | Clean synchronized `main` at `425e87b`; 43 GiB available RAM; 720 GiB free NVMe; low load; no active project build; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work |
 | Preflight commands   | Desktop TypeScript check 1.60 seconds/about 262 MiB; four-worker Cargo check 1.35 seconds/about 501 MiB; both passed with zero swaps                                                                      |
-| Current status       | Implementation, visual review, and local gates complete on `feat/milestone-14b-integration-center`; publication and hosted verification pending                                                           |
+| Current status       | Complete and merged through PR #38 as `93e585f`; local gates and pull-request/main repository checks passed                                                                                               |
 
 Critical path: normalized contract-to-view mapping → isolated responsive
 Integration Center → application catalog/mutation state wiring → search,
@@ -1184,6 +1184,21 @@ final command reported zero swaps. Desktop and mobile visual review confirmed
 the intended two-column and single-column layouts. The early JSON import and
 semantic-dialog lint corrections stayed within the debugging allowance and do
 not require a forecast revision.
+
+Milestone 14B completed at `2026-07-22T05:12:14-07:00`, the successful
+post-merge `main` workflow endpoint. It used approximately 0.34 active hours,
+0.16 automated-wait hours, 0.00 user-blocked hours, and 0.50 counted/elapsed
+hours. That is approximately 2.38 hours or 82.6% below the 2.875-hour midpoint
+of the calibrated active forecast. Reuse of the finished 13B/14A contracts,
+warm caches, isolated component boundaries, and fast review/merge account for
+the difference; the initial JSON import and dialog-lint corrections did not
+materially extend the critical path. Pull-request workflow
+[`29918268480`](https://github.com/James-Jennison/quireforge/actions/runs/29918268480)
+and post-merge `main` workflow
+[`29918513538`](https://github.com/James-Jennison/quireforge/actions/runs/29918513538)
+passed. Future established-contract presentation checkpoints should start from
+the measured sub-hour path while authentication/configuration work retains a
+larger security and interface-uncertainty allowance.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

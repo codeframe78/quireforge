@@ -747,4 +747,10 @@ browser test used obsolete JSON import syntax and an initial lint pass rejected
 a keyboard handler on a non-semantic dialog container; both were corrected
 before the final gates by using import attributes and a native `dialog`
 element. The existing desktop bundle-size warning remains unchanged. Hosted
-pull-request and `main` measurements will be appended after publication.
+pull-request workflow
+[`29918268480`](https://github.com/James-Jennison/quireforge/actions/runs/29918268480)
+completed the source, website, and desktop jobs in 7 seconds, 49 seconds, and 2
+minutes 47 seconds. Post-merge `main` workflow
+[`29918513538`](https://github.com/James-Jennison/quireforge/actions/runs/29918513538)
+completed them in 7 seconds, 51 seconds, and 2 minutes 23 seconds. Both hosted
+gates passed without a cache, workflow, runner, or host configuration change.

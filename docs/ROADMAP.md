@@ -100,7 +100,7 @@ feature prerequisites before that control is implemented.
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A merged, 14B implemented and verified locally       |
+|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A and 14B complete and merged to `main`              |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
@@ -498,10 +498,17 @@ mutation contracts. It exposes only capability-ready fixed operations, uses a
 pinned-reference form for repository marketplace adds, presents separate hook
 trust and supply-chain warnings, and keeps unavailable management explicit.
 Desktop/mobile, keyboard, overflow, and automated accessibility checks pass
-locally. A later separately gated Milestone 14 checkpoint must handle only
-supported connector/MCP authorization, enable/disable or update flows,
-health/troubleshooting, and prompt mentions; unsupported management must remain
-visibly unavailable.
+locally and in hosted CI. Publication completed through
+[PR #38](https://github.com/James-Jennison/quireforge/pull/38), implementation
+commit `42cff70`, merge commit `93e585f`, successful pull-request workflow
+[`29918268480`](https://github.com/James-Jennison/quireforge/actions/runs/29918268480),
+and post-merge `main` workflow
+[`29918513538`](https://github.com/James-Jennison/quireforge/actions/runs/29918513538).
+No personal integration or account state was read or mutated, and no package,
+release, deployment, or hosting change was made. A later separately gated
+Milestone 14 checkpoint must handle only supported connector/MCP authorization,
+enable/disable or update flows, health/troubleshooting, and prompt mentions;
+unsupported management must remain visibly unavailable.
 
 ### 15 — File Previews and Desktop Integration
 
