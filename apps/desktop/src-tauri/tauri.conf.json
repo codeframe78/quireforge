@@ -29,7 +29,7 @@
       "capabilities": ["main"],
       "csp": "default-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self'",
       "devCsp": "default-src 'self' http://127.0.0.1:1420; connect-src ipc: http://ipc.localhost http://127.0.0.1:1420 ws://127.0.0.1:1420; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline' http://127.0.0.1:1420; script-src 'self' 'unsafe-eval' http://127.0.0.1:1420",
-      "freezePrototype": true
+      "freezePrototype": false
     }
   },
   "bundle": {

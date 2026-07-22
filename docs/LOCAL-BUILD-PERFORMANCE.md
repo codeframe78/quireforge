@@ -754,3 +754,22 @@ minutes 47 seconds. Post-merge `main` workflow
 [`29918513538`](https://github.com/James-Jennison/quireforge/actions/runs/29918513538)
 completed them in 7 seconds, 51 seconds, and 2 minutes 23 seconds. Both hosted
 gates passed without a cache, workflow, runner, or host configuration change.
+
+## Post-Milestone 14B native-render correction
+
+The first user launch exposed that the production Tauri window showed only its
+black background. Native page-load instrumentation confirmed the release used
+the embedded `tauri://localhost` origin, but the React root had no children.
+A deterministic Chromium reproduction that froze `Object.prototype` produced
+the same empty root and the production exception `Cannot assign to read only
+property 'toString'`. Rebuilding with Tauri's documented default
+`freezePrototype: false` rendered the complete workspace under the real native
+WebKitGTK window. Disabling WebKit DMA-BUF or compositing did not affect the
+failure, so no NVIDIA workaround, driver change, or persistent environment
+override was adopted.
+
+The corrected warm unbundled production build completed in approximately 40
+seconds with the existing caches. A native screenshot verified the workspace,
+navigation, project controls, and status content at the production custom-
+protocol origin. The fix changes no dependency, IPC route, capability, CSP,
+credential behavior, personal integration state, package, or deployment.

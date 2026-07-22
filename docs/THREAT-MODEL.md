@@ -444,6 +444,11 @@ URLs, huge/decompression-bomb files, and webview-to-native command abuse.
 Controls:
 
 - Strict Tauri capabilities and content security policy.
+- Keep Tauri `freezePrototype` disabled for the current verified Vite/React
+  bundle: enabling it prevents the application from mounting. Compensate with
+  the explicit CSP, no privileged remote content, dependency locking, strict
+  capability allowlisting, and narrow validated IPC instead of claiming a
+  hardening control the shipped frontend cannot execute under.
 - Treat previews as untrusted data; no arbitrary active HTML execution.
 - MIME/extension/size limits and safe text/image/PDF renderers.
 - Allowlisted external URL opening with visible destination.

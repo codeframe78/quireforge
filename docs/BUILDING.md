@@ -92,6 +92,14 @@ the frontend and produces the unbundled executable `target/release/quireforge`.
 The output is ignored by Git and is a local verification artifact, not a Debian
 package, AppImage, release, or supported installation.
 
+After a production build, launch `./target/release/quireforge` and verify that
+the rendered workspace—not only the native title bar and dark background—is
+visible. QuireForge intentionally keeps Tauri's `freezePrototype` option at its
+documented default of `false`: the current Vite/React production bundle assigns
+an own `toString` property during startup and otherwise fails before mounting.
+The explicit production CSP, restricted Tauri capability, and narrow typed IPC
+remain the primary webview/native controls.
+
 The browser-only shell preview is available with:
 
 ```bash

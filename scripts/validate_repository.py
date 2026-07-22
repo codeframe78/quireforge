@@ -365,6 +365,10 @@ def validate() -> list[str]:
         security = tauri_config.get("app", {}).get("security", {})
         if not security.get("csp"):
             errors.append("desktop production CSP must be explicit")
+        if security.get("freezePrototype") is not False:
+            errors.append(
+                "desktop Object.prototype freezing must remain disabled for the verified frontend bundle"
+            )
         if tauri_config.get("bundle", {}).get("active") is not False:
             errors.append("desktop packaging must remain disabled before Milestone 19")
 

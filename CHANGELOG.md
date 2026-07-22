@@ -338,6 +338,15 @@ released a usable application.
   start a live model turn, resolve conflicts, clean a worktree, alter a user
   repository, deploy, package, publish, or release.
 
+### Fixed
+
+- Fixed the native production window rendering only its black background. The
+  Tauri `freezePrototype` option made the current production bundle fail before
+  mounting with a read-only `Object.prototype.toString` error. QuireForge now
+  uses Tauri's documented default (`false`), retains its strict CSP and narrow
+  capability/IPC boundaries, validates the compatible setting in the repository
+  gate, and smoke-tests the rendered unbundled executable on Linux.
+
 ### Migration note
 
 - The existing Git history and discovery work were migrated in place; no

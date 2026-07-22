@@ -459,10 +459,14 @@ pnpm desktop:dev
 The automated Rust test serializes the native bootstrap contract and compares
 it with the exact JSON fixture parsed by TypeScript. The final command remains a
 manual launch check: verify the QuireForge title and icon, light/dark themes,
-keyboard focus, native bridge status, resizing, and clean exit. On Linux the
-running application must own `io.github.codeframe78.QuireForge` on the session
-bus. An unbundled launch does not validate package installation or desktop-file
-naming; those remain packaging-milestone obligations.
+keyboard focus, native bridge status, resizing, and clean exit. Confirm that the
+workspace DOM is visibly rendered rather than accepting a native title bar over
+an empty black webview. The repository validator keeps Tauri
+`freezePrototype: false` because the current verified production bundle cannot
+mount against a frozen `Object.prototype`. On Linux the running application
+must own `io.github.codeframe78.QuireForge` on the session bus. An unbundled
+launch does not validate package installation or desktop-file naming; those
+remain packaging-milestone obligations.
 
 The routine suite does not require Codex authentication or make billable model
 calls. An ignored compatibility test performs only local initialization and
