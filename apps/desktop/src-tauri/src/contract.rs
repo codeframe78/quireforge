@@ -101,6 +101,12 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 15,
                 },
+                CapabilitySummary {
+                    id: "desktop-integration",
+                    label: "Reviewed desktop integration",
+                    state: CapabilityState::Ready,
+                    milestone: 15,
+                },
             ],
         }
     }

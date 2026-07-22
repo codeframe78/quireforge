@@ -24,13 +24,13 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-22T14:25:43-07:00`
+Last updated: `2026-07-22T15:11:10-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                            |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Total milestones planned                  | 22 major milestones (0–21); Milestones 13 and 14 use separately gated submilestones                                                                          |
 | Total milestone entries completed         | 20 (Milestones 0–12, 13A–13B, 14A–14C, and local 15A–15B checkpoints); Milestone 15 remains open through 15C                                                |
-| Milestones in progress                    | Milestone 15; 15A–15B are complete locally and 15C remains separately gated                                                                                  |
+| Milestones in progress                    | Milestone 15; 15A–15B are complete locally, while 15C code/XWayland evidence is complete and its interactive Wayland/true-X11 gate remains open                |
 | Confirmed/reconstructed active execution  | Approximately 22.04–29.12 hours                                                                                                                              |
 | Confirmed/reconstructed automated wait    | Approximately 6.85–7.74 hours; early uninstrumented waits excluded                                                                                           |
 | Reconstructed user-blocked time           | At least 11.73 hours, plus unmeasured early approvals/prerequisites                                                                                          |
@@ -785,3 +785,35 @@ greater precision than the underlying ranges.
 - **Status:** Local checkpoint only. No push, merge, package, release,
   deployment, hosting mutation, user-file inspection, personal Codex-state
   read/mutation, or live/billable model call was performed.
+
+## Milestone 15C — Reviewed desktop handoffs and Linux verification (in progress)
+
+- **Objective:** Add one-use, system-default-application handoff for an already
+  reviewed project file plus focused-window-suppressed, deduplicated, fixed-copy
+  task notifications; verify supported Wayland and X11-family sessions without
+  widening the webview capability boundary.
+- **Start / current checkpoint:** Started at
+  `2026-07-22T14:30:59-07:00`, the reflog-recorded branch checkout from finished
+  15B commit `390434b`. Completion is intentionally unset while interactive
+  Wayland notification/picker and a true X11-login pass remain open.
+- **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
+- **Calibrated forecast:** 2–4 active hours, 15–35 minutes of local commands,
+  and 2.5–5 total elapsed hours, excluding logout/login time required to reach
+  a true X11 session; medium confidence.
+- **Current evidence:** Full validation passed 142 frontend and 166 Rust tests
+  in 59.03 seconds; 163 Rust tests passed and three deliberate live probes were
+  ignored. Desktop and website Playwright passed 24/24 and 8/8 in 27.17/7.16
+  seconds. The configured unbundled Tauri build passed in 45.67 seconds. All
+  timed final operations reported zero swaps. That production artifact started
+  under Wayland and completed the native attachment/file pickers, bounded
+  preview, second default-application confirmation, registered viewer launch,
+  and consumed-action state under XWayland with disposable app data.
+- **Correction recorded:** A raw Cargo release diagnostic retained Tauri's
+  development URL and produced the observed `127.0.0.1:1420` refusal. It was
+  stopped and excluded from acceptance. The repository's configured
+  `pnpm desktop:build` embedded `dist` and supplied the verified artifact.
+- **Status:** In progress, so no completion time, counted-project-time value,
+  variance, confidence classification, or cumulative completed-entry increment
+  is recorded yet. No push, merge, package, release, deployment, hosting
+  mutation, personal Codex-state access, live/billable model call, or fabricated
+  notification transition was performed.

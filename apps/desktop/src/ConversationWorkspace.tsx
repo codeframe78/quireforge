@@ -480,6 +480,8 @@ export function ConversationWorkspace({
         <p>
           Work stays scoped to the attached directory. QuireForge displays a
           normalized event stream and does not persist transcript content.
+          Background approval, completion, and failure alerts use fixed text
+          without project names, prompts, paths, or task output.
         </p>
       </div>
 

@@ -94,6 +94,12 @@ const nativeResponses = {
         state: "ready",
         milestone: 15,
       },
+      {
+        id: "desktop-integration",
+        label: "Reviewed desktop integration",
+        state: "ready",
+        milestone: 15,
+      },
     ],
   },
   codex_runtime_probe: {
@@ -131,6 +137,12 @@ const nativeResponses = {
   file_preview_pick: {
     ...filePreviewFixture,
     projectId: "018f0000-0000-7000-8000-000000000001",
+  },
+  file_preview_open: null,
+  file_preview_cancel: true,
+  conversation_notify: {
+    schemaVersion: 1,
+    status: "foreground",
   },
   conversation_attachment_status: {
     schemaVersion: 1,
@@ -670,6 +682,14 @@ test("native file preview uses the bounded shared contract", async ({
   await expect(page.locator(".file-preview-text code")).toContainText(
     "Paths remain native-only.",
   );
+  await page.getByRole("button", { name: "Open with desktop app" }).click();
+  await expect(
+    page.getByText("Destination · System default application"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Open with default app" }).click();
+  await expect(
+    page.getByRole("button", { name: "Opened with desktop app" }),
+  ).toBeDisabled();
 
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations).toEqual([]);

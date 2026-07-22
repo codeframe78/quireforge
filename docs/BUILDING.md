@@ -1,10 +1,12 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and desktop work through Milestone 15B can be
+Status: the Milestone 2 website and desktop code through Milestone 15C can be
 developed and built locally, including Codex/authentication, project and
 conversation lifecycle, reviewed Git/worktree workflows, the native terminal,
 normalized/confirmed integration workflows, bounded project-file previews, and
-private conversation-image attachments.
+private conversation-image attachments, reviewed default-application handoffs,
+and privacy-safe background notifications. Full display-session acceptance is
+tracked separately.
 An installable application package does not yet exist.
 
 ## Supported development baseline
@@ -93,6 +95,11 @@ pnpm desktop:build
 the frontend and produces the unbundled executable `target/release/quireforge`.
 The output is ignored by Git and is a local verification artifact, not a Debian
 package, AppImage, release, or supported installation.
+
+Use `pnpm desktop:build` before treating that executable as a production
+artifact. A direct `cargo build --release` does not run Tauri's frontend build
+hook or embed `dist`; launching that diagnostic binary can retain the configured
+development URL and fail at `127.0.0.1:1420` when Vite is not running.
 
 After a production build, launch `./target/release/quireforge` and verify that
 the rendered workspace—not only the native title bar and dark background—is

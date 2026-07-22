@@ -36,7 +36,16 @@ import {
 } from "./auth";
 import { codexRuntimeSchema, type CodexRuntimeSnapshot } from "./codex";
 import { desktopBootstrapSchema, type DesktopBootstrap } from "./contract";
-import { filePreviewSchema, type FilePreviewSnapshot } from "./filePreview";
+import {
+  filePreviewHandoffRequestSchema,
+  filePreviewSchema,
+  type FilePreviewHandoffRequest,
+  type FilePreviewSnapshot,
+} from "./filePreview";
+import {
+  desktopNotificationResultSchema,
+  type DesktopNotificationResult,
+} from "./desktopIntegration";
 import {
   integrationCatalogSchema,
   integrationControlActionRequestSchema,
@@ -148,6 +157,8 @@ export const PROJECT_DETACH_COMMAND = "project_detach";
 export const PROJECT_ARCHIVE_COMMAND = "project_archive";
 export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
 export const FILE_PREVIEW_PICK_COMMAND = "file_preview_pick";
+export const FILE_PREVIEW_OPEN_COMMAND = "file_preview_open";
+export const FILE_PREVIEW_CANCEL_COMMAND = "file_preview_cancel";
 export const CONVERSATION_ATTACHMENT_STATUS_COMMAND =
   "conversation_attachment_status";
 export const CONVERSATION_ATTACHMENT_PICK_COMMAND =
@@ -171,6 +182,7 @@ export const GIT_MUTATION_CONFIRM_COMMAND = "git_mutation_confirm";
 export const GIT_MUTATION_RECOVER_COMMAND = "git_mutation_recover";
 export const CONVERSATION_STATUS_COMMAND = "conversation_status";
 export const CONVERSATION_ACTIVE_COMMAND = "conversation_active";
+export const CONVERSATION_NOTIFY_COMMAND = "conversation_notify";
 export const CONVERSATION_START_COMMAND = "conversation_start";
 export const CONVERSATION_POLL_COMMAND = "conversation_poll";
 export const CONVERSATION_INTERRUPT_COMMAND = "conversation_interrupt";
@@ -444,6 +456,25 @@ export async function pickFilePreview(
   return filePreviewSchema.parse(payload);
 }
 
+export async function openFilePreview(
+  request: FilePreviewHandoffRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<void> {
+  const reviewedRequest = filePreviewHandoffRequestSchema.parse(request);
+  await invokeFunction(FILE_PREVIEW_OPEN_COMMAND, { request: reviewedRequest });
+}
+
+export async function cancelFilePreview(
+  request: FilePreviewHandoffRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<boolean> {
+  const reviewedRequest = filePreviewHandoffRequestSchema.parse(request);
+  const payload = await invokeFunction(FILE_PREVIEW_CANCEL_COMMAND, {
+    request: reviewedRequest,
+  });
+  return z.boolean().parse(payload);
+}
+
 export async function loadConversationAttachments(
   projectId: string,
   invokeFunction: InvokeFunction = invokeTauri,
@@ -640,6 +671,17 @@ export async function loadConversationStatus(
 ): Promise<ConversationSnapshot> {
   const payload = await invokeFunction(CONVERSATION_STATUS_COMMAND);
   return conversationSnapshotSchema.parse(payload);
+}
+
+export async function notifyConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<DesktopNotificationResult> {
+  const reviewedId = conversationIdSchema.parse(conversationId);
+  const payload = await invokeFunction(CONVERSATION_NOTIFY_COMMAND, {
+    request: { conversationId: reviewedId },
+  });
+  return desktopNotificationResultSchema.parse(payload);
 }
 
 export async function loadActiveConversations(

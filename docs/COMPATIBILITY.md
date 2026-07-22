@@ -1,10 +1,14 @@
 # Compatibility
 
-Status: desktop work through Milestone 15B is implemented and verified on the discovery
-host. Milestone 13 defines the Codex 0.145.0 integration contract and read-only
-catalog; Milestones 14A–14C add fixed integration workflows, and Milestone 15A
-adds native-selected bounded project-file previews while 15B adds documented
-conversation-image inputs.
+Status: desktop work through Milestone 15B is implemented and verified on the
+discovery host. Milestone 15C's reviewed handoff and notification code is
+implemented; its production Wayland launch and complete XWayland handoff path
+are verified, while interactive Wayland notification/picker and true X11-login
+acceptance remain open.
+Milestone 13 defines the Codex 0.145.0 integration contract and read-only
+catalog; Milestones 14A–14C add fixed integration workflows, and Milestones
+15A–15C add bounded local-file, conversation-image, and desktop-integration
+contracts.
 
 ## Identity compatibility contract
 
@@ -230,8 +234,8 @@ It does not depend on a PDF engine, image metadata helper, external command, or
 editor association. APNG, unknown binary content, and files above the native
 byte/dimension limits are refused; UTF-8 HTML/SVG source is shown only as inert
 normalized text. The native picker compiles on the discovery Wayland host;
-interactive Wayland and X11 behavior remains a 15C manual verification
-obligation rather than an automated claim.
+interactive Wayland and X11 behavior is recorded separately because a compile
+or browser test is not display-session evidence.
 
 ## Conversation-image compatibility
 
@@ -248,6 +252,36 @@ bytes with Tauri default file-drop events disabled, so WebKitGTK does not become
 a native path bridge. Source and staged paths remain native-only. Interactive
 picker/drop behavior on both target Wayland and X11 sessions remains part of
 the 15C manual compatibility gate.
+
+## Desktop handoff and notification compatibility
+
+Milestone 15C uses Tauri's official opener only after native code claims a
+one-use preview action and revalidates the selected file. The external
+destination class is the system default application; QuireForge does not
+select, configure, or execute a custom editor. Notification delivery uses the
+official Tauri notification plugin's Rust interface and the stable reverse-DNS
+application identity. The webview retains no direct opener or notification
+permission.
+
+The discovery GNOME Wayland session exposes both `WAYLAND_DISPLAY=wayland-0`
+and the shell-owned XWayland display `DISPLAY=:0`. `gnome-shell` 50.1 answers
+the Freedesktop notification service. Results obtained with
+`GDK_BACKEND=x11` on that display are labeled XWayland, not a separate GNOME
+Xorg login. A true X11-session claim requires a real X11 login or equivalent
+supported-session evidence.
+
+The unbundled production artifact built through `pnpm desktop:build` launched
+cleanly with `GDK_BACKEND=wayland`. Under `GDK_BACKEND=x11` on the host's
+XWayland display, the same embedded artifact rendered the workspace and
+completed attachment, native file selection, bounded README preview, explicit
+default-application review, one-use opener call, and consumed-action UI state
+against disposable QuireForge app data. The registered host viewer received
+the revalidated file. A raw `cargo build --release` diagnostic artifact was not
+accepted because it retained Tauri's development URL and therefore attempted
+`127.0.0.1:1420`; rebuilding through the configured Tauri command corrected
+that launch before evidence was recorded. No true X11 login was available, and
+the live notification transition was not fabricated without a real background
+conversation event.
 
 ## Website-host compatibility
 

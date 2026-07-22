@@ -111,6 +111,11 @@ struct TerminalState {
     diagnostic_code: Option<ConversationDiagnosticCode>,
 }
 
+pub(crate) struct ConversationNotificationCandidate {
+    pub(crate) key: String,
+    pub(crate) state: ConversationState,
+}
+
 impl ConversationServiceState {
     fn empty() -> Self {
         Self {
@@ -204,6 +209,31 @@ impl ConversationService {
             capacity: MAX_ACTIVE_CONVERSATIONS as u8,
             conversations,
         }
+    }
+
+    pub(crate) async fn notification_candidate(
+        &self,
+        conversation_id: &str,
+    ) -> Option<ConversationNotificationCandidate> {
+        if validate_uuid_v7(conversation_id).is_err() {
+            return None;
+        }
+        let state = self.state.lock().await;
+        let snapshot = state.recent.get(conversation_id)?;
+        let key = match snapshot.state {
+            ConversationState::WaitingForApproval => format!(
+                "approval:{}",
+                snapshot.pending_approval.as_ref()?.approval_id
+            ),
+            ConversationState::Completed => format!("terminal:{conversation_id}:completed"),
+            ConversationState::Blocked => format!("terminal:{conversation_id}:blocked"),
+            ConversationState::Failed => format!("terminal:{conversation_id}:failed"),
+            _ => return None,
+        };
+        Some(ConversationNotificationCandidate {
+            key,
+            state: snapshot.state,
+        })
     }
 
     async fn active_slot(
@@ -1749,6 +1779,44 @@ mod tests {
             serde_json::to_value(registry).expect("registry must serialize"),
             fixture
         );
+    }
+
+    #[tokio::test]
+    async fn notification_candidates_require_fresh_eligible_native_state() {
+        let service = ConversationService::default();
+        let conversation_id = Uuid::now_v7().to_string();
+        service
+            .remember_snapshot(ConversationSnapshot {
+                state: ConversationState::Running,
+                conversation_id: Some(conversation_id.clone()),
+                ..ConversationSnapshot::empty()
+            })
+            .await;
+        assert!(service
+            .notification_candidate(&conversation_id)
+            .await
+            .is_none());
+
+        service
+            .remember_snapshot(ConversationSnapshot {
+                state: ConversationState::Completed,
+                conversation_id: Some(conversation_id.clone()),
+                ..ConversationSnapshot::empty()
+            })
+            .await;
+        let candidate = service
+            .notification_candidate(&conversation_id)
+            .await
+            .expect("completed conversation must be eligible");
+        assert_eq!(candidate.state, ConversationState::Completed);
+        assert_eq!(
+            candidate.key,
+            format!("terminal:{conversation_id}:completed")
+        );
+        assert!(service
+            .notification_candidate("raw-thread-id")
+            .await
+            .is_none());
     }
 
     #[test]

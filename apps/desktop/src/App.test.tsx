@@ -150,7 +150,7 @@ describe("QuireForge desktop shell", () => {
     expect(
       await screen.findByRole("button", { name: "Continue in browser" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(9);
+    expect(screen.getAllByText("ready")).toHaveLength(10);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(
@@ -207,6 +207,7 @@ describe("QuireForge desktop shell", () => {
     const pickFilePreviewTask = vi
       .fn()
       .mockResolvedValue({ ...sharedFilePreviewFixture, projectId });
+    const openFilePreviewTask = vi.fn().mockResolvedValue(undefined);
     render(
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
@@ -214,6 +215,7 @@ describe("QuireForge desktop shell", () => {
         loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         pickFilePreviewTask={pickFilePreviewTask}
+        openFilePreviewTask={openFilePreviewTask}
       />,
     );
 
@@ -227,6 +229,18 @@ describe("QuireForge desktop shell", () => {
       }),
     ).toBeInTheDocument();
     expect(pickFilePreviewTask).toHaveBeenCalledWith(projectId);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with desktop app" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with default app" }),
+    );
+    await waitFor(() =>
+      expect(openFilePreviewTask).toHaveBeenCalledWith({
+        openActionId: sharedFilePreviewFixture.openActionId,
+      }),
+    );
   });
 
   it("sends only reviewed opaque image IDs with an explicit task start", async () => {
@@ -486,6 +500,10 @@ describe("QuireForge desktop shell", () => {
     });
     const startConversationTask = vi.fn().mockResolvedValue(running);
     const pollConversationTask = vi.fn().mockResolvedValue(completed);
+    const notifyConversationTask = vi.fn().mockResolvedValue({
+      schemaVersion: 1 as const,
+      status: "foreground" as const,
+    });
 
     render(
       <App
@@ -496,6 +514,7 @@ describe("QuireForge desktop shell", () => {
         loadConversation={() => Promise.resolve(scaffoldConversation)}
         startConversationTask={startConversationTask}
         pollConversationTask={pollConversationTask}
+        notifyConversationTask={notifyConversationTask}
       />,
     );
 
@@ -519,6 +538,7 @@ describe("QuireForge desktop shell", () => {
     );
     expect(await screen.findByText("Task completed")).toBeInTheDocument();
     expect(screen.getAllByText("Reviewing the task.")).toHaveLength(1);
+    expect(notifyConversationTask).toHaveBeenCalledWith(conversationId);
   });
 
   it("cancels pending conversation polling when the shell unmounts", async () => {

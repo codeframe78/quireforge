@@ -261,6 +261,18 @@ released a usable application.
   source/staging paths never cross IPC or persist in QuireForge metadata.
   Generic files, browser path events, arbitrary filesystem reads, live model
   calls in routine tests, packages, releases, and deployments remain excluded.
+- The Milestone 15C reviewed desktop-integration checkpoint: five-minute,
+  one-use UUIDv7 preview handoffs; confirmation that names the relative file and
+  fixed system-default-application destination; fresh attachment, containment,
+  symlink, descriptor, and device/inode revalidation; plus native-focused,
+  deduplicated approval/completion/block/failure notifications using fixed copy
+  without project names, prompts, paths, output, or raw diagnostics. React can
+  provide neither a path nor an application/command, the webview receives no
+  direct opener/notification plugin permission, and full display-session
+  acceptance remains separately evidenced. The configured production artifact
+  now has a verified native Wayland launch and complete XWayland picker,
+  preview, confirmation, default-application, and consumed-action path; true
+  X11-login and interactive Wayland notification/picker evidence remain open.
 
 ### Changed
 

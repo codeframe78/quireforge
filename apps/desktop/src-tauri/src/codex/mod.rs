@@ -14,10 +14,12 @@ pub mod types;
 
 pub use auth::types::{AuthLoginMethod, CodexAuthSnapshot};
 pub use auth::CodexAuthService;
+pub(crate) use conversation::types::ConversationState;
 pub use conversation::types::{
     ConversationApprovalDecisionRequest, ConversationDiagnosticCode, ConversationRegistrySnapshot,
     ConversationSnapshot, ConversationStartRequest,
 };
+pub(crate) use conversation::ConversationNotificationCandidate;
 pub use conversation::{
     ConversationContinueRequest, ConversationService, SessionLifecycleSnapshot, SessionListRequest,
 };

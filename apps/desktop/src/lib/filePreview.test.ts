@@ -10,6 +10,7 @@ describe("file preview contract", () => {
   it("parses the shared normalized text fixture", () => {
     expect(sharedFilePreviewFixture.kind).toBe("text");
     expect(sharedFilePreviewFixture.displayPath).toBe("docs/preview.md");
+    expect(sharedFilePreviewFixture.openActionId).toMatch(/^[0-9a-f-]+$/u);
   });
 
   it("accepts the empty scaffold", () => {
@@ -56,6 +57,18 @@ describe("file preview contract", () => {
         imageDataUrl: "data:image/jpeg;base64,/9g=",
         imageWidth: 1,
         imageHeight: 1,
+      }),
+    ).toThrow();
+    expect(() =>
+      filePreviewSchema.parse({
+        ...sharedFilePreviewFixture,
+        openActionId: null,
+      }),
+    ).toThrow();
+    expect(() =>
+      filePreviewSchema.parse({
+        ...sharedFilePreviewFixture,
+        openActionId: "/private/file",
       }),
     ).toThrow();
     expect(() =>

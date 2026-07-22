@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { FilePreviewWorkspace } from "./FilePreviewWorkspace";
@@ -36,6 +36,7 @@ describe("FilePreviewWorkspace", () => {
         busy={false}
         actionError={false}
         onPick={onPick}
+        onOpen={vi.fn()}
         onClear={vi.fn()}
       />,
     );
@@ -52,6 +53,42 @@ describe("FilePreviewWorkspace", () => {
     expect(onPick).toHaveBeenCalledWith(project.id);
   });
 
+  it("reviews the visible default-application destination before handoff", async () => {
+    const onOpen = vi.fn().mockResolvedValue(undefined);
+    render(
+      <FilePreviewWorkspace
+        availability="native"
+        project={project}
+        snapshot={sharedFilePreviewFixture}
+        busy={false}
+        actionError={false}
+        onPick={vi.fn()}
+        onOpen={onOpen}
+        onClear={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with desktop app" }),
+    );
+    expect(
+      screen.getByText(/Destination · System default application/u),
+    ).toBeInTheDocument();
+    expect(onOpen).not.toHaveBeenCalled();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with default app" }),
+    );
+    await waitFor(() =>
+      expect(onOpen).toHaveBeenCalledWith({
+        openActionId: sharedFilePreviewFixture.openActionId,
+      }),
+    );
+    expect(
+      screen.getByRole("button", { name: "Opened with desktop app" }),
+    ).toBeDisabled();
+  });
+
   it("keeps native file selection unavailable in browser preview", () => {
     render(
       <FilePreviewWorkspace
@@ -61,6 +98,7 @@ describe("FilePreviewWorkspace", () => {
         busy={false}
         actionError={false}
         onPick={vi.fn()}
+        onOpen={vi.fn()}
         onClear={vi.fn()}
       />,
     );
@@ -90,6 +128,7 @@ describe("FilePreviewWorkspace", () => {
         busy={false}
         actionError={false}
         onPick={vi.fn()}
+        onOpen={vi.fn()}
         onClear={vi.fn()}
       />,
     );
@@ -116,6 +155,7 @@ describe("FilePreviewWorkspace", () => {
         busy={false}
         actionError={false}
         onPick={vi.fn()}
+        onOpen={vi.fn()}
         onClear={vi.fn()}
       />,
     );

@@ -68,7 +68,17 @@ export const filePreviewDiagnosticCodeSchema = z.enum([
   "read-failed",
   "invalid-content",
   "image-dimensions-too-large",
+  "handoff-expired",
+  "open-failed",
 ]);
+
+export const filePreviewHandoffRequestSchema = z
+  .object({ openActionId: opaqueIdSchema })
+  .strict();
+
+export type FilePreviewHandoffRequest = z.infer<
+  typeof filePreviewHandoffRequestSchema
+>;
 
 export const filePreviewSchema = z
   .object({
@@ -99,6 +109,7 @@ export const filePreviewSchema = z
     imageDataUrl: imageDataUrlSchema.nullable(),
     imageWidth: z.number().int().positive().max(8192).nullable(),
     imageHeight: z.number().int().positive().max(8192).nullable(),
+    openActionId: opaqueIdSchema.nullable(),
     diagnosticCode: filePreviewDiagnosticCodeSchema.nullable(),
   })
   .strict()
@@ -113,6 +124,7 @@ export const filePreviewSchema = z
       preview.imageDataUrl,
       preview.imageWidth,
       preview.imageHeight,
+      preview.openActionId,
     ];
     if (preview.state === "empty") {
       if (
@@ -147,6 +159,7 @@ export const filePreviewSchema = z
       preview.rendering === null ||
       preview.mimeType === null ||
       preview.byteSize === null ||
+      preview.openActionId === null ||
       preview.diagnosticCode !== null
     ) {
       context.addIssue({
@@ -224,6 +237,7 @@ export const scaffoldFilePreview: FilePreviewSnapshot = {
   imageDataUrl: null,
   imageWidth: null,
   imageHeight: null,
+  openActionId: null,
   diagnosticCode: null,
 };
 

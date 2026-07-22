@@ -858,3 +858,31 @@ rose to about 2.28 GiB. Both remained comfortably within the host's available
 memory and forecasted command allowance. An initial targeted browser run used
 the previous production `dist`; rebuilding before Playwright produced the
 expected attachment surface and all final checks passed.
+
+## Milestone 15C measurements
+
+The reviewed desktop-integration checkpoint reused warm Cargo, pnpm, Vite,
+Astro, and browser caches. It added Tauri's official Rust notification plugin;
+no clean build, cache reset, schema migration, linker, driver, CUDA, swap, or
+zram change was made, and the RTX 3050 remained unused.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                                   |
+| ----------------------------------------------- | -----------------: | -------------------: | -------------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.61 seconds |        about 271 MiB | Passed with zero swaps                                                                                   |
+| Cargo preflight                                 |       1.72 seconds |        about 588 MiB | Passed with zero swaps                                                                                   |
+| Final complete non-browser `pnpm validate` gate |      59.03 seconds |       about 1.67 GiB | Passed 142 frontend tests and 166 Rust tests; 163 passed and 3 deliberate live probes were ignored       |
+| Final desktop Playwright regression             |      27.17 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
+| Final website Playwright regression             |       7.16 seconds |        about 252 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
+| Final configured unbundled Tauri release build  |      45.67 seconds |       about 2.35 GiB | Passed, including a 41.40-second optimized compile/link and the existing frontend chunk-size warning     |
+
+Every resource-timed final operation reported zero swaps. The desktop bundle
+is 788.36 kB/211.84 kB gzip and retains the existing chunk-size warning. The
+configured production artifact started under Wayland and completed the native
+picker, preview, second confirmation, system-default opener, and consumed-
+action path under XWayland against disposable app data. A raw Cargo release
+diagnostic was rejected because it retained the development URL and attempted
+`127.0.0.1:1420`; rebuilding through `pnpm desktop:build` embedded `dist` and
+provided the accepted native artifact. Routine tests made no personal Codex-
+state read/mutation, live/billable model call, package, release, deployment, or
+hosting change. Interactive Wayland notification/picker and true X11-login
+evidence remain open.

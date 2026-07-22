@@ -62,6 +62,12 @@
       "label": "Conversation image attachments",
       "state": "ready",
       "milestone": 15
+    },
+    {
+      "id": "desktop-integration",
+      "label": "Reviewed desktop integration",
+      "state": "ready",
+      "milestone": 15
     }
   ]
 }

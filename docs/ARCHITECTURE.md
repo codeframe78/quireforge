@@ -1,9 +1,9 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the website foundation and
-desktop work implemented locally through Milestone 15B. Packaging, deployment,
-remaining desktop integration, and unsupported integration-management
-expansion remain subject to separately gated milestones.
+desktop implementation through the Milestone 15C code checkpoint. Packaging,
+deployment, interactive Wayland/true-X11 acceptance, and unsupported
+integration-management expansion remain subject to separately gated work.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -385,7 +385,7 @@ capped at 8 MiB and preview state is never persisted.
 The production CSP permits `data:` only for image sources so the two bounded
 image types can render. Browser preview cannot select or read a local file.
 Conversation attachments use the separate 15B boundary below. Notifications,
-expanded editor/open-with behavior, and Wayland/X11 verification remain 15C.
+reviewed open-with behavior, and Linux verification use the 15C boundary below.
 See [ADR 0021](DECISIONS/0021-safe-project-file-previews.md).
 
 ### Milestone 15B conversation-image boundary
@@ -416,6 +416,28 @@ the other cleanup paths. Generic files remain unsupported because the reviewed
 Codex 0.145.0 turn schema has no generic local-file input. See
 [ADR 0022](DECISIONS/0022-bounded-conversation-image-attachments.md).
 
+### Milestone 15C desktop-integration boundary
+
+Each ready safe preview now registers one process-local, five-minute UUIDv7
+open action. React can review the attachment-relative file name and the closed
+`System default application` destination, but it cannot provide a path,
+application, executable, argument, MIME type, URL, or working directory. Claim
+is one-use; native code reloads the attachment and revalidates canonical
+containment, regular non-symlink state, descriptor identity, and the previewed
+device/inode before calling Tauri's opener. Replacement, clear, expiry, and
+successful claim remove the action, and at most 16 actions exist.
+
+Background conversation notifications accept only an app-owned conversation
+UUIDv7 and re-resolve it against the native recent-state registry. Pending
+approval, completion, block, and failure select fixed privacy-safe copy;
+interrupted and other states are ineligible. The main window's native focus
+state suppresses foreground alerts, and approval/terminal identity provides
+bounded deduplication. Project names, prompts, paths, model/account data,
+outputs, diagnostics, and raw protocol fields never enter the notification.
+The official Rust notification plugin is initialized without granting its
+commands to the webview; the main capability list remains empty. See
+[ADR 0023](DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md).
+
 ## Application layers
 
 ### Frontend
@@ -432,10 +454,15 @@ worktree confirmation supplies only its native-held token. Recovery and cleanup
 previews add only opaque app-owned recovery/project IDs; React still cannot
 submit a worktree path, branch for removal, cwd, executable, or Git argument.
 File preview adds only an opaque project ID; the native picker owns the path,
-and React can consume only the strict bounded snapshot.
+and React can consume only the strict bounded snapshot. Its optional desktop
+handoff adds one native-held open-action ID with a fixed default-application
+destination; React still cannot submit a path or application.
 Conversation attachments add only opaque project/attachment IDs plus bounded
 dragged image bytes; no source path, staged path, generic file handle, or
 arbitrary read operation crosses the boundary.
+Notifications add only an app-owned conversation ID and return a closed
+delivery status; native code owns eligibility, focus suppression, copy, and
+deduplication.
 
 ### Native application core
 

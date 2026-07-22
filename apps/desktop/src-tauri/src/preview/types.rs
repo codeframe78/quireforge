@@ -2,6 +2,12 @@ use serde::{Deserialize, Serialize};
 
 pub const FILE_PREVIEW_SCHEMA_VERSION: u16 = 1;
 
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct FilePreviewHandoffRequest {
+    pub open_action_id: String,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum FilePreviewState {
@@ -41,6 +47,8 @@ pub enum FilePreviewDiagnosticCode {
     ReadFailed,
     InvalidContent,
     ImageDimensionsTooLarge,
+    HandoffExpired,
+    OpenFailed,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -59,6 +67,7 @@ pub struct FilePreviewSnapshot {
     pub image_data_url: Option<String>,
     pub image_width: Option<u32>,
     pub image_height: Option<u32>,
+    pub open_action_id: Option<String>,
     pub diagnostic_code: Option<FilePreviewDiagnosticCode>,
 }
 
@@ -78,6 +87,7 @@ impl FilePreviewSnapshot {
             image_data_url: None,
             image_width: None,
             image_height: None,
+            open_action_id: None,
             diagnostic_code: None,
         }
     }

@@ -561,12 +561,20 @@ reviewable:
 - **15C — desktop handoffs and Linux verification:** add notifications and
   reviewed editor/open-with behavior, then verify native picker/handoff behavior
   on supported Wayland and X11 sessions. External destinations stay visible and
-  allowlisted; no generic opener or arbitrary command IPC is allowed.
+  allowlisted; no generic opener or arbitrary command IPC is allowed. The code
+  checkpoint uses native-held one-use preview actions, an explicit system-
+  default-application review, and fixed privacy-safe background notifications;
+  Linux display-session evidence remains the final acceptance gate. See
+  [ADR 0023](DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md).
 
-Milestones 15A and 15B are implemented and verified locally with no dependency
-addition, source-path persistence, user-file test access, billable model call,
-package, release, or deployment. The broader Milestone 15 acceptance remains
-open until 15C is implemented and verified.
+Milestones 15A and 15B are implemented and verified locally. The 15C handoff
+and notification code checkpoint is implemented with one official Rust desktop
+dependency and no source-path persistence, unrelated user-file access, billable
+model call, package, release, or deployment. Its production Wayland launch and
+complete XWayland picker/preview/default-application handoff are verified on the
+attached discovery repository. The broader Milestone 15 acceptance remains open
+until an interactive Wayland notification/picker pass and true X11-login
+verification are complete.
 
 ### 16 — Complete Cloudflare Pages Website
 

@@ -15,6 +15,9 @@ Milestone 15A adds a strict bounded file-preview contract, temporary-file
 native tests, and honest browser/native presentation coverage.
 Milestone 15B adds strict conversation-image staging, lifecycle, turn-input,
 component, and browser coverage.
+Milestone 15C adds opaque one-use handoff, native revalidation, fixed-copy
+notification, focus/deduplication state-machine, component, and bridge coverage;
+real display-session results remain separately labeled manual evidence.
 
 ## Repository, website, and desktop checks
 
@@ -337,6 +340,42 @@ app-server processes and make no live model call.
   desktop/mobile Playwright with axe-core/overflow, complete repository gates,
   and a warm unbundled release build. Do not inspect user files, start a live
   model turn, or create a package, release, deployment, or hosting change.
+
+## Milestone 15C desktop-integration checklist
+
+- Confirm a ready preview exposes only one UUIDv7 open action and relative
+  display name. The command must accept no path, URL, MIME, application,
+  executable, argument, or working directory.
+- Confirm the UI names `System default application` and requires a separate
+  handoff confirmation. Rust must revalidate attachment identity, canonical
+  containment, regular non-symlink state, descriptor path, and device/inode
+  before opening. Replacement, clear, expiry, replay, and tamper cases must
+  fail closed without creating a generic opener.
+- Confirm the notification command accepts only an app-owned conversation ID,
+  freshly permits pending approval/completed/blocked/failed state, suppresses
+  foreground delivery, and deduplicates approval/terminal identity. Fixed
+  notification copy must not interpolate project names, prompts, paths,
+  model/account data, output, diagnostics, or raw protocol fields.
+- Confirm the official notification plugin is invoked only from Rust and the
+  main webview capability list remains empty. Delivery failure must not change
+  task state and may retry only the same native-reviewed notification.
+- Run strict contracts, temporary-file/native state-machine tests, bridge,
+  component, and application tests, desktop/mobile Playwright with axe-core and
+  overflow, complete repository gates, and a warm unbundled release build.
+- On a disposable app-data root, manually exercise attach, file picker,
+  preview, open confirmation, attachment picker/drop, and a privacy-safe
+  notification on supported Wayland and X11 sessions. Record Wayland,
+  XWayland, and true X11 accurately; one cannot substitute for another. Do not
+  inspect unrelated user files, start a live model turn, or create a package,
+  release, deployment, or hosting change.
+
+Current discovery-host evidence: the configured unbundled Tauri production
+artifact starts under native Wayland. The same artifact completed the attached-
+project picker, file picker, bounded README preview, second confirmation,
+system-default opener, and consumed-action state under XWayland with disposable
+app data. Desktop Playwright passed 24/24 and website Playwright passed 8/8.
+Interactive Wayland notification/picker and a true X11 login remain unchecked;
+the host's XWayland display is not recorded as true X11 evidence.
 
 ## Planned manual Milestone 18 checklist
 

@@ -1262,9 +1262,9 @@ representation issues before publication.
 | Calibrated forecast  | Approximately 4.5–8 active hours; 25–55 minutes of local commands; 4–10 minutes hosted CI critical path; 5–9.5 total elapsed hours across 15A–15C; medium confidence                                             |
 | Calibration basis    | Synchronized clean `main` at `f99c078`; 44 GiB available RAM and 718 GiB free storage; low load; 12 logical CPUs; warm Cargo/pnpm caches; no GPU work; split into three independently reviewable checkpoints     |
 | Preflight commands   | Desktop TypeScript check 1.67 seconds/about 266 MiB; four-worker Cargo check 0.25 second/about 109 MiB; both passed with zero swaps                                                                              |
-| Current status       | Milestones 15A and 15B implemented and verified locally on their feature branches; publication remains separately approval-gated and 15C remains gated                                                                       |
-| Observed local work  | 15A: approximately 0.60 active/0.13 automated hour. 15B: approximately 0.60 active/0.08 automated hour. Neither checkpoint had a post-start user-blocked interval                                                           |
-| Acceptance timings   | 15B full validation 68.50 seconds/about 1.51 GiB; final Rust rerun 161 tests/158 passed/3 ignored; browser suites 26.81/7.10 seconds; warm native release build 39.63 seconds/about 2.28 GiB; zero product failures                      |
+| Current status       | Milestones 15A and 15B implemented and verified locally; 15C code/automated gates, production Wayland launch, and XWayland handoff are verified, while interactive Wayland notification/picker and true X11-login acceptance remain open |
+| Observed local work  | 15A: approximately 0.60 active/0.13 automated hour. 15B: approximately 0.60 active/0.08 automated hour. 15C timing remains in progress. None had a post-start user-blocked interval                                                         |
+| Acceptance timings   | 15C full validation 59.03 seconds/about 1.67 GiB; 166 Rust tests/163 passed/3 ignored; browser suites 27.17/7.16 seconds; configured native release build 45.67 seconds/about 2.35 GiB; zero product failures                         |
 
 Critical path: safe preview threat/format decision → native picker and
 attachment-contained read boundary → strict shared contract → responsive
@@ -1320,6 +1320,32 @@ compressed implementation. Focused review still caught a stale production
 browser artifact, a React state-derivation lint issue, a Rust argument-grouping
 Clippy issue, conservative image-lifetime semantics, and source-file identity
 revalidation before the final green gates.
+
+### Milestone 15C checkpoint
+
+| Field               | Record                                                                                                                                                                                                                                                                                                  |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date       | 2026-07-22                                                                                                                                                                                                                                                                                              |
+| Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                        |
+| Calibrated forecast | Approximately 2–4 active hours; 15–35 minutes of local commands; 2.5–5 total elapsed hours in one session, excluding any logout/login needed for a true X11 session; medium confidence                                                                                                                  |
+| Calibration basis   | Finished 15B branch at `390434b`; closed 15A preview and conversation-state contracts; warm Cargo/pnpm/browser caches; GNOME Wayland host with XWayland but no true X11 login; TypeScript preflight 1.61 seconds/about 271 MiB and Cargo preflight 1.72 seconds/about 588 MiB, both with zero swaps         |
+| Current status      | Code and automated gates verified locally on `feat/milestone-15c-desktop-handoffs`; production Wayland launch and complete XWayland picker/preview/default-application handoff verified; interactive Wayland notification/picker and true X11-login acceptance remain open                             |
+| Observed local work | In-progress timing from the `2026-07-22T14:30:59-07:00` branch start; no post-start user-blocked interval, package, release, deployment, hosting mutation, personal Codex-state access, live model call, or fabricated notification event                                                                   |
+| Acceptance timings  | Full validation 59.03 seconds/about 1.67 GiB; 139 desktop and 3 website frontend tests; 166 Rust tests with 163 passed/3 deliberate live probes ignored; desktop Playwright 24/24 in 27.17 seconds/about 441 MiB; website 8/8 in 7.16 seconds/about 252 MiB; release 45.67 seconds/about 2.35 GiB; zero swaps |
+
+The design narrowed “open with” to the system default application for exactly
+one already-previewed file. The frontend receives only a five-minute one-use
+UUIDv7 action, while native code revalidates the current attachment, canonical
+path, descriptor path, regular-file state, and device/inode identity. Fixed
+notification copy is selected only from freshly resolved native approval or
+terminal state and is suppressed when the main window is focused.
+
+Native verification also caught a launch-procedure error before evidence was
+accepted: a raw `cargo build --release` artifact retained Tauri's development
+URL and attempted `127.0.0.1:1420`. Rebuilding with the repository's configured
+`pnpm desktop:build` command embedded `dist`; that exact artifact rendered the
+workspace and completed the XWayland handoff path. The remaining display gates
+are environmental/manual rather than code or automated-test failures.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

@@ -90,8 +90,11 @@ explicit PNG/JPEG conversation attachments through the documented Codex
 `localImage` turn input. Native picker selections and browser drag/drop bytes
 are revalidated into private, short-lived app-owned copies; React receives only
 opaque IDs and normalized metadata. Generic file attachments and path-bearing
-drag/drop remain unavailable. Notifications, expanded open-with behavior, and
-Wayland/X11 verification remain Milestone 15C.
+drag/drop remain unavailable. Milestone 15C adds a separately confirmed,
+one-use default-application handoff for a revalidated preview plus fixed-copy
+background approval/completion/failure notifications. React receives no
+absolute path or notification content input, and generic opener IPC remains
+unavailable. Full Wayland/X11-session acceptance is recorded separately.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -122,14 +125,18 @@ deployed. There is no application package to install yet.
   mutation boundary, the Milestone 14B accessible Integration Center, and the
   Milestone 14C confirmed authorization/control boundary, plus the Milestone
   15A bounded project-file preview surface and Milestone 15B bounded
-  conversation-image staging and explicit attachment flow.
+  conversation-image staging and explicit attachment flow, plus the Milestone
+  15C reviewed default-application handoff and privacy-safe notification code
+  checkpoint.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Current milestone: Milestone 15 is in progress. The 15A safe file-preview and
   15B conversation-image attachment checkpoints are implemented and verified
-  locally on their feature branches; 15C desktop handoffs/Linux verification
-  remains. Unsupported generic file attachments and integration-management
-  paths remain unavailable.
+  locally; the 15C handoff/notification code checkpoint is implemented and its
+  production Wayland launch plus complete XWayland handoff path are verified.
+  Interactive Wayland notification/picker and true X11-login evidence remain
+  open. Unsupported generic openers, file attachments, and integration-
+  management paths remain unavailable.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own

@@ -15,6 +15,7 @@ import {
 import {
   archiveConversation,
   archiveProject,
+  cancelFilePreview,
   cancelConversationAttachments,
   cancelCodexAuth,
   cancelProjectAttachment,
@@ -34,6 +35,8 @@ import {
   loadGitDiff,
   loadGitStatus,
   loadIntegrationCatalog,
+  notifyConversation,
+  openFilePreview,
   openIntegrationControlBrowser,
   loadProjectWorkspace,
   logoutCodexAuth,
@@ -87,8 +90,10 @@ import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
 import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
 import {
   scaffoldFilePreview,
+  type FilePreviewHandoffRequest,
   type FilePreviewSnapshot,
 } from "./lib/filePreview";
+import type { DesktopNotificationResult } from "./lib/desktopIntegration";
 import {
   scaffoldConversation,
   type ConversationApprovalDecisionRequest,
@@ -194,6 +199,10 @@ interface AppProps {
     projectId: string,
   ) => Promise<ProjectPreflightSnapshot>;
   pickFilePreviewTask?: (projectId: string) => Promise<FilePreviewSnapshot>;
+  openFilePreviewTask?: (request: FilePreviewHandoffRequest) => Promise<void>;
+  cancelFilePreviewTask?: (
+    request: FilePreviewHandoffRequest,
+  ) => Promise<boolean>;
   pickConversationAttachmentsTask?: (
     projectId: string,
   ) => Promise<ConversationAttachmentSnapshot>;
@@ -242,6 +251,9 @@ interface AppProps {
   pollConversationTask?: (
     conversationId: string,
   ) => Promise<ConversationSnapshot>;
+  notifyConversationTask?: (
+    conversationId: string,
+  ) => Promise<DesktopNotificationResult>;
   interruptConversationTask?: (
     conversationId: string,
   ) => Promise<ConversationSnapshot>;
@@ -469,6 +481,8 @@ export default function App({
   archiveProjectMetadata = archiveProject,
   preflightProjectDirectory = preflightProject,
   pickFilePreviewTask = pickFilePreview,
+  openFilePreviewTask = openFilePreview,
+  cancelFilePreviewTask = cancelFilePreview,
   pickConversationAttachmentsTask = pickConversationAttachments,
   stageDroppedConversationAttachmentsTask = stageDroppedConversationAttachments,
   cancelConversationAttachmentsTask = cancelConversationAttachments,
@@ -489,6 +503,7 @@ export default function App({
   loadActiveConversationTasks = loadActiveConversations,
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
+  notifyConversationTask = notifyConversation,
   interruptConversationTask = interruptConversation,
   decideConversationApprovalTask = decideConversationApproval,
   loadSessions = loadConversationSessions,
@@ -583,6 +598,9 @@ export default function App({
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationActionError, setConversationActionError] = useState(false);
   const conversationActionGenerations = useRef<Record<string, number>>({});
+  const observedConversationStates = useRef<
+    Record<string, ConversationSnapshot["state"]>
+  >({});
   const [sessions, setSessions] = useState<SessionLifecycleSnapshot>(
     scaffoldSessionLifecycle,
   );
@@ -947,6 +965,14 @@ export default function App({
     let active = true;
     let timer: number | undefined;
     const ids = activeConversationKey.split(",");
+    const observed = observedConversationStates.current;
+    observedConversationStates.current = Object.fromEntries(
+      ids.flatMap((conversationId) =>
+        observed[conversationId]
+          ? [[conversationId, observed[conversationId]]]
+          : [],
+      ),
+    );
 
     async function poll() {
       const pollGenerations = Object.fromEntries(
@@ -968,6 +994,24 @@ export default function App({
       );
       if (settled.some((result) => result.status === "rejected"))
         setConversationActionError(true);
+
+      for (const result of results) {
+        if (!result.conversationId) continue;
+        const previous =
+          observedConversationStates.current[result.conversationId];
+        observedConversationStates.current[result.conversationId] =
+          result.state;
+        if (
+          previous !== result.state &&
+          ["waiting-for-approval", "completed", "blocked", "failed"].includes(
+            result.state,
+          )
+        ) {
+          void notifyConversationTask(result.conversationId).catch(() => {
+            // Notification delivery is best-effort and never changes task state.
+          });
+        }
+      }
 
       setTrackedConversations((current) => {
         const next = { ...current };
@@ -1043,6 +1087,7 @@ export default function App({
     conversation.conversationId,
     loadGitStatusTask,
     loadSessions,
+    notifyConversationTask,
     pollConversationTask,
     sessionSearchTerm,
   ]);
@@ -1149,6 +1194,18 @@ export default function App({
     setConversationAttachmentActionError(false);
   }
 
+  function discardFilePreview() {
+    if (filePreview.state === "ready" && filePreview.openActionId) {
+      void cancelFilePreviewTask({
+        openActionId: filePreview.openActionId,
+      }).catch(() => {
+        // Native expiry and bounded eviction remain the fail-closed fallback.
+      });
+    }
+    setFilePreview(scaffoldFilePreview);
+    setFilePreviewActionError(false);
+  }
+
   async function applyProjectAction(
     action: () => Promise<ProjectWorkspaceSnapshot>,
   ) {
@@ -1168,6 +1225,20 @@ export default function App({
         )
       ) {
         discardConversationAttachmentDraft();
+      }
+      if (
+        filePreview.state === "ready" &&
+        filePreview.projectId &&
+        !result.projects.some(
+          (project) =>
+            project.id === filePreview.projectId &&
+            !project.archived &&
+            ["connected-accessible", "connected-read-only"].includes(
+              project.directory?.state ?? "",
+            ),
+        )
+      ) {
+        discardFilePreview();
       }
     } catch {
       setProjectActionError(true);
@@ -1444,8 +1515,7 @@ export default function App({
       discardConversationAttachmentDraft();
     }
     setSelectedProjectId(projectId);
-    setFilePreview(scaffoldFilePreview);
-    setFilePreviewActionError(false);
+    discardFilePreview();
     const tracked = trackedConversations[projectId];
     setConversation(tracked?.snapshot ?? scaffoldConversation);
     setConversationEvents(tracked?.events ?? []);
@@ -1460,6 +1530,25 @@ export default function App({
     } catch {
       setFilePreview(scaffoldFilePreview);
       setFilePreviewActionError(true);
+    } finally {
+      setFilePreviewBusy(false);
+    }
+  }
+
+  async function openSelectedFilePreview(request: FilePreviewHandoffRequest) {
+    setFilePreviewBusy(true);
+    setFilePreviewActionError(false);
+    try {
+      await openFilePreviewTask(request);
+    } catch (error) {
+      try {
+        await cancelFilePreviewTask(request);
+      } catch {
+        // Native expiry and bounded eviction remain the fail-closed fallback.
+      }
+      setFilePreview(scaffoldFilePreview);
+      setFilePreviewActionError(true);
+      throw error;
     } finally {
       setFilePreviewBusy(false);
     }
@@ -2179,10 +2268,8 @@ export default function App({
             busy={filePreviewBusy}
             actionError={filePreviewActionError}
             onPick={chooseFilePreview}
-            onClear={() => {
-              setFilePreview(scaffoldFilePreview);
-              setFilePreviewActionError(false);
-            }}
+            onOpen={openSelectedFilePreview}
+            onClear={discardFilePreview}
           />
 
           <WorktreeWorkspace

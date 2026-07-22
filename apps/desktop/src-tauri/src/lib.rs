@@ -1,6 +1,7 @@
 mod attachment;
 mod codex;
 mod contract;
+mod desktop;
 mod git;
 mod preview;
 mod project;
@@ -24,6 +25,10 @@ use codex::{
     IntegrationControlService, IntegrationMutationService, SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
+use desktop::{
+    DesktopNotificationRequest, DesktopNotificationResult, DesktopNotificationService,
+    DesktopNotificationStatus,
+};
 use git::{
     types::{
         GitDiffRequest, GitDiffSnapshot, GitMutationConfirmRequest, GitMutationPreviewRequest,
@@ -32,13 +37,17 @@ use git::{
     },
     GitService,
 };
-use preview::{types::FilePreviewSnapshot, FilePreviewService};
+use preview::{
+    types::{FilePreviewHandoffRequest, FilePreviewSnapshot},
+    FilePreviewService,
+};
 use project::{
     types::{ProjectPreflightSnapshot, ProjectWorkspaceSnapshot},
     ProjectService,
 };
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_opener::OpenerExt;
 use terminal::{
     types::{
@@ -305,13 +314,106 @@ async fn file_preview_pick(
     Ok(match selection {
         Some(path) => match path.into_path() {
             Ok(path) => service.preview_selected(project_id, path, &projects),
-            Err(_) => FilePreviewSnapshot::unavailable(
-                Some(project_id),
-                preview::types::FilePreviewDiagnosticCode::PickerUnavailable,
-            ),
+            Err(_) => {
+                service.clear_project(&project_id);
+                FilePreviewSnapshot::unavailable(
+                    Some(project_id),
+                    preview::types::FilePreviewDiagnosticCode::PickerUnavailable,
+                )
+            }
         },
-        None => FilePreviewSnapshot::empty(Some(project_id)),
+        None => {
+            service.clear_project(&project_id);
+            FilePreviewSnapshot::empty(Some(project_id))
+        }
     })
+}
+
+#[tauri::command]
+async fn file_preview_open(
+    request: FilePreviewHandoffRequest,
+    app: tauri::AppHandle,
+    service: tauri::State<'_, FilePreviewService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<(), preview::types::FilePreviewDiagnosticCode> {
+    let claimed = service.claim_handoff(&request)?;
+    let path = match claimed.path(&projects) {
+        Ok(path) => path,
+        Err(error) => return Err(error),
+    };
+    let Some(path) = path.to_str() else {
+        return Err(preview::types::FilePreviewDiagnosticCode::UnsafePath);
+    };
+    if app.opener().open_path(path, None::<&str>).is_err() {
+        service.restore_handoff(claimed);
+        return Err(preview::types::FilePreviewDiagnosticCode::OpenFailed);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+fn file_preview_cancel(
+    request: FilePreviewHandoffRequest,
+    service: tauri::State<'_, FilePreviewService>,
+) -> bool {
+    service.cancel_handoff(&request)
+}
+
+#[tauri::command]
+async fn conversation_notify(
+    request: DesktopNotificationRequest,
+    app: tauri::AppHandle,
+    conversations: tauri::State<'_, ConversationService>,
+    notifications: tauri::State<'_, DesktopNotificationService>,
+) -> Result<DesktopNotificationResult, ()> {
+    let Some(candidate) = conversations
+        .notification_candidate(&request.conversation_id)
+        .await
+    else {
+        return Ok(DesktopNotificationResult::new(
+            DesktopNotificationStatus::Ineligible,
+        ));
+    };
+    let Some(window) = app.get_webview_window("main") else {
+        return Ok(DesktopNotificationResult::new(
+            DesktopNotificationStatus::Unavailable,
+        ));
+    };
+    if window.is_focused().unwrap_or(true) {
+        return Ok(DesktopNotificationResult::new(
+            DesktopNotificationStatus::Foreground,
+        ));
+    }
+    let prepared = match notifications.prepare(candidate) {
+        Ok(Some(prepared)) => prepared,
+        Ok(None) => {
+            return Ok(DesktopNotificationResult::new(
+                DesktopNotificationStatus::Duplicate,
+            ));
+        }
+        Err(()) => {
+            return Ok(DesktopNotificationResult::new(
+                DesktopNotificationStatus::Unavailable,
+            ));
+        }
+    };
+    if app
+        .notification()
+        .builder()
+        .title(prepared.title())
+        .body(prepared.body())
+        .show()
+        .is_err()
+    {
+        notifications.restore(prepared);
+        return Ok(DesktopNotificationResult::new(
+            DesktopNotificationStatus::Unavailable,
+        ));
+    }
+    notifications.complete(prepared);
+    Ok(DesktopNotificationResult::new(
+        DesktopNotificationStatus::Sent,
+    ))
 }
 
 #[tauri::command]
@@ -776,6 +878,7 @@ async fn terminal_close(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
@@ -783,8 +886,9 @@ pub fn run() {
         .manage(IntegrationControlService::default())
         .manage(IntegrationMutationService::default())
         .manage(ConversationService::default())
+        .manage(DesktopNotificationService::default())
         .manage(GitService::default())
-        .manage(FilePreviewService)
+        .manage(FilePreviewService::default())
         .manage(TerminalService::default())
         .setup(|app| {
             match app.path().app_data_dir() {
@@ -829,6 +933,8 @@ pub fn run() {
             project_archive,
             project_preflight,
             file_preview_pick,
+            file_preview_open,
+            file_preview_cancel,
             conversation_attachment_status,
             conversation_attachment_pick,
             conversation_attachment_stage_drop,
@@ -848,6 +954,7 @@ pub fn run() {
             git_mutation_recover,
             conversation_status,
             conversation_active,
+            conversation_notify,
             conversation_start,
             conversation_poll,
             conversation_interrupt,

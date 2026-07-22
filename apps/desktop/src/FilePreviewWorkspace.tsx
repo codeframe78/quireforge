@@ -1,4 +1,9 @@
-import type { FilePreviewSnapshot } from "./lib/filePreview";
+import { useState } from "react";
+
+import type {
+  FilePreviewHandoffRequest,
+  FilePreviewSnapshot,
+} from "./lib/filePreview";
 import type { ProjectWorkspaceSnapshot } from "./lib/project";
 
 type ProjectSummary = ProjectWorkspaceSnapshot["projects"][number];
@@ -12,6 +17,7 @@ interface FilePreviewWorkspaceProps {
   busy: boolean;
   actionError: boolean;
   onPick: (projectId: string) => Promise<void>;
+  onOpen: (request: FilePreviewHandoffRequest) => Promise<void>;
   onClear: () => void;
 }
 
@@ -37,6 +43,8 @@ const diagnostics: Record<
     "The selected file content did not match its supported preview format.",
   "image-dimensions-too-large":
     "The image dimensions exceed the safe preview limit.",
+  "handoff-expired": "Choose the file again before opening it externally.",
+  "open-failed": "The system default application could not open the file.",
 };
 
 function formatBytes(value: number): string {
@@ -52,8 +60,20 @@ export function FilePreviewWorkspace({
   busy,
   actionError,
   onPick,
+  onOpen,
   onClear,
 }: FilePreviewWorkspaceProps) {
+  const [confirmOpenActionId, setConfirmOpenActionId] = useState<string | null>(
+    null,
+  );
+  const [consumedActionId, setConsumedActionId] = useState<string | null>(null);
+  const confirmOpen =
+    snapshot.openActionId !== null &&
+    confirmOpenActionId === snapshot.openActionId;
+  const handoffConsumed =
+    snapshot.openActionId !== null &&
+    consumedActionId === snapshot.openActionId;
+
   const projectReady =
     project !== undefined &&
     !project.archived &&
@@ -66,6 +86,17 @@ export function FilePreviewWorkspace({
       ? snapshot
       : null;
 
+  async function openWithDefaultApplication() {
+    if (!visibleSnapshot?.openActionId || busy || handoffConsumed) return;
+    try {
+      await onOpen({ openActionId: visibleSnapshot.openActionId });
+      setConsumedActionId(visibleSnapshot.openActionId);
+      setConfirmOpenActionId(null);
+    } catch {
+      // App owns the bounded handoff error message.
+    }
+  }
+
   return (
     <section
       className="workspace-section file-preview-workspace"
@@ -76,15 +107,17 @@ export function FilePreviewWorkspace({
         <div>
           <p className="eyebrow">
             <span />
-            Safe local review · Milestone 15A
+            Safe local review and handoff · Milestone 15
           </p>
           <h2 id="file-preview-title">
             Preview a file without widening trust.
           </h2>
           <p>
-            The native picker chooses one project-contained regular file. Paths
-            remain native-only; React receives only bounded normalized content
-            and a relative display name.
+            The native picker chooses one project-contained regular file. A
+            separate confirmation opens that reviewed target through the system
+            default app. Absolute paths remain native-only; React receives only
+            bounded normalized content, a relative display name, and an opaque
+            action.
           </p>
         </div>
         <div className="section-actions">
@@ -124,7 +157,8 @@ export function FilePreviewWorkspace({
       )}
       {actionError && (
         <p className="inline-error" role="alert">
-          The native preview bridge failed. No file content was retained.
+          The native preview or desktop handoff failed. No unreviewed path was
+          opened.
         </p>
       )}
       {visibleSnapshot?.state === "unavailable" &&
@@ -148,6 +182,57 @@ export function FilePreviewWorkspace({
             </div>
             <span>{formatBytes(visibleSnapshot.byteSize!)}</span>
           </header>
+          <div className="file-preview-handoff">
+            {!confirmOpen ? (
+              <button
+                className="secondary-action"
+                type="button"
+                disabled={
+                  busy || handoffConsumed || !visibleSnapshot.openActionId
+                }
+                onClick={() =>
+                  setConfirmOpenActionId(visibleSnapshot.openActionId)
+                }
+              >
+                {handoffConsumed
+                  ? "Opened with desktop app"
+                  : "Open with desktop app"}
+              </button>
+            ) : (
+              <div
+                className="file-preview-handoff__review"
+                role="group"
+                aria-label="Review external file handoff"
+              >
+                <div>
+                  <strong>Open outside QuireForge?</strong>
+                  <p>
+                    File · {visibleSnapshot.displayPath}
+                    <br />
+                    Destination · System default application
+                  </p>
+                </div>
+                <div>
+                  <button
+                    className="ghost-action"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setConfirmOpenActionId(null)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="secondary-action"
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void openWithDefaultApplication()}
+                  >
+                    {busy ? "Opening…" : "Open with default app"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
           {visibleSnapshot.kind === "text" && (
             <>
               {visibleSnapshot.truncated && (

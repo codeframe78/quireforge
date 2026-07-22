@@ -14,6 +14,7 @@ import { scaffoldSessionLifecycle } from "./session";
 import {
   archiveConversation,
   archiveProject,
+  cancelFilePreview,
   cancelConversationAttachments,
   cancelProjectAttachment,
   cancelWorktree,
@@ -36,6 +37,7 @@ import {
   CONVERSATION_ATTACHMENT_STATUS_COMMAND,
   CONVERSATION_ACTIVE_COMMAND,
   CONVERSATION_INTERRUPT_COMMAND,
+  CONVERSATION_NOTIFY_COMMAND,
   CONVERSATION_ARCHIVE_COMMAND,
   CONVERSATION_FORK_COMMAND,
   CONVERSATION_POLL_COMMAND,
@@ -47,6 +49,8 @@ import {
   DESKTOP_BOOTSTRAP_COMMAND,
   detachProject,
   forkConversation,
+  FILE_PREVIEW_CANCEL_COMMAND,
+  FILE_PREVIEW_OPEN_COMMAND,
   FILE_PREVIEW_PICK_COMMAND,
   loadCodexAuth,
   loadCodexRuntime,
@@ -59,7 +63,9 @@ import {
   loadGitStatus,
   loadProjectWorkspace,
   loadWorktreeStatus,
+  notifyConversation,
   openCodexAuthBrowser,
+  openFilePreview,
   openGitFile,
   pickProjectDirectory,
   pickConversationAttachments,
@@ -367,6 +373,47 @@ describe("desktop bridge", () => {
     });
 
     await expect(pickFilePreview("/private/path", invoke)).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens and cancels previews through one opaque handoff action", async () => {
+    const openActionId = sharedFilePreviewFixture.openActionId!;
+    const invoke = vi.fn().mockResolvedValue(true);
+
+    await expect(
+      openFilePreview({ openActionId }, invoke),
+    ).resolves.toBeUndefined();
+    expect(invoke).toHaveBeenNthCalledWith(1, FILE_PREVIEW_OPEN_COMMAND, {
+      request: { openActionId },
+    });
+    await expect(cancelFilePreview({ openActionId }, invoke)).resolves.toBe(
+      true,
+    );
+    expect(invoke).toHaveBeenNthCalledWith(2, FILE_PREVIEW_CANCEL_COMMAND, {
+      request: { openActionId },
+    });
+
+    await expect(
+      openFilePreview({ openActionId: "/private/file" }, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("requests only a privacy-safe native notification by conversation ID", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const invoke = vi.fn().mockResolvedValue({
+      schemaVersion: 1,
+      status: "sent",
+    });
+
+    await expect(notifyConversation(conversationId, invoke)).resolves.toEqual({
+      schemaVersion: 1,
+      status: "sent",
+    });
+    expect(invoke).toHaveBeenCalledWith(CONVERSATION_NOTIFY_COMMAND, {
+      request: { conversationId },
+    });
+    await expect(notifyConversation("raw-thread-id", invoke)).rejects.toThrow();
     expect(invoke).toHaveBeenCalledTimes(1);
   });
 
