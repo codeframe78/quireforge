@@ -288,6 +288,19 @@ Controls:
   JSON and verify the expected fresh list postcondition; bound time/output,
   remove inherited API credentials, use neutral cwd and null streams, and reap
   every child.
+- Render an Integration Center mutation only when its normalized capability is
+  both upstream-available and implementation-ready. Unsupported connector,
+  MCP, skill, enablement, authorization, prompt-mention, and repair flows remain
+  visibly unavailable and cannot fall through to a generic route.
+- Keep catalog search and filters presentation-only: they may select an opaque
+  normalized entry ID but cannot derive a command, source, path, URL, or
+  operation. Repository marketplace adds reuse the strict pinned-reference
+  request contract.
+- Before confirmation, display the native preview's source class, normalized
+  permissions, warnings, destructive status, and separate hook-trust notice.
+  Contain and restore focus so keyboard users cannot accidentally interact with
+  obscured controls, and refresh normalized catalog state after an applied
+  result.
 
 ### MCP and connector tool side effects
 

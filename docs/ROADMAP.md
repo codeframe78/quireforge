@@ -77,10 +77,10 @@ and effort, while Milestone 13A confirms the app-owned dynamic-tool
 registration, invocation, and result lifecycle needed for a future selector
 control. Milestone 13B establishes live read-only integration discovery.
 Milestone 14A establishes the confirmed native plugin and marketplace mutation
-boundary without adding a user-facing Integration Center. Milestones 14B–17
-still need to establish the user-facing integration,
-mutation, and advanced-feature prerequisites before that control is
-implemented.
+boundary. Milestone 14B adds the user-facing Integration Center over that
+boundary without broadening it. Later Milestone 14 checkpoints and Milestones
+15–17 still need to establish authorization, configuration, and advanced-
+feature prerequisites before that control is implemented.
 
 ## Status
 
@@ -100,7 +100,7 @@ implemented.
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A complete and merged to `main`                      |
+|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A merged, 14B implemented and verified locally       |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
@@ -492,12 +492,16 @@ and post-merge `main` workflow
 This checkpoint made no personal integration or account mutation and produced
 no package, release, deployment, or hosting change.
 
-Milestone 14B remains the user-facing browse/search/filter/details and
+Milestone 14B implements the user-facing browse/search/filter/details and
 permission-review Integration Center over the normalized discovery and 14A
-mutation contracts. A later separately gated Milestone 14 checkpoint must
-handle only supported connector/MCP authorization, enable/disable or update
-flows, health/troubleshooting, and prompt mentions; unsupported management must
-remain visibly unavailable.
+mutation contracts. It exposes only capability-ready fixed operations, uses a
+pinned-reference form for repository marketplace adds, presents separate hook
+trust and supply-chain warnings, and keeps unavailable management explicit.
+Desktop/mobile, keyboard, overflow, and automated accessibility checks pass
+locally. A later separately gated Milestone 14 checkpoint must handle only
+supported connector/MCP authorization, enable/disable or update flows,
+health/troubleshooting, and prompt mentions; unsupported management must remain
+visibly unavailable.
 
 ### 15 — File Previews and Desktop Integration
 

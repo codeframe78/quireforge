@@ -83,6 +83,12 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 12,
                 },
+                CapabilitySummary {
+                    id: "integration-center",
+                    label: "Integration Center",
+                    state: CapabilityState::Ready,
+                    milestone: 14,
+                },
             ],
         }
     }

@@ -1,8 +1,8 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery with implementation through Milestone 14A,
-including the native read-only catalog and confirmed plugin/marketplace
-lifecycle validated locally
+Status: Milestone 0 discovery with implementation through Milestone 14B,
+including the native read-only catalog, confirmed plugin/marketplace lifecycle,
+and user-facing Integration Center validated locally
 Observed: initial discovery 2026-07-19; protocol refresh 2026-07-21
 Installed CLI evidence: `codex-cli 0.144.6` baseline and `codex-cli 0.145.0`
 current refresh
@@ -157,7 +157,31 @@ Routine tests use deterministic temporary fixtures. The separately invoked
 real-CLI proof uses temporary `CODEX_HOME` and `HOME` with one local fixture
 marketplace/plugin and does not touch personal Codex state. Plugin
 enable/disable, connector/MCP authorization, skill configuration, prompt
-mentions, and the Integration Center UI remain later gated work.
+mentions, and health repair remain later gated work.
+
+## Milestone 14B Integration Center
+
+The React Integration Center consumes only the strict 13B catalog and 14A
+preview/result contracts. It keeps connector, plugin, marketplace, skill, and
+MCP-server categories visible; offers bounded name/summary/publisher search and
+category/health filters; and presents normalized source, scope, installation,
+enablement, authentication, policy, version, permissions, requirements, and
+health without raw protocol or CLI fields.
+
+Actions appear only for the fixed plugin install/remove and marketplace
+add/remove/upgrade operations whose capability reports both upstream
+availability and QuireForge implementation readiness. A repository marketplace
+add accepts only the existing bounded `owner/repository` plus 40- or 64-hex
+pinned reference contract. Preview preserves the native-selected operation and
+shows source, permissions, warnings, destructive status, and separate hook
+trust before the one-use confirmation is submitted. Applied results trigger a
+fresh catalog read.
+
+Unsupported connector/MCP authorization, enable/disable, skill configuration,
+prompt mentions, and repair operations are explicitly unavailable rather than
+mapped to a generic command. Browser preview uses the sanitized catalog fixture;
+routine component and browser tests do not inspect or mutate personal Codex
+integration state.
 
 ## Required CLI inspection
 

@@ -1,9 +1,9 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the website foundation and
-desktop work implemented locally through Milestone 13B. Packaging, deployment,
-integration mutation, and Integration Center presentation remain subject to
-separately gated milestones.
+desktop work implemented locally through Milestone 14B. Packaging, deployment,
+and later integration authorization/configuration remain subject to separately
+gated milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -495,9 +495,21 @@ upgrades disclose their mutable-source risk. Bounded permissions, warnings,
 opaque entry IDs, and stable diagnostics are the only mutation data crossing
 IPC. See [ADR 0019](DECISIONS/0019-confirmed-integration-mutations.md).
 
+Milestone 14B implements the React Integration Center over only the normalized
+13B catalog and fixed 14A mutation contracts. The view preserves integration
+categories, searches bounded display metadata, filters category and health,
+and displays normalized source, scope, installation, enablement,
+authentication, policy, publisher, version, permission, requirement, and
+health state. Mutation controls render only when upstream availability and
+QuireForge implementation are both ready. Preview and confirmation preserve
+the fixed operation ID, disclose normalized permissions, warnings, destructive
+status, and separate hook trust, and refresh the catalog after an applied
+result. Browser preview uses sanitized deterministic fixtures and never claims
+live native state.
+
 Connector/MCP authorization, plugin enable/disable, skill configuration,
-prompt mentions, the user-facing Integration Center, and the app-owned dynamic
-tool remain unimplemented.
+prompt mentions, health repair, and the app-owned dynamic tool remain
+unimplemented.
 
 The future app-owned dynamic-tool boundary registers a closed schema through
 `thread/start`, accepts only the correlated `item/tool/call` server request,

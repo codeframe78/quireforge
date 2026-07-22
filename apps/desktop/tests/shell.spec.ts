@@ -1,6 +1,25 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+import integrationCatalogFixture from "../fixtures/integration-catalog.json" with { type: "json" };
+import integrationMutationFixture from "../fixtures/integration-mutation.json" with { type: "json" };
+
+const nativeIntegrationCatalog = {
+  ...integrationCatalogFixture,
+  capabilities: integrationCatalogFixture.capabilities.map((capability) =>
+    ["plugin.install", "plugin.remove", "marketplace.configure"].includes(
+      capability.id,
+    )
+      ? {
+          ...capability,
+          availability: "ready",
+          implementation: "ready",
+          diagnosticCode: null,
+        }
+      : capability,
+  ),
+};
+
 const nativeResponses = {
   desktop_bootstrap: {
     schemaVersion: 1,
@@ -49,6 +68,12 @@ const nativeResponses = {
         state: "ready",
         milestone: 12,
       },
+      {
+        id: "integration-center",
+        label: "Integration Center",
+        state: "ready",
+        milestone: 14,
+      },
     ],
   },
   codex_runtime_probe: {
@@ -83,6 +108,9 @@ const nativeResponses = {
     handoff: null,
     diagnosticCode: null,
   },
+  integration_catalog_read: nativeIntegrationCatalog,
+  integration_mutation_preview: integrationMutationFixture.preview,
+  integration_mutation_confirm: integrationMutationFixture.result,
   project_workspace_status: {
     schemaVersion: 1,
     state: "ready",
@@ -578,6 +606,48 @@ test("native terminal fixture mounts the app-owned xterm tab", async ({
   ).toBeVisible();
   await expect(page.getByText(/Linux account privileges/u)).toBeVisible();
 
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("native Integration Center reviews trust before a fixed mutation", async ({
+  page,
+}) => {
+  await installNativeFixture(page);
+  await page.goto("/");
+
+  const navigation = page.getByRole("button", { name: /Integrations/u });
+  if (await navigation.isVisible()) {
+    await expect(navigation).toBeEnabled();
+    await navigation.click();
+  } else {
+    await page.locator("#integrations").scrollIntoViewIfNeeded();
+  }
+  await expect(
+    page.getByRole("heading", { name: "Inspect trust before changing state." }),
+  ).toBeVisible();
+  await expect(page.getByText("5 of 5 integrations")).toBeVisible();
+  await page.getByLabel("Category").selectOption("plugin");
+  await expect(
+    page.getByRole("heading", { name: "Fixture review plugin" }),
+  ).toBeVisible();
+  await expect(page.getByText(/requires separate hook trust/u)).toBeVisible();
+
+  await page.getByRole("button", { name: "Install plugin" }).click();
+  const confirmation = page.getByRole("dialog", { name: "Install plugin" });
+  await expect(confirmation).toContainText(
+    "Authentication, if needed, remains a separate action.",
+  );
+  await expect(confirmation).toContainText("Pinned plugin repository");
+  await confirmation.getByRole("button", { name: "Confirm change" }).click();
+  await expect(
+    page.getByText(/Install plugin completed and the catalog was refreshed/u),
+  ).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );

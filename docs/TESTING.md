@@ -204,6 +204,29 @@ or account data and is not part of routine validation.
   repository gates, and both Playwright viewports. Browser verification is
   regression-only because 14A adds no Integration Center UI.
 
+## Milestone 14B Integration Center checklist
+
+- Confirm search matches only bounded name, summary, and publisher metadata and
+  that category/health filters preserve the normalized entry category and
+  honest blocked, degraded, unavailable, and unknown states.
+- Confirm details expose only normalized source, scope, installation,
+  enablement, authentication, policy, publisher, version, permissions,
+  requirements, warnings, and health; no raw protocol, CLI, path, URL,
+  credential, account, or tool-argument field reaches React.
+- Confirm controls appear only for fixed 14A operations whose capability is
+  available and implemented, while connector/MCP authorization, enable/disable,
+  skill configuration, prompt mentions, and repair stay visibly unavailable.
+- Confirm repository marketplace adds accept only the strict pinned-reference
+  request and every mutation displays the native preview's permissions,
+  warnings, destructive status, and separate hook trust before confirmation.
+- Verify dialog focus entry, containment, restoration, and Escape behavior;
+  bounded loading/error/result states; and a fresh catalog read after an
+  applied result.
+- Run deterministic component and application wiring tests, complete repository
+  gates, desktop/mobile Playwright with axe-core and overflow assertions, visual
+  review in both viewports, and a warm unbundled native release build. Do not
+  read or mutate personal integration state.
+
 ## Planned manual Milestone 18 checklist
 
 - Use deterministic mock catalogs and control requests; do not make a live or

@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
 import { ConversationWorkspace } from "./ConversationWorkspace";
 import { GitWorkspace } from "./GitWorkspace";
+import { IntegrationCenter } from "./IntegrationCenter";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
 import { TerminalWorkspace } from "./TerminalWorkspace";
@@ -17,6 +18,7 @@ import {
   cancelProjectAttachment,
   confirmProjectAttachment,
   confirmGitMutation,
+  confirmIntegrationMutation,
   decideConversationApproval,
   detachProject,
   interruptConversation,
@@ -28,6 +30,7 @@ import {
   loadDesktopBootstrap,
   loadGitDiff,
   loadGitStatus,
+  loadIntegrationCatalog,
   loadProjectWorkspace,
   logoutCodexAuth,
   openGitFile,
@@ -36,6 +39,7 @@ import {
   pickProjectRelink,
   preflightProject,
   previewGitMutation,
+  previewIntegrationMutation,
   pollConversation,
   refreshCodexAuth,
   recoverGitMutation,
@@ -92,6 +96,14 @@ import {
   type ProjectWorkspaceSnapshot,
 } from "./lib/project";
 import {
+  scaffoldIntegrationCatalog,
+  type IntegrationCatalogSnapshot,
+  type IntegrationMutationConfirmRequest,
+  type IntegrationMutationPreviewRequest,
+  type IntegrationMutationPreviewSnapshot,
+  type IntegrationMutationResultSnapshot,
+} from "./lib/integration";
+import {
   scaffoldSessionLifecycle,
   type ConversationContinueRequest,
   type SessionLifecycleSnapshot,
@@ -130,6 +142,7 @@ type WorktreeViewState = "checking" | "native" | "preview";
 type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
 type TerminalViewState = "checking" | "native" | "preview";
+type IntegrationViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -231,6 +244,13 @@ interface AppProps {
   closeTerminalTask?: (
     request: TerminalCloseRequest,
   ) => Promise<TerminalRegistrySnapshot>;
+  loadIntegrationCatalogTask?: () => Promise<IntegrationCatalogSnapshot>;
+  previewIntegrationMutationTask?: (
+    request: IntegrationMutationPreviewRequest,
+  ) => Promise<IntegrationMutationPreviewSnapshot>;
+  confirmIntegrationMutationTask?: (
+    request: IntegrationMutationConfirmRequest,
+  ) => Promise<IntegrationMutationResultSnapshot>;
 }
 
 interface TrackedConversation {
@@ -278,8 +298,8 @@ const navigation = [
     label: "Integrations",
     milestone: 14,
     icon: "blocks",
-    target: "",
-    ready: false,
+    target: "integrations",
+    ready: true,
   },
 ] as const;
 
@@ -423,6 +443,9 @@ export default function App({
   writeTerminalTask = writeTerminal,
   resizeTerminalTask = resizeTerminal,
   closeTerminalTask = closeTerminal,
+  loadIntegrationCatalogTask = loadIntegrationCatalog,
+  previewIntegrationMutationTask = previewIntegrationMutation,
+  confirmIntegrationMutationTask = confirmIntegrationMutation,
 }: AppProps) {
   const [bootstrap, setBootstrap] =
     useState<DesktopBootstrap>(scaffoldBootstrap);
@@ -501,6 +524,16 @@ export default function App({
     useState<TerminalViewState>("checking");
   const [terminalBusy, setTerminalBusy] = useState(false);
   const [terminalActionError, setTerminalActionError] = useState(false);
+  const [integrationCatalog, setIntegrationCatalog] =
+    useState<IntegrationCatalogSnapshot>(scaffoldIntegrationCatalog);
+  const [integrationPreview, setIntegrationPreview] =
+    useState<IntegrationMutationPreviewSnapshot | null>(null);
+  const [integrationResult, setIntegrationResult] =
+    useState<IntegrationMutationResultSnapshot | null>(null);
+  const [integrationState, setIntegrationState] =
+    useState<IntegrationViewState>("checking");
+  const [integrationBusy, setIntegrationBusy] = useState(false);
+  const [integrationActionError, setIntegrationActionError] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
     null,
   );
@@ -770,6 +803,23 @@ export default function App({
       active = false;
     };
   }, [loadTerminalsTask]);
+
+  useEffect(() => {
+    let active = true;
+    void loadIntegrationCatalogTask()
+      .then((result) => {
+        if (!active) return;
+        setIntegrationCatalog(result);
+        setIntegrationState("native");
+      })
+      .catch(() => {
+        if (active) setIntegrationState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [loadIntegrationCatalogTask]);
 
   useEffect(() => {
     if (authState !== "login-pending") return;
@@ -1508,6 +1558,59 @@ export default function App({
     }
   }
 
+  async function refreshIntegrationCatalog() {
+    setIntegrationBusy(true);
+    setIntegrationActionError(false);
+    setIntegrationPreview(null);
+    try {
+      const result = await loadIntegrationCatalogTask();
+      setIntegrationCatalog(result);
+      setIntegrationResult(null);
+      setIntegrationState("native");
+    } catch (error) {
+      setIntegrationActionError(true);
+      throw error;
+    } finally {
+      setIntegrationBusy(false);
+    }
+  }
+
+  async function beginIntegrationMutation(
+    request: IntegrationMutationPreviewRequest,
+  ) {
+    setIntegrationBusy(true);
+    setIntegrationActionError(false);
+    setIntegrationResult(null);
+    try {
+      setIntegrationPreview(await previewIntegrationMutationTask(request));
+    } catch (error) {
+      setIntegrationPreview(null);
+      setIntegrationActionError(true);
+      throw error;
+    } finally {
+      setIntegrationBusy(false);
+    }
+  }
+
+  async function applyIntegrationMutation(confirmationId: string) {
+    setIntegrationBusy(true);
+    setIntegrationActionError(false);
+    try {
+      const result = await confirmIntegrationMutationTask({ confirmationId });
+      setIntegrationPreview(null);
+      if (result.state === "applied" && result.catalogRefreshRequired) {
+        setIntegrationCatalog(await loadIntegrationCatalogTask());
+        setIntegrationState("native");
+      }
+      setIntegrationResult(result);
+    } catch (error) {
+      setIntegrationActionError(true);
+      throw error;
+    } finally {
+      setIntegrationBusy(false);
+    }
+  }
+
   const currentProject =
     projects.projects.find(
       (project) => project.id === selectedProjectId && !project.archived,
@@ -1854,6 +1957,19 @@ export default function App({
             onRestore={(conversationId) =>
               mutateSession(() => restoreConversationTask(conversationId))
             }
+          />
+
+          <IntegrationCenter
+            availability={integrationState}
+            snapshot={integrationCatalog}
+            preview={integrationPreview}
+            result={integrationResult}
+            busy={integrationBusy}
+            actionError={integrationActionError}
+            onRefresh={refreshIntegrationCatalog}
+            onPreview={beginIntegrationMutation}
+            onConfirm={applyIntegrationMutation}
+            onCancel={() => setIntegrationPreview(null)}
           />
 
           <ConversationWorkspace

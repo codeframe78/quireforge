@@ -44,6 +44,12 @@
       "label": "Integrated terminal",
       "state": "ready",
       "milestone": 12
+    },
+    {
+      "id": "integration-center",
+      "label": "Integration Center",
+      "state": "ready",
+      "milestone": 14
     }
   ]
 }

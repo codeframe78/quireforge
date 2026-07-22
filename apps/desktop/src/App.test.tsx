@@ -17,6 +17,12 @@ import {
   projectWorkspaceSchema,
   scaffoldProjectWorkspace,
 } from "./lib/project";
+import {
+  integrationCatalogSchema,
+  scaffoldIntegrationCatalog,
+  scaffoldIntegrationMutationPreview,
+  scaffoldIntegrationMutationResult,
+} from "./lib/integration";
 import { sessionLifecycleSchema } from "./lib/session";
 import { worktreeWorkspaceSchema } from "./lib/worktree";
 
@@ -81,6 +87,21 @@ const pendingRelink = projectWorkspaceSchema.parse({
     hasCodexConfig: false,
   },
 });
+const readyIntegrationCatalog = integrationCatalogSchema.parse({
+  ...scaffoldIntegrationCatalog,
+  capabilities: scaffoldIntegrationCatalog.capabilities.map((capability) =>
+    ["plugin.install", "plugin.remove", "marketplace.configure"].includes(
+      capability.id,
+    )
+      ? {
+          ...capability,
+          availability: "ready",
+          implementation: "ready",
+          diagnosticCode: null,
+        }
+      : capability,
+  ),
+});
 
 describe("QuireForge desktop shell", () => {
   beforeEach(() => {
@@ -109,7 +130,7 @@ describe("QuireForge desktop shell", () => {
     expect(
       await screen.findByRole("button", { name: "Continue in browser" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(6);
+    expect(screen.getAllByText("ready")).toHaveLength(7);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(
@@ -709,6 +730,60 @@ describe("QuireForge desktop shell", () => {
     );
     await waitFor(() =>
       expect(pollConversationTask).toHaveBeenCalledWith(conversationId),
+    );
+  });
+
+  it("wires the Integration Center through fixed catalog and mutation tasks", async () => {
+    const loadIntegrationCatalogTask = vi
+      .fn()
+      .mockResolvedValue(readyIntegrationCatalog);
+    const previewIntegrationMutationTask = vi
+      .fn()
+      .mockResolvedValue(scaffoldIntegrationMutationPreview);
+    const confirmIntegrationMutationTask = vi
+      .fn()
+      .mockResolvedValue(scaffoldIntegrationMutationResult);
+
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
+        loadIntegrationCatalogTask={loadIntegrationCatalogTask}
+        previewIntegrationMutationTask={previewIntegrationMutationTask}
+        confirmIntegrationMutationTask={confirmIntegrationMutationTask}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("heading", {
+        name: "Inspect trust before changing state.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /IntegrationsM14/u }),
+    ).toBeEnabled();
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "plugin" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Install plugin" }));
+    await waitFor(() =>
+      expect(previewIntegrationMutationTask).toHaveBeenCalledWith({
+        operation: "plugin-install",
+        targetEntryId: "plugin:fixture-review",
+        repository: null,
+        reference: null,
+      }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm change" }));
+    await waitFor(() =>
+      expect(confirmIntegrationMutationTask).toHaveBeenCalledWith({
+        confirmationId: scaffoldIntegrationMutationPreview.confirmationId,
+      }),
+    );
+    await waitFor(() =>
+      expect(loadIntegrationCatalogTask).toHaveBeenCalledTimes(2),
     );
   });
 });

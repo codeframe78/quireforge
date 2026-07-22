@@ -1110,7 +1110,7 @@ reusing this result directly.
 | Calibrated forecast       | Approximately 2.75–5 active hours; 15–35 minutes of local commands; 3.25–6 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                                                                          |
 | Calibration basis         | Synchronized `main` at `861f0dc`; CLI 0.145.0 stable plugin/marketplace JSON routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work                                                                                                                                  |
 | Current measured commands | TypeScript preflight 1.71 seconds/about 266 MiB; Cargo preflight 1.39 seconds/about 486 MiB; final warm focused mutation suite 0.24 second/about 108 MiB; isolated real-CLI lifecycle 0.29 second/about 108 MiB; complete gate 37.23 seconds/about 942 MiB; browser regression 19.24 seconds/about 390 MiB; warm release 41.50 seconds/about 1.88 GiB; all zero swaps |
-| Current status            | Complete and merged through PR #36 as `a20919f`; local gates and pull-request/main repository checks passed                                                                                                                                                                                                                                                            |
+| Current status            | Complete and merged through PR #36 as `a20919f`; local gates and pull-request/main repository checks passed                                                                                                                                                                                                                                                           |
 
 Critical path: stable route/source review → closed preview/confirm contract →
 native fixed-command coordinator → shared strict IPC → deterministic and
@@ -1142,6 +1142,48 @@ and post-merge `main` workflow
 passed. Future narrowly bounded native checkpoints should use the measured
 warm repository and roughly 1.5–1.75-minute hosted critical paths while keeping
 allowance for interface drift, source-security discoveries, and cache misses.
+
+## Milestone 14B — Integration Center UI
+
+| Field                | Record                                                                                                                                                                                                    |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date        | 2026-07-22                                                                                                                                                                                                |
+| Selected model       | GPT-5.6 Sol, High reasoning; manually confirmed                                                                                                                                                           |
+| Preliminary forecast | Approximately 2.25–4.5 active hours; 8–20 minutes of local commands; 2.5–5 total elapsed hours in one session; medium confidence                                                                          |
+| Calibrated forecast  | Approximately 2–3.75 active hours; 5–15 minutes of local commands; 3–8 minutes hosted CI critical path; 2.25–4.25 total elapsed hours in one session; medium confidence                                   |
+| Calibration basis    | Clean synchronized `main` at `425e87b`; 43 GiB available RAM; 720 GiB free NVMe; low load; no active project build; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work |
+| Preflight commands   | Desktop TypeScript check 1.60 seconds/about 262 MiB; four-worker Cargo check 1.35 seconds/about 501 MiB; both passed with zero swaps                                                                      |
+| Current status       | Implementation, visual review, and local gates complete on `feat/milestone-14b-integration-center`; publication and hosted verification pending                                                           |
+
+Critical path: normalized contract-to-view mapping → isolated responsive
+Integration Center → application catalog/mutation state wiring → search,
+filter, details, and explicit confirmation interactions → deterministic
+component/browser tests → visual/accessibility review → complete gates →
+security/diff review → publication and successful `main` CI. The Balanced
+profile keeps four Cargo workers and two Playwright workers. Browser, release,
+and native suites remain sequential because earlier measurements found a
+generated-output race when production and preview work overlapped. The RTX
+3050 is intentionally unused.
+
+The calibrated range is lower than the preliminary range because the existing
+native and TypeScript contracts are complete, no dependency change is expected,
+and both warm preflights completed in under three seconds combined. The upper
+allowance remains for accessible focus handling, responsive visual correction,
+large application-shell wiring, partial catalog states, and stale confirmation
+presentation. Connector/MCP authorization, enable/disable, skill configuration,
+prompt mentions, new native routes, personal integration mutation, packaging,
+release, and deployment remain excluded.
+
+Measured locally: the focused component suite passed 5 tests in 1.54 seconds;
+the complete desktop unit suite passed 112 tests in 9.13 seconds; the final
+non-browser repository gate passed in 49.85 seconds at about 1.32 GiB peak RSS;
+the final website/desktop Playwright gate passed 28 desktop/mobile tests in
+23.32 seconds at about 449 MiB peak RSS; and the warm unbundled native release
+build passed in 42.54 seconds at about 1.88 GiB peak RSS. Every resource-timed
+final command reported zero swaps. Desktop and mobile visual review confirmed
+the intended two-column and single-column layouts. The early JSON import and
+semantic-dialog lint corrections stayed within the debugging allowance and do
+not require a forecast revision.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

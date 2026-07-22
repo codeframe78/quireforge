@@ -719,3 +719,32 @@ seconds, and 1 minute 44 seconds. Post-merge `main` workflow
 completed them in 7 seconds, 1 minute 16 seconds, and 1 minute 25 seconds. Both
 hosted gates passed without a cache, workflow, runner, or host configuration
 change.
+
+## Milestone 14B measurements
+
+The Integration Center checkpoint used the Balanced profile with four Cargo
+workers and two Playwright workers. It preserved warm Cargo, pnpm, Vite, Astro,
+and browser caches and added no dependency, clean build, cache reset, linker,
+driver, CUDA, swap, or zram change. The RTX 3050 remained unused because this
+React, TypeScript, Rust-contract, and browser-validation work is CPU/system-
+memory work.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                                          |
+| ----------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.60 seconds |        about 262 MiB | Passed with zero swaps                                                                                          |
+| Four-worker Cargo preflight                     |       1.35 seconds |        about 501 MiB | Passed with zero swaps                                                                                          |
+| Focused Integration Center component suite      |       1.54 seconds |                  n/a | Passed 5 search/filter, action, confirmation, failure, and focus tests                                          |
+| Complete desktop unit suite                     |       9.13 seconds |                  n/a | Passed 112 tests across 20 files                                                                                |
+| Final complete non-browser `pnpm validate` gate |      49.85 seconds |       about 1.32 GiB | Passed 115 JavaScript tests and 139 Rust tests; 136 Rust tests passed and 3 deliberate live probes were ignored |
+| Final desktop and website Playwright regression |      23.32 seconds |        about 449 MiB | Passed 28 tests across desktop/mobile viewport profiles, including Integration Center axe and overflow coverage |
+| Final warm unbundled native release build       |      42.54 seconds |       about 1.88 GiB | Passed, including a 38.33-second optimized compile/link                                                         |
+
+Every resource-timed final operation reported zero swaps. Approximately 43 GiB
+RAM and 720 GiB NVMe were available at preflight; no competing project build,
+OOM event, dependency download, personal integration read or mutation,
+connector/MCP authorization, model call, or GPU workload occurred. An initial
+browser test used obsolete JSON import syntax and an initial lint pass rejected
+a keyboard handler on a non-semantic dialog container; both were corrected
+before the final gates by using import attributes and a native `dialog`
+element. The existing desktop bundle-size warning remains unchanged. Hosted
+pull-request and `main` measurements will be appended after publication.

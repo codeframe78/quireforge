@@ -219,6 +219,19 @@ released a usable application.
   isolated real-CLI test lifecycle under temporary `CODEX_HOME` and `HOME`.
   Personal Codex state, generic command execution, connector authorization, and
   the user-facing Integration Center are not part of this checkpoint.
+- The Milestone 14B Integration Center: a responsive category-preserving
+  catalog with bounded search, category and health filters, normalized source,
+  scope, installation, enablement, authentication, policy, publisher, version,
+  permission, requirement, and health details. Fixed 14A plugin and marketplace
+  operations appear only when the corresponding capability is both available
+  and implemented; pinned repository marketplace adds reuse the strict 14A
+  request contract. The preview dialog discloses permissions, warnings,
+  destructive status, and separate hook trust with focus entry, containment,
+  restoration, and Escape handling. Deterministic component and application
+  tests plus desktop/mobile Playwright, overflow, and axe-core coverage do not
+  read or mutate personal integration state. Connector/MCP authorization,
+  enable/disable, skill configuration, prompt mentions, package, release, and
+  deployment remain outside this checkpoint.
 
 ### Changed
 
