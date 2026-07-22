@@ -24,24 +24,24 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-21T21:43:18-07:00`
+Last updated: `2026-07-21T22:26:02-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                            |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Total milestones planned                  | 22 major milestones (0–21); Milestones 13 and 14 use separately gated submilestones                                                                          |
-| Total milestone entries completed         | 15 (Milestones 0–12, 13A, and 13B); 14 major roadmap milestones complete through Milestone 13                                                                |
-| Milestones in progress                    | 1 (Milestone 14A)                                                                                                                                            |
-| Confirmed/reconstructed active execution  | Approximately 19.22–26.30 hours                                                                                                                              |
-| Confirmed/reconstructed automated wait    | Approximately 6.10–6.99 hours; early uninstrumented waits excluded                                                                                           |
+| Total milestone entries completed         | 16 (Milestones 0–12, 13A, 13B, and 14A); 14 major roadmap milestones complete through Milestone 13                                                           |
+| Milestones in progress                    | 0; Milestone 14 remains open for separately gated 14B and later checkpoints                                                                                  |
+| Confirmed/reconstructed active execution  | Approximately 19.80–26.88 hours                                                                                                                              |
+| Confirmed/reconstructed automated wait    | Approximately 6.24–7.13 hours; early uninstrumented waits excluded                                                                                           |
 | Reconstructed user-blocked time           | At least 10.86 hours, plus unmeasured early approvals/prerequisites                                                                                          |
-| Counted project time                      | Approximately 25.31–33.28 hours                                                                                                                              |
-| Total elapsed across completed milestones | At least 32.22 evidenced hours; exact historical total is unknown                                                                                            |
-| Average counted time                      | Approximately 1.69–2.22 hours per completed milestone entry                                                                                                  |
-| Median counted time                       | Approximately 1.53 hours using reconstructed range midpoints                                                                                                 |
+| Counted project time                      | Approximately 26.02–33.99 hours                                                                                                                              |
+| Total elapsed across completed milestones | At least 32.93 evidenced hours; exact historical total is unknown                                                                                            |
+| Average counted time                      | Approximately 1.63–2.12 hours per completed milestone entry                                                                                                  |
+| Median counted time                       | Approximately 1.18 hours using reconstructed range midpoints                                                                                                 |
 | Longest completed milestone               | Milestone 11, approximately 5.45–7.72 counted hours                                                                                                          |
 | Shortest completed milestone              | Milestone 0, approximately 0.15 counted hours                                                                                                                |
-| Comparable forecast versus actual         | Milestones 3–13B forecast 74.00–126.75 active hours in aggregate and used approximately 21.78–29.75 counted hours, about 60%–83% below the forecast envelope |
-| Confidence classifications                | 2 Confirmed, 11 Reconstructed, 2 Estimated, 0 Unknown completed entries                                                                                      |
+| Comparable forecast versus actual         | Milestones 3–14A forecast 76.75–131.75 active hours in aggregate and used approximately 22.49–30.46 counted hours, about 60%–83% below the forecast envelope |
+| Confidence classifications                | 3 Confirmed, 11 Reconstructed, 2 Estimated, 0 Unknown completed entries                                                                                      |
 
 The cumulative active and automated ranges are derived from historical reports
 and workflow evidence that were recorded with different granularity. They are
@@ -68,7 +68,7 @@ range endpoints.
 | 12        | Complete    | `2026-07-20T18:27:06-07:00` | `2026-07-20T19:59:04-07:00` | 5–8 h active; 6–10 h elapsed      |     ~1.16 h |        ~0.38 h |                    0.00 h |               1.53 h |        1.53 h | ~4.97 h / 76.4% below midpoint  | Reconstructed |
 | 13A       | Complete    | `2026-07-21T19:41:14-07:00` | `2026-07-21T20:21:58-07:00` | 3.5–6 h active; 4.5–7.5 h elapsed |      0.43 h |         0.14 h |                    0.00 h |               0.57 h |        0.68 h | ~4.18 h / 88.0% below midpoint  | Confirmed     |
 | 13B       | Complete    | `2026-07-21T20:39:50-07:00` | `2026-07-21T21:27:13-07:00` | 2.5–4.25 h active; 3–5 h elapsed  |      0.61 h |         0.18 h |                    0.00 h |               0.79 h |        0.79 h | ~2.59 h / 76.6% below midpoint  | Confirmed     |
-| 14A       | In progress | `2026-07-21T21:43:18-07:00` | —                           | 2.75–5 h active; 3.25–6 h elapsed |   Measuring |      Measuring |            0.00 h to date |            Measuring |     Measuring | Pending                         | Prospective   |
+| 14A       | Complete    | `2026-07-21T21:43:18-07:00` | `2026-07-21T22:26:02-07:00` | 2.75–5 h active; 3.25–6 h elapsed |      0.58 h |         0.14 h |                    0.00 h |               0.71 h |        0.71 h | ~3.16 h / 81.7% below midpoint  | Confirmed     |
 
 Variance uses the midpoint of the historical forecast and counted-time ranges.
 It is included only where a recorded forecast exists and should not be read as
@@ -532,7 +532,8 @@ greater precision than the underlying ranges.
 - **Start:** `2026-07-21T21:43:18-07:00`, immediately after the calibrated
   forecast and explicit user approval. Planning, model selection, calibration,
   and approval time before this timestamp are excluded.
-- **Completion:** In progress.
+- **Completion:** `2026-07-21T22:26:02-07:00`, when the first post-merge
+  `main` workflow completed successfully.
 - **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
 - **Original preliminary forecast:** 3–5.5 active hours and 3.5–6.5 total
   elapsed hours in one or two sessions; medium-to-low confidence.
@@ -544,25 +545,57 @@ greater precision than the underlying ranges.
   checking passed in 1.71 seconds at about 266 MiB RSS and four-worker
   `cargo check --locked --workspace` passed in 1.39 seconds at about 486 MiB
   RSS. Both reported zero swaps.
-- **Active interval:** Opened at `2026-07-21T21:43:18-07:00` on branch
-  `feat/milestone-14a-plugin-lifecycle`.
-- **Measured command waits to date:** 1.71-second TypeScript and 1.39-second
+- **Active execution:** Approximately 0.58 hour within the prospective
+  execution interval, after subtracting the measured and defensible automated
+  waits. No long pause or approval gap occurred after execution started.
+- **Measured command waits:** 1.71-second TypeScript and 1.39-second
   Cargo preflights; 0.24-second final warm focused native mutation suite;
   0.29-second
   isolated real-CLI lifecycle; 3.10-second TypeScript check; 8.57-second
   frontend unit suite; 9.51-second lint; 6.69-second Clippy; 2.80-second
   production build; 7.51-second earlier full native tests; 37.23-second final
   complete gate; 19.24-second final browser regression; and 41.50-second warm
-  release build. All reported zero swaps. Repeated targeted debugging commands
-  and final publication gates will be included at completion rather than
-  represented with false stopwatch precision.
-- **Implementation evidence to date:** Fixed native plugin install/remove and
+  release build. All reported zero swaps. Pull-request workflow critical path
+  was 1 minute 47 seconds and post-merge `main` critical path was 1 minute 29
+  seconds. The approximately 0.14-hour automated total includes the recorded
+  local gates and those required hosted waits without double-counting parallel
+  hosted jobs; repeated subsecond commands are not represented with false
+  stopwatch precision.
+- **Implementation evidence:** Fixed native plugin install/remove and
   marketplace add/remove/upgrade routes, strict Rust/TypeScript preview/result
   fixture, one-use confirmation and stale-source tests, isolated temporary-home
   real-CLI lifecycle, 109 JavaScript tests, 136 passing non-live Rust tests, and
   26 desktop/mobile browser regressions. No personal integration mutation,
   authorization, model call, package, release, or deployment occurred.
-- **Automated wait / user-blocked:** Measuring / 0.00 hour after start to date.
-- **Counted / total elapsed:** Measuring prospectively.
-- **Confidence:** **Prospective**; start and subsequent intervals are being
-  recorded as the work occurs.
+- **Automated wait / user-blocked:** Approximately 0.14 / 0.00 hour after
+  start.
+- **Counted / total elapsed:** 0.71 / 0.71 hour. Active and wait categories are
+  rounded independently, so their displayed hundredths need not sum exactly to
+  the rounded wall-clock total.
+- **Forecast variance:** Approximately 3.16 hours, or 81.7%, below the
+  3.875-hour calibrated active midpoint.
+- **Evidence:** Prospective start record, feature commit `e46cb5c`, merge commit
+  `a20919f`, timed local gates,
+  [PR #36](https://github.com/James-Jennison/quireforge/pull/36), pull-request
+  workflow
+  [`29893588842`](https://github.com/James-Jennison/quireforge/actions/runs/29893588842),
+  and post-merge `main` workflow
+  [`29893692681`](https://github.com/James-Jennison/quireforge/actions/runs/29893692681).
+- **Confidence:** **Confirmed** for the execution interval and total elapsed;
+  active/wait separation is a documented approximation from measured commands
+  and hosted critical paths.
+- **Explanation of variance:** The existing catalog normalization, strict IPC
+  patterns, deterministic app-server harness, and warm dependency/build caches
+  made the bounded mutation service substantially faster than forecast. The
+  security review found the default-hook and mutable-remote-source cases early
+  enough to harden them without redesign or additional dependencies.
+- **Forecasting lessons:** Narrow native lifecycle checkpoints that reuse
+  normalized evidence should be forecast closer to the measured sub-hour warm
+  implementation path, while preserving explicit allowance for Codex route
+  drift, local-source trust discoveries, cold caches, and hosted queue delay.
+  Keep the user-facing Integration Center in its separately gated 14B scope.
+- **Publication:** Implementation commit `e46cb5c` merged through
+  [PR #36](https://github.com/James-Jennison/quireforge/pull/36) as `a20919f`.
+  Both the pull-request and post-merge `main` workflows passed all source,
+  website, and desktop jobs. No personal integration or account state was
+  mutated, and no package, release, deployment, or hosting change was made.

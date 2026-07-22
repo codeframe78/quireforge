@@ -1110,7 +1110,7 @@ reusing this result directly.
 | Calibrated forecast       | Approximately 2.75–5 active hours; 15–35 minutes of local commands; 3.25–6 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                                                                          |
 | Calibration basis         | Synchronized `main` at `861f0dc`; CLI 0.145.0 stable plugin/marketplace JSON routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work                                                                                                                                  |
 | Current measured commands | TypeScript preflight 1.71 seconds/about 266 MiB; Cargo preflight 1.39 seconds/about 486 MiB; final warm focused mutation suite 0.24 second/about 108 MiB; isolated real-CLI lifecycle 0.29 second/about 108 MiB; complete gate 37.23 seconds/about 942 MiB; browser regression 19.24 seconds/about 390 MiB; warm release 41.50 seconds/about 1.88 GiB; all zero swaps |
-| Current status            | Native service, strict IPC, deterministic/adversarial tests, isolated real-CLI proof, documentation, and all local production/browser/native gates pass; publication pending                                                                                                                                                                                          |
+| Current status            | Complete and merged through PR #36 as `a20919f`; local gates and pull-request/main repository checks passed                                                                                                                                                                                                                                                            |
 
 Critical path: stable route/source review → closed preview/confirm contract →
 native fixed-command coordinator → shared strict IPC → deterministic and
@@ -1120,13 +1120,28 @@ profile keeps four Cargo workers and two Playwright workers. Browser, release,
 and native suites remain sequential; documentation may overlap only short warm
 commands. The RTX 3050 is intentionally unused.
 
-The implementation checkpoint remains inside the calibrated range. Existing
-catalog normalization, fixed-command mutation patterns, and warm build caches
-removed much of the anticipated greenfield work. Security review added an
-explicit mutable-remote-source warning for configured marketplace upgrades;
-this did not change scope or invalidate the forecast. Completion measurements,
-forecast variance, publication evidence, and later forecasting lessons will be
-recorded after the post-merge `main` workflow.
+Execution ran from `2026-07-21T21:43:18-07:00` through the first successful
+post-merge `main` workflow at `2026-07-21T22:26:02-07:00`: 0.71 hour total
+elapsed and counted project time, with approximately 0.58 hour active work,
+0.14 hour measured/defensible automated wait, and 0.00 hour user-blocked after
+start. The counted result was approximately 3.16 hours, or 81.7%, below the
+3.875-hour calibrated active midpoint. Category totals are rounded separately,
+so their displayed hundredths need not add exactly to the rounded wall-clock
+total.
+
+Existing catalog normalization, fixed-command mutation patterns, and warm
+build caches removed much of the anticipated greenfield work. Official Codex
+manual review identified the default `hooks/hooks.json` trust boundary before
+publication, so the implementation added local-source hook presence and
+identity revalidation without architectural rework. Security review also added
+an explicit mutable-remote-source warning for configured marketplace upgrades.
+Pull-request workflow
+[`29893588842`](https://github.com/James-Jennison/quireforge/actions/runs/29893588842)
+and post-merge `main` workflow
+[`29893692681`](https://github.com/James-Jennison/quireforge/actions/runs/29893692681)
+passed. Future narrowly bounded native checkpoints should use the measured
+warm repository and roughly 1.5–1.75-minute hosted critical paths while keeping
+allowance for interface drift, source-security discoveries, and cache misses.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

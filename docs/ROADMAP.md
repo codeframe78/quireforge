@@ -100,7 +100,7 @@ implemented.
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A implemented and verified locally                   |
+|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A complete and merged to `main`                      |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
@@ -482,6 +482,15 @@ connector authorization, MCP configuration, skill configuration, plugin
 enable/disable, generic command execution, Integration Center UI, package,
 release, deployment, or personal integration mutation is included. See
 [ADR 0019](DECISIONS/0019-confirmed-integration-mutations.md).
+
+Milestone 14A publication completed through
+[PR #36](https://github.com/James-Jennison/quireforge/pull/36), implementation
+commit `e46cb5c`, merge commit `a20919f`, successful pull-request workflow
+[`29893588842`](https://github.com/James-Jennison/quireforge/actions/runs/29893588842),
+and post-merge `main` workflow
+[`29893692681`](https://github.com/James-Jennison/quireforge/actions/runs/29893692681).
+This checkpoint made no personal integration or account mutation and produced
+no package, release, deployment, or hosting change.
 
 Milestone 14B remains the user-facing browse/search/filter/details and
 permission-review Integration Center over the normalized discovery and 14A

@@ -711,5 +711,11 @@ authorization, model call, or GPU workload occurred. Security review performed
 one redacted shape-only local marketplace-list read and retained no names,
 paths, URLs, account data, or raw response. Routine tests remain fully isolated
 from personal Codex state. The existing desktop bundle-size warning remains
-unchanged. Hosted publication measurements will be appended at the milestone
-completion checkpoint.
+unchanged. Pull-request workflow
+[`29893588842`](https://github.com/James-Jennison/quireforge/actions/runs/29893588842)
+completed the source, website, and desktop jobs in 7 seconds, 1 minute 16
+seconds, and 1 minute 44 seconds. Post-merge `main` workflow
+[`29893692681`](https://github.com/James-Jennison/quireforge/actions/runs/29893692681)
+completed them in 7 seconds, 1 minute 16 seconds, and 1 minute 25 seconds. Both
+hosted gates passed without a cache, workflow, runner, or host configuration
+change.
