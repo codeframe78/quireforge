@@ -54,21 +54,21 @@ identity.
 
 ## Validated discovery environment
 
-| Component                       | Observed value                         | Readiness                               |
-| ------------------------------- | -------------------------------------- | --------------------------------------- |
-| Operating system                | Ubuntu 26.04 LTS, x86_64               | Discovery only                          |
-| Desktop session                 | GNOME on Wayland with XWayland display | Available                               |
+| Component                       | Observed value                         | Readiness                                  |
+| ------------------------------- | -------------------------------------- | ------------------------------------------ |
+| Operating system                | Ubuntu 26.04 LTS, x86_64               | Discovery only                             |
+| Desktop session                 | GNOME on Wayland with XWayland display | Available                                  |
 | Codex CLI                       | 0.145.0 standalone Linux build         | Current refresh; 0.144.6 fixtures retained |
-| Codex authentication            | ChatGPT-managed                        | Available                               |
-| Active/default model            | GPT-5.6 Sol                            | Discovered from app-server              |
-| Node.js / npm                   | 22.22.1 / 9.2.0                        | Available                               |
-| Git / GitHub CLI                | 2.53.0 / 2.46.0                        | Available                               |
-| pnpm                            | 11.15.0                                | Available and pinned by the workspace   |
-| Rust / Cargo                    | 1.97.1 / 1.97.1                        | Available; project minimum is Rust 1.88 |
-| Tauri / CLI                     | Rust 2.11.5 / JavaScript 2.11.4        | Locked and locally built                |
-| WebKitGTK development package   | 2.52.3, API 4.1                        | Available and locally built against     |
-| GTK / GLib development packages | GTK 3.24.52 / GLib 2.88.0              | Available and locally built against     |
-| XDG desktop portal / GTK portal | Installed                              | Native picker feasible                  |
+| Codex authentication            | ChatGPT-managed                        | Available                                  |
+| Active/default model            | GPT-5.6 Sol                            | Discovered from app-server                 |
+| Node.js / npm                   | 22.22.1 / 9.2.0                        | Available                                  |
+| Git / GitHub CLI                | 2.53.0 / 2.46.0                        | Available                                  |
+| pnpm                            | 11.15.0                                | Available and pinned by the workspace      |
+| Rust / Cargo                    | 1.97.1 / 1.97.1                        | Available; project minimum is Rust 1.88    |
+| Tauri / CLI                     | Rust 2.11.5 / JavaScript 2.11.4        | Locked and locally built                   |
+| WebKitGTK development package   | 2.52.3, API 4.1                        | Available and locally built against        |
+| GTK / GLib development packages | GTK 3.24.52 / GLib 2.88.0              | Available and locally built against        |
+| XDG desktop portal / GTK portal | Installed                              | Native picker feasible                     |
 
 The portal executables live under the distribution's libexec directory rather
 than the interactive shell `PATH`. The native dialog dependency and fixed
@@ -82,37 +82,37 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 
 ## Codex feature compatibility
 
-| Capability                                 | CLI 0.145.0          | Intended application route                                                    | Classification                        |
-| ------------------------------------------ | -------------------- | ----------------------------------------------------------------------------- | ------------------------------------- |
-| Detect version                             | Implemented          | Fixed `codex --version` probe                                                 | Stable official                       |
-| List account-visible models/efforts        | Implemented          | Bounded `model/list` normalization                                            | Stable method on experimental server  |
-| Apply model/effort to the next turn        | Yes                  | Revalidated `turn/start` model/effort overrides                               | Stable method on experimental server  |
+| Capability                                 | CLI 0.145.0          | Intended application route                                                                                     | Classification                        |
+| ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Detect version                             | Implemented          | Fixed `codex --version` probe                                                                                  | Stable official                       |
+| List account-visible models/efforts        | Implemented          | Bounded `model/list` normalization                                                                             | Stable method on experimental server  |
+| Apply model/effort to the next turn        | Yes                  | Revalidated `turn/start` model/effort overrides                                                                | Stable method on experimental server  |
 | Agent-directed selector request lifecycle  | Contract validated   | `thread/start` dynamic-tool registration plus correlated `item/tool/call`; implementation remains Milestone 18 | Stable methods on experimental server |
-| Start in an absolute local cwd             | Yes                  | `thread/start` / `turn/start`; CLI fallback                                   | Stable method + stable CLI            |
-| Additional writable roots                  | Yes                  | sandbox `writableRoots`; CLI `--add-dir`                                      | Stable official                       |
-| Stream turns, commands, plans, diffs       | Yes                  | app-server events                                                             | Stable methods on experimental server |
-| Approve commands/file changes              | Yes                  | app-server server requests                                                    | Stable methods on experimental server |
-| Resume/fork/archive/restore                | Yes                  | app-server; CLI fallback                                                      | Stable official                       |
-| Search/list conversations                  | Partial              | stable thread title/cwd filters; experimental deeper paging                   | Mixed                                 |
-| Codex-managed ChatGPT login                | Implemented          | Bounded app-server browser/device flow, cancel, logout, and normalized events | Stable official                       |
-| List skills by cwd                         | Yes                  | `skills/list`                                                                 | Stable method on experimental server  |
-| Enable/disable skills                      | Yes                  | `skills/config/write`                                                         | Stable method on experimental server  |
-| List apps/connectors                       | Yes                  | `app/list`                                                                    | Stable method on experimental server  |
-| Attach app to prompt                       | Yes                  | documented `mention` item                                                     | Stable method on experimental server  |
-| General connector authorization RPC        | Not established      | Official returned URL/browser handoff                                         | Limited                               |
-| MCP list/status/tools/auth                 | Yes                  | app-server + CLI                                                              | Stable official                       |
-| MCP OAuth                                  | Yes                  | app-server/CLI official flow                                                  | Stable official                       |
-| Plugin catalog via CLI JSON                | Implemented          | Bounded `plugin list --available --json` adapter                              | Supported CLI                         |
-| Plugin install/remove via CLI JSON         | Yes                  | CLI adapter with confirmation                                                 | Supported CLI                         |
-| Plugin app-server management               | Present              | Disabled in production                                                        | Under development                     |
-| Marketplace add/list/upgrade/remove        | Read implemented     | Bounded CLI JSON list; confirmed mutations remain Milestone 14                | Supported CLI                         |
-| Managed policy read                        | Yes                  | `configRequirements/read`                                                     | Stable method on experimental server  |
-| Permission profile discovery               | Yes                  | `permissionProfile/list` with bounded summaries                               | Stable method on experimental server  |
-| Client-owned dynamic tools                 | Contract validated   | `thread/start` registration and correlated `item/tool/call` server request     | Stable methods on experimental server |
-| Integrated process API                     | Present              | Do not use as default terminal                                                | Experimental/outside Codex sandbox    |
-| Scheduled hosted tasks                     | Not established      | Defer                                                                         | Unsupported until discovered          |
-| Repository status and staged/worktree diff | Git 2.53.0 available | Fixed native shell-free Git service over a revalidated attachment             | Implemented locally in Milestone 10A  |
-| Stage, unstage, bounded revert, and commit | Git 2.53.0 available | Native-held preview/confirmation plans with fixed Git operations              | Implemented locally in Milestone 10B  |
+| Start in an absolute local cwd             | Yes                  | `thread/start` / `turn/start`; CLI fallback                                                                    | Stable method + stable CLI            |
+| Additional writable roots                  | Yes                  | sandbox `writableRoots`; CLI `--add-dir`                                                                       | Stable official                       |
+| Stream turns, commands, plans, diffs       | Yes                  | app-server events                                                                                              | Stable methods on experimental server |
+| Approve commands/file changes              | Yes                  | app-server server requests                                                                                     | Stable methods on experimental server |
+| Resume/fork/archive/restore                | Yes                  | app-server; CLI fallback                                                                                       | Stable official                       |
+| Search/list conversations                  | Partial              | stable thread title/cwd filters; experimental deeper paging                                                    | Mixed                                 |
+| Codex-managed ChatGPT login                | Implemented          | Bounded app-server browser/device flow, cancel, logout, and normalized events                                  | Stable official                       |
+| List skills by cwd                         | Yes                  | `skills/list`                                                                                                  | Stable method on experimental server  |
+| Enable/disable skills                      | Yes                  | `skills/config/write`                                                                                          | Stable method on experimental server  |
+| List apps/connectors                       | Yes                  | `app/list`                                                                                                     | Stable method on experimental server  |
+| Attach app to prompt                       | Yes                  | documented `mention` item                                                                                      | Stable method on experimental server  |
+| General connector authorization RPC        | Not established      | Official returned URL/browser handoff                                                                          | Limited                               |
+| MCP list/status/tools/auth                 | Yes                  | app-server + CLI                                                                                               | Stable official                       |
+| MCP OAuth                                  | Yes                  | app-server/CLI official flow                                                                                   | Stable official                       |
+| Plugin catalog via CLI JSON                | Implemented          | Bounded `plugin list --available --json` adapter                                                               | Supported CLI                         |
+| Plugin install/remove via CLI JSON         | Implemented          | 14A fixed-command source review, one-use confirmation, and postcondition                                       | Supported CLI 0.145.x                 |
+| Plugin app-server management               | Present              | Disabled in production                                                                                         | Under development                     |
+| Marketplace add/list/upgrade/remove        | Implemented natively | Bounded list plus 14A confirmed fixed mutations; upgrade warns on mutable source                               | Supported CLI 0.145.x                 |
+| Managed policy read                        | Yes                  | `configRequirements/read`                                                                                      | Stable method on experimental server  |
+| Permission profile discovery               | Yes                  | `permissionProfile/list` with bounded summaries                                                                | Stable method on experimental server  |
+| Client-owned dynamic tools                 | Contract validated   | `thread/start` registration and correlated `item/tool/call` server request                                     | Stable methods on experimental server |
+| Integrated process API                     | Present              | Do not use as default terminal                                                                                 | Experimental/outside Codex sandbox    |
+| Scheduled hosted tasks                     | Not established      | Defer                                                                                                          | Unsupported until discovered          |
+| Repository status and staged/worktree diff | Git 2.53.0 available | Fixed native shell-free Git service over a revalidated attachment                                              | Implemented locally in Milestone 10A  |
+| Stage, unstage, bounded revert, and commit | Git 2.53.0 available | Native-held preview/confirmation plans with fixed Git operations                                               | Implemented locally in Milestone 10B  |
 
 Account-scoped inspection on 2026-07-19 returned a multi-page app directory
 from both the default OpenAI catalog and ecosystem directory, with only a small
@@ -138,6 +138,19 @@ remain under development. Every response is bounded and normalized into the
 shared contract, and malformed or unavailable categories degrade independently.
 Deterministic fixtures—not a personal account inventory—verified the complete
 catalog path during implementation.
+
+Milestone 14A enables only the reviewed plugin and marketplace mutation
+capabilities. Preview and confirmation both depend on a fresh 0.145.x catalog,
+effective policy, and ready normalized capability. Plugin sources must be a
+reviewable local manifest, a credential-free HTTPS repository at a pinned
+commit, or an exact-version package source. New repository marketplaces require
+a pinned 40- or 64-hex reference. Configured marketplace upgrade remains
+possible only for a safe repository source and is labeled mutable because the
+next remote artifact is not present in list evidence. Every successful command
+must return the exact closed JSON shape and satisfy a follow-up list
+postcondition. Other CLI minors remain unavailable pending route review.
+Built-in/default marketplace rows are read-only; removal is exposed only when
+the fresh CLI record identifies an explicitly configured source.
 
 Milestones 4–5 commit only the CLI 0.144.6 initialize, `model/list`, and stable
 account-lifecycle generated schemas, their hashes, and sanitized deterministic

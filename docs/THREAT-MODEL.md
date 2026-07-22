@@ -269,6 +269,25 @@ Controls:
 - Treat dynamic tool arguments as native-only untrusted input. Correlate the
   exact thread, turn, request, namespace, and tool; validate one closed
   app-owned schema; and return only bounded result content.
+- Expose no generic integration command. Accept only closed plugin
+  install/remove and marketplace add/remove/upgrade requests; map opaque entry
+  IDs back to fresh native CLI evidence and keep programs, arguments, paths,
+  URLs, install roots, and raw JSON out of IPC.
+- Require a five-minute, one-use UUIDv7 confirmation; cap pending previews;
+  serialize execution; and revalidate the reviewed CLI minor, effective policy,
+  ready capability, exact normalized entry, and native source evidence after
+  consuming the token.
+- For local plugins, canonicalize the directory and refuse symlinked,
+  malformed, mismatched, or oversized manifests. For remote installs, reject
+  URL credentials and unpinned repositories/package versions. Require a pinned
+  reference for a new repository marketplace.
+- Label a configured repository marketplace upgrade as mutable-source because
+  the next fetched artifact cannot be derived from list evidence. Confirmation
+  acknowledges that risk; it is not represented as artifact verification.
+- Treat process success as insufficient. Accept only closed operation-specific
+  JSON and verify the expected fresh list postcondition; bound time/output,
+  remove inherited API credentials, use neutral cwd and null streams, and reap
+  every child.
 
 ### MCP and connector tool side effects
 

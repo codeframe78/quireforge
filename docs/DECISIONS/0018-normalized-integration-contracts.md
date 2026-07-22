@@ -43,14 +43,14 @@ with these boundaries:
 
 The reviewed route matrix for CLI 0.145.0 is:
 
-| Domain | Read/discovery route | Mutating route | Milestone 13A classification |
-| --- | --- | --- | --- |
-| Apps/connectors | app-server `app/list` and `app/installed` | Supported app-server configuration or official authorization handoff only | Stable methods on an experimental server; unnecessary `app/read` is not called |
-| Plugins | Stable `codex plugin list --available --json` | Stable `codex plugin ... --json` fixed commands preferred | App-server plugin lifecycle remains experimental and disabled in production |
-| Marketplaces | Stable `codex plugin marketplace list --json` | Stable fixed `codex plugin marketplace` commands | Local paths remain native-only |
-| Skills | app-server `skills/list` and invalidation notification | app-server `skills/config/write` | Stable methods on an experimental server |
-| MCP | app-server status, resource, refresh, and OAuth methods | Official returned authorization URL and fixed refresh/config flows | Stable methods on an experimental server |
-| Policy/requirements | app-server `configRequirements/read`, `config/read`, and `permissionProfile/list` | No generic frontend configuration writer | Raw managed requirements never cross IPC |
+| Domain              | Read/discovery route                                                              | Mutating route                                                            | Milestone 13A classification                                                   |
+| ------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Apps/connectors     | app-server `app/list` and `app/installed`                                         | Supported app-server configuration or official authorization handoff only | Stable methods on an experimental server; unnecessary `app/read` is not called |
+| Plugins             | Stable `codex plugin list --available --json`                                     | Stable `codex plugin ... --json` fixed commands preferred                 | App-server plugin lifecycle remains experimental and disabled in production    |
+| Marketplaces        | Stable `codex plugin marketplace list --json`                                     | Stable fixed `codex plugin marketplace` commands                          | Local paths remain native-only                                                 |
+| Skills              | app-server `skills/list` and invalidation notification                            | app-server `skills/config/write`                                          | Stable methods on an experimental server                                       |
+| MCP                 | app-server status, resource, refresh, and OAuth methods                           | Official returned authorization URL and fixed refresh/config flows        | Stable methods on an experimental server                                       |
+| Policy/requirements | app-server `configRequirements/read`, `config/read`, and `permissionProfile/list` | No generic frontend configuration writer                                  | Raw managed requirements never cross IPC                                       |
 
 Every mutation remains a separately reviewed preview/confirmation operation.
 React will never receive a generic method name, argument vector, filesystem
@@ -80,6 +80,14 @@ Milestone 13A records this lifecycle as `contract-only`. Milestone 13B
 implements the read-only catalog and one fixed Tauri IPC read while keeping
 dynamic-tool registration, installation, authorization, configuration
 mutation, and the Integration Center UI in later milestones.
+
+Milestone 14A subsequently implements the `plugin.install`, `plugin.remove`,
+and `marketplace.configure` capabilities as fixed native preview/confirm
+operations while preserving this normalized catalog boundary. The mutation
+architecture and its additional source-review/revalidation rules are recorded
+in [ADR 0019](0019-confirmed-integration-mutations.md). Authorization,
+enable/disable configuration, the Integration Center UI, and dynamic-tool
+registration remain outside 14A.
 
 ## Security and privacy invariants
 

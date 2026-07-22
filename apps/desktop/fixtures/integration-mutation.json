@@ -1,0 +1,34 @@
+{
+  "preview": {
+    "schemaVersion": 1,
+    "state": "ready",
+    "operation": "plugin-install",
+    "targetEntryId": "plugin:fixture-review",
+    "targetDisplayName": "Fixture review plugin",
+    "source": "repository",
+    "permissions": [
+      {
+        "kind": "network",
+        "access": "read",
+        "target": "Pinned plugin repository",
+        "required": true
+      }
+    ],
+    "warnings": [
+      "repository-source",
+      "network-access",
+      "authentication-after-install"
+    ],
+    "destructive": false,
+    "confirmationId": "018f0000-0000-7000-8000-000000000014",
+    "diagnosticCode": null
+  },
+  "result": {
+    "schemaVersion": 1,
+    "state": "applied",
+    "operation": "plugin-install",
+    "targetEntryId": "plugin:fixture-review",
+    "catalogRefreshRequired": true,
+    "diagnosticCode": null
+  }
+}

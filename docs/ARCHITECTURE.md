@@ -480,8 +480,24 @@ discarded. Refreshes replace only the affected category, while independent CLI
 plugin/marketplace failures preserve healthy app-server categories. Absolute
 paths, URLs, config contents, marketplace roots, endpoint/tool definitions,
 account identity, and upstream error text remain native-only and are reduced
-to stable diagnostics. All mutation capabilities and the app-owned dynamic
-tool remain contract-only.
+to stable diagnostics.
+
+Milestone 14A implements only `plugin.install`, `plugin.remove`, and
+`marketplace.configure` through `IntegrationMutationService`. Two fixed Tauri
+commands expose a closed preview/confirm state machine; no generic integration
+command exists. Preview forces a fresh catalog/policy build and stores exact
+CLI source evidence behind a five-minute, one-use native UUIDv7. Confirmation
+serializes mutations, rechecks the CLI minor, policy, capability, normalized
+entry, and exact evidence, then runs one fixed stable CLI command and verifies
+both its closed JSON result and a fresh catalog postcondition. Repository
+marketplace adds require a pinned hexadecimal reference; remote marketplace
+upgrades disclose their mutable-source risk. Bounded permissions, warnings,
+opaque entry IDs, and stable diagnostics are the only mutation data crossing
+IPC. See [ADR 0019](DECISIONS/0019-confirmed-integration-mutations.md).
+
+Connector/MCP authorization, plugin enable/disable, skill configuration,
+prompt mentions, the user-facing Integration Center, and the app-owned dynamic
+tool remain unimplemented.
 
 The future app-owned dynamic-tool boundary registers a closed schema through
 `thread/start`, accepts only the correlated `item/tool/call` server request,

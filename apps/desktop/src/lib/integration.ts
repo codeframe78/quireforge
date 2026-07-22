@@ -1,4 +1,5 @@
 import integrationFixture from "../../fixtures/integration-catalog.json";
+import integrationMutationFixture from "../../fixtures/integration-mutation.json";
 import { z } from "zod";
 
 const identifierSchema = z
@@ -396,3 +397,191 @@ export type IntegrationCatalogSnapshot = z.infer<
 
 export const scaffoldIntegrationCatalog =
   integrationCatalogSchema.parse(integrationFixture);
+
+export const integrationMutationOperationSchema = z.enum([
+  "plugin-install",
+  "plugin-remove",
+  "marketplace-add",
+  "marketplace-remove",
+  "marketplace-upgrade",
+]);
+
+const integrationMutationWarningSchema = z.enum([
+  "local-source",
+  "repository-source",
+  "package-registry-source",
+  "network-access",
+  "hook-execution",
+  "mcp-servers",
+  "connector-apps",
+  "skill-content",
+  "authentication-after-install",
+  "mutable-remote-source",
+  "removes-cached-plugin",
+  "removes-marketplace-snapshot",
+  "updates-marketplace-snapshot",
+]);
+
+const integrationMutationDiagnosticSchema = z.enum([
+  "invalid-request",
+  "cli-unavailable",
+  "version-unsupported",
+  "catalog-unavailable",
+  "target-not-found",
+  "operation-unavailable",
+  "policy-blocked",
+  "source-invalid",
+  "source-unpinned",
+  "source-unreviewable",
+  "capacity-reached",
+  "confirmation-expired",
+  "stale-preview",
+  "mutation-failed",
+  "response-invalid",
+  "postcondition-failed",
+]);
+
+const confirmationIdSchema = z
+  .string()
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+  );
+
+const repositorySchema = z
+  .string()
+  .min(3)
+  .max(160)
+  .regex(/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/u);
+
+export const integrationMutationPreviewRequestSchema = z
+  .object({
+    operation: integrationMutationOperationSchema,
+    targetEntryId: identifierSchema.nullable(),
+    repository: repositorySchema.nullable(),
+    reference: z.string().min(1).max(64).nullable(),
+  })
+  .strict()
+  .superRefine((request, context) => {
+    const addsMarketplace = request.operation === "marketplace-add";
+    const addFieldsPresent =
+      request.repository !== null && request.reference !== null;
+    if (
+      (addsMarketplace &&
+        (request.targetEntryId !== null || !addFieldsPresent)) ||
+      (!addsMarketplace &&
+        (request.targetEntryId === null ||
+          request.repository !== null ||
+          request.reference !== null))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Integration mutation request fields are inconsistent",
+      });
+    }
+  });
+
+export const integrationMutationConfirmRequestSchema = z
+  .object({ confirmationId: confirmationIdSchema })
+  .strict();
+
+export const integrationMutationPreviewSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    state: z.enum(["ready", "blocked", "unavailable"]),
+    operation: integrationMutationOperationSchema,
+    targetEntryId: identifierSchema.nullable(),
+    targetDisplayName: displayTextSchema(128).nullable(),
+    source: z.enum([
+      "official",
+      "marketplace",
+      "local",
+      "repository",
+      "configuration",
+      "unknown",
+    ]),
+    permissions: z.array(permissionSchema).max(64),
+    warnings: z.array(integrationMutationWarningSchema).max(12),
+    destructive: z.boolean(),
+    confirmationId: confirmationIdSchema.nullable(),
+    diagnosticCode: integrationMutationDiagnosticSchema.nullable(),
+  })
+  .strict()
+  .superRefine((preview, context) => {
+    const ready = preview.state === "ready";
+    const removes =
+      preview.operation === "plugin-remove" ||
+      preview.operation === "marketplace-remove";
+    const addsMarketplace = preview.operation === "marketplace-add";
+    if (
+      preview.destructive !== removes ||
+      (addsMarketplace
+        ? preview.targetEntryId !== null
+        : preview.targetEntryId === null) ||
+      (ready &&
+        (preview.confirmationId === null ||
+          preview.diagnosticCode !== null ||
+          preview.targetDisplayName === null)) ||
+      (!ready &&
+        (preview.confirmationId !== null ||
+          preview.diagnosticCode === null ||
+          preview.targetDisplayName !== null ||
+          preview.source !== "unknown" ||
+          preview.permissions.length !== 0 ||
+          preview.warnings.length !== 0)) ||
+      new Set(preview.warnings).size !== preview.warnings.length
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Integration mutation preview fields are inconsistent",
+      });
+    }
+  });
+
+export const integrationMutationResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    state: z.enum(["applied", "unavailable"]),
+    operation: integrationMutationOperationSchema.nullable(),
+    targetEntryId: identifierSchema.nullable(),
+    catalogRefreshRequired: z.boolean(),
+    diagnosticCode: integrationMutationDiagnosticSchema.nullable(),
+  })
+  .strict()
+  .superRefine((result, context) => {
+    const applied = result.state === "applied";
+    if (
+      (applied &&
+        (result.operation === null ||
+          result.targetEntryId === null ||
+          !result.catalogRefreshRequired ||
+          result.diagnosticCode !== null)) ||
+      (!applied &&
+        (result.catalogRefreshRequired || result.diagnosticCode === null))
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Integration mutation result fields are inconsistent",
+      });
+    }
+  });
+
+export type IntegrationMutationOperation = z.infer<
+  typeof integrationMutationOperationSchema
+>;
+export type IntegrationMutationPreviewRequest = z.infer<
+  typeof integrationMutationPreviewRequestSchema
+>;
+export type IntegrationMutationConfirmRequest = z.infer<
+  typeof integrationMutationConfirmRequestSchema
+>;
+export type IntegrationMutationPreviewSnapshot = z.infer<
+  typeof integrationMutationPreviewSchema
+>;
+export type IntegrationMutationResultSnapshot = z.infer<
+  typeof integrationMutationResultSchema
+>;
+
+export const scaffoldIntegrationMutationPreview =
+  integrationMutationPreviewSchema.parse(integrationMutationFixture.preview);
+export const scaffoldIntegrationMutationResult =
+  integrationMutationResultSchema.parse(integrationMutationFixture.result);

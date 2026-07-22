@@ -212,6 +212,13 @@ released a usable application.
   invalidation reasons; and fails closed on unsupported CLI minors or malformed
   upstream data without exposing raw paths, URLs, configuration, credentials,
   account identity, or tool arguments.
+- The Milestone 14A native plugin and marketplace lifecycle: fixed stable CLI
+  add/remove/upgrade commands, bounded source review, one-use UUIDv7
+  preview/confirm tokens, fresh policy/catalog/source revalidation, exact JSON
+  result checks, postcondition refresh, closed Rust/TypeScript IPC, and an
+  isolated real-CLI test lifecycle under temporary `CODEX_HOME` and `HOME`.
+  Personal Codex state, generic command execution, connector authorization, and
+  the user-facing Integration Center are not part of this checkpoint.
 
 ### Changed
 

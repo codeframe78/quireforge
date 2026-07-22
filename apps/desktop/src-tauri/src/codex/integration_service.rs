@@ -38,8 +38,8 @@ const CLI_JSON_TIMEOUT: Duration = Duration::from_secs(15);
 const MAX_CLI_JSON_BYTES: usize = 1024 * 1024;
 
 const CONNECTOR_CAPABILITIES: &[&str] = &["connector.catalog", "connector.installed"];
-const PLUGIN_CAPABILITIES: &[&str] = &["plugin.catalog"];
-const MARKETPLACE_CAPABILITIES: &[&str] = &["marketplace.catalog"];
+const PLUGIN_CAPABILITIES: &[&str] = &["plugin.catalog", "plugin.install", "plugin.remove"];
+const MARKETPLACE_CAPABILITIES: &[&str] = &["marketplace.catalog", "marketplace.configure"];
 const SKILL_CAPABILITIES: &[&str] = &["skill.catalog"];
 const MCP_CAPABILITIES: &[&str] = &["mcp.health"];
 const REQUIREMENT_CAPABILITIES: &[&str] = &["policy.requirements"];
@@ -107,6 +107,11 @@ impl IntegrationCatalogService {
         let snapshot = validated_or_unavailable(snapshot);
         state.snapshot = Some(snapshot.clone());
         snapshot
+    }
+
+    pub async fn refresh(&self) -> IntegrationCatalogSnapshot {
+        let mut state = self.state.lock().await;
+        self.rebuild(&mut state).await
     }
 
     async fn rebuild(&self, state: &mut IntegrationServiceState) -> IntegrationCatalogSnapshot {
@@ -1419,7 +1424,10 @@ fn template_snapshot(cli_version: &str) -> IntegrationCatalogSnapshot {
             "connector.catalog"
                 | "connector.installed"
                 | "plugin.catalog"
+                | "plugin.install"
+                | "plugin.remove"
                 | "marketplace.catalog"
+                | "marketplace.configure"
                 | "skill.catalog"
                 | "mcp.health"
                 | "policy.requirements"
@@ -1699,7 +1707,10 @@ mod tests {
                 capability.id.as_str(),
                 "connector.catalog"
                     | "plugin.catalog"
+                    | "plugin.install"
+                    | "plugin.remove"
                     | "marketplace.catalog"
+                    | "marketplace.configure"
                     | "skill.catalog"
                     | "mcp.health"
                     | "policy.requirements"

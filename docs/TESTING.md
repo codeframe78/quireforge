@@ -131,6 +131,23 @@ from serialized snapshots. The TypeScript bridge test validates the one fixed
 test reads a personal integration catalog, installs an integration, starts an
 authorization flow, changes Codex configuration, or makes a model call.
 
+Milestone 14A adds a second shared Rust/TypeScript fixture for the closed
+mutation preview/result contract and strict bridge requests. Deterministic
+native tests run fixed shell fixtures in private temporary directories and
+cover plugin install/remove, marketplace add/remove/upgrade, pinned-source
+enforcement, exact-entry staleness, one-use confirmation replay, fixed JSON
+result validation, and list postconditions. TypeScript tests reject
+operation-inconsistent requests, raw source paths/URLs, unexpected fields,
+destructive-label mismatches, and applied results without catalog refresh.
+
+The real CLI lifecycle proof is `#[ignore]` and must be invoked explicitly. It
+creates temporary `CODEX_HOME` and `HOME`, registers a local fixture marketplace,
+installs and removes its local fixture plugin, removes the marketplace, and
+deletes that temporary tree. It does not inherit personal Codex configuration,
+authentication, or integration state and makes no model call. A separate
+redacted shape-only read during security review returned no names, paths, URLs,
+or account data and is not part of routine validation.
+
 ## Milestone 13A contract checklist
 
 - Confirm the generated manifest identifies CLI 0.145.0, hashes every selected
@@ -165,6 +182,27 @@ authorization flow, changes Codex configuration, or makes a model call.
   warm unbundled native release build. No new visual surface is expected, so
   browser verification is regression coverage rather than a new screenshot
   approval.
+
+## Milestone 14A mutation checklist
+
+- Confirm only fixed plugin install/remove and marketplace add/remove/upgrade
+  operations exist; React cannot supply a command, argument vector, path, URL,
+  configuration object, or raw CLI payload.
+- Confirm preview refreshes the catalog/policy, requires a reviewed 0.145.x
+  minor and ready capability, reviews local/pinned repository/exact package
+  sources, and returns only normalized permissions and closed warnings.
+- Confirm marketplace repository adds require a 40- or 64-hex reference and
+  marketplace upgrades expose the mutable-remote-source warning.
+- Confirm the UUIDv7 token expires after five minutes, is consumed once, and
+  confirmation serializes mutations before revalidating CLI version, policy,
+  normalized entry, and exact native source evidence.
+- Confirm every fixed command has neutral cwd, null stdin/stderr, bounded
+  output/time, credential removal, child reaping, a closed JSON result, and a
+  follow-up catalog postcondition.
+- Run strict shared contract/bridge tests, deterministic native lifecycle and
+  adversarial tests, the explicit temporary-home real-CLI proof, complete
+  repository gates, and both Playwright viewports. Browser verification is
+  regression-only because 14A adds no Integration Center UI.
 
 ## Planned manual Milestone 18 checklist
 

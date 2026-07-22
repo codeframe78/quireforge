@@ -11,7 +11,8 @@ use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
     CodexRuntimeService, ConversationApprovalDecisionRequest, ConversationContinueRequest,
     ConversationRegistrySnapshot, ConversationService, ConversationSnapshot,
-    ConversationStartRequest, IntegrationCatalogService, SessionLifecycleSnapshot,
+    ConversationStartRequest, IntegrationCatalogService, IntegrationMutationService,
+    SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
 use git::{
@@ -62,6 +63,30 @@ async fn integration_catalog_read(
     service: tauri::State<'_, IntegrationCatalogService>,
 ) -> Result<integration::IntegrationCatalogSnapshot, ()> {
     Ok(service.snapshot().await)
+}
+
+#[tauri::command]
+async fn integration_mutation_preview(
+    request: integration::IntegrationMutationPreviewRequest,
+    service: tauri::State<'_, IntegrationMutationService>,
+    catalog: tauri::State<'_, IntegrationCatalogService>,
+) -> Result<integration::IntegrationMutationPreviewSnapshot, ()> {
+    let snapshot = catalog.refresh().await;
+    Ok(service.preview(request, &snapshot).await)
+}
+
+#[tauri::command]
+async fn integration_mutation_confirm(
+    request: integration::IntegrationMutationConfirmRequest,
+    service: tauri::State<'_, IntegrationMutationService>,
+    catalog: tauri::State<'_, IntegrationCatalogService>,
+) -> Result<integration::IntegrationMutationResultSnapshot, ()> {
+    let snapshot = catalog.refresh().await;
+    let result = service.confirm(request, &snapshot).await;
+    if result.state == integration::IntegrationMutationResultState::Applied {
+        let _ = catalog.refresh().await;
+    }
+    Ok(result)
 }
 
 #[tauri::command]
@@ -482,6 +507,7 @@ pub fn run() {
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
         .manage(IntegrationCatalogService::default())
+        .manage(IntegrationMutationService::default())
         .manage(ConversationService::default())
         .manage(GitService::default())
         .manage(TerminalService::default())
@@ -502,6 +528,8 @@ pub fn run() {
             desktop_bootstrap,
             codex_runtime_probe,
             integration_catalog_read,
+            integration_mutation_preview,
+            integration_mutation_confirm,
             codex_auth_status,
             codex_auth_refresh,
             codex_auth_start,

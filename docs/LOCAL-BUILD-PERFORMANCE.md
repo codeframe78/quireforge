@@ -613,15 +613,15 @@ added no package, schema migration, clean build, cache reset, linker, driver,
 CUDA, swap, or zram change. Generated schema work and ordinary Rust/TypeScript
 validation are CPU/system-memory tasks; the RTX 3050 was correctly unused.
 
-| Operation | Observed wall time | Approximate peak RSS | Result |
-| --- | ---: | ---: | --- |
-| Local 0.145.0 schema inventory generation | 0.36 second | about 45 MiB | Generated the full temporary protocol inventory for read-only inspection |
-| Reviewed 0.145.0 fixture refresh | 0.42 second | about 46 MiB | Generated and hashed 95 selected schemas while retaining 0.144.6 |
-| Contract frontend suite | 8.65 seconds | about 264 MiB | Passed 100 desktop tests across 19 files, including 3 integration contract tests |
-| Contract native suite | 11.72 seconds | about 1.44 GiB | Passed the shared Rust contract after incremental compilation |
-| Repository/type/lint/Clippy preflight | 17.36 seconds | about 937 MiB | Passed with warnings denied |
-| Final complete non-browser repository gate | 37.77 seconds | about 935 MiB | Passed 103 JavaScript tests and 121 Rust tests; 119 Rust tests passed and 2 deliberate live probes were ignored |
-| Final warm unbundled native release build | 38.41 seconds | about 1.81 GiB | Passed, including a 34.22-second optimized compile/link |
+| Operation                                  | Observed wall time | Approximate peak RSS | Result                                                                                                          |
+| ------------------------------------------ | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------------- |
+| Local 0.145.0 schema inventory generation  |        0.36 second |         about 45 MiB | Generated the full temporary protocol inventory for read-only inspection                                        |
+| Reviewed 0.145.0 fixture refresh           |        0.42 second |         about 46 MiB | Generated and hashed 95 selected schemas while retaining 0.144.6                                                |
+| Contract frontend suite                    |       8.65 seconds |        about 264 MiB | Passed 100 desktop tests across 19 files, including 3 integration contract tests                                |
+| Contract native suite                      |      11.72 seconds |       about 1.44 GiB | Passed the shared Rust contract after incremental compilation                                                   |
+| Repository/type/lint/Clippy preflight      |      17.36 seconds |        about 937 MiB | Passed with warnings denied                                                                                     |
+| Final complete non-browser repository gate |      37.77 seconds |        about 935 MiB | Passed 103 JavaScript tests and 121 Rust tests; 119 Rust tests passed and 2 deliberate live probes were ignored |
+| Final warm unbundled native release build  |      38.41 seconds |       about 1.81 GiB | Passed, including a 34.22-second optimized compile/link                                                         |
 
 All final timed gates reported zero swaps. About 43 GiB RAM and 720 GiB NVMe
 were available before the complete gate. There was no OOM, throttling,
@@ -651,14 +651,14 @@ reset, schema migration, linker, driver, CUDA, swap, or zram change. The RTX
 3050 remained unused because discovery normalization, Rust/TypeScript builds,
 and browser regression tests are CPU/system-memory workloads.
 
-| Operation | Observed wall time | Approximate peak RSS | Result |
-| --- | ---: | ---: | --- |
-| Desktop TypeScript preflight | 1.62 seconds | about 262 MiB | Passed with zero swaps |
-| Four-worker Cargo preflight | 1.30 seconds | about 478 MiB | Passed with zero swaps |
-| Final focused integration service suite | 10.29 seconds | about 1.41 GiB | Passed 7 discovery/version/failure tests |
-| Complete non-browser `pnpm validate` gate | 37.82 seconds | about 940 MiB | Passed 104 JavaScript tests and 129 Rust tests; 127 Rust tests passed and 2 deliberate live probes were ignored |
-| Desktop and website Playwright regression | 24.23 seconds | about 386 MiB | Passed 26 tests across desktop/mobile viewport profiles |
-| Final warm unbundled native release build | 40.35 seconds | about 1.85 GiB | Passed, including a 35.72-second optimized compile/link |
+| Operation                                 | Observed wall time | Approximate peak RSS | Result                                                                                                          |
+| ----------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight              |       1.62 seconds |        about 262 MiB | Passed with zero swaps                                                                                          |
+| Four-worker Cargo preflight               |       1.30 seconds |        about 478 MiB | Passed with zero swaps                                                                                          |
+| Final focused integration service suite   |      10.29 seconds |       about 1.41 GiB | Passed 7 discovery/version/failure tests                                                                        |
+| Complete non-browser `pnpm validate` gate |      37.82 seconds |        about 940 MiB | Passed 104 JavaScript tests and 129 Rust tests; 127 Rust tests passed and 2 deliberate live probes were ignored |
+| Desktop and website Playwright regression |      24.23 seconds |        about 386 MiB | Passed 26 tests across desktop/mobile viewport profiles                                                         |
+| Final warm unbundled native release build |      40.35 seconds |       about 1.85 GiB | Passed, including a 35.72-second optimized compile/link                                                         |
 
 All timed final gates reported zero swaps. Approximately 43 GiB RAM and 720
 GiB NVMe were available; no competing project build, OOM event, throttling,
@@ -677,3 +677,39 @@ minutes 39 seconds. Post-merge `main` workflow
 completed them in 7 seconds, 1 minute 9 seconds, and 2 minutes 13 seconds. The
 retained caches therefore remained effective; no workflow, cache, runner, or
 host configuration change was needed.
+
+## Milestone 14A measurements
+
+The native plugin/marketplace lifecycle checkpoint uses the Balanced profile
+with four Cargo workers and two Playwright workers. It preserved the warm
+Cargo, pnpm, Vite, Astro, and browser caches and added no dependency, clean
+build, cache reset, schema migration, linker, driver, CUDA, swap, or zram
+change. The RTX 3050 remained unused because source review, CLI orchestration,
+Rust/TypeScript builds, and browser regression are CPU/system-memory work.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                                          |
+| ----------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.71 seconds |        about 266 MiB | Passed with zero swaps                                                                                          |
+| Four-worker Cargo preflight                     |       1.39 seconds |        about 486 MiB | Passed with zero swaps                                                                                          |
+| Final warm focused native mutation suite        |        0.24 second |        about 108 MiB | Passed 8 deterministic tests; isolated real-CLI proof ignored                                                   |
+| Explicit isolated real-CLI fixture lifecycle    |        0.29 second |        about 108 MiB | Passed install/remove under temporary `CODEX_HOME` and `HOME`                                                   |
+| Desktop TypeScript check                        |       3.10 seconds |        about 370 MiB | Passed the strict mutation contract and bridge                                                                  |
+| Complete desktop unit suite                     |       8.57 seconds |        about 268 MiB | Passed 106 tests across 19 files                                                                                |
+| Workspace lint                                  |       9.51 seconds |        about 943 MiB | Passed desktop and website lint with zero swaps                                                                 |
+| Four-worker Clippy                              |       6.69 seconds |        about 893 MiB | Passed all targets with warnings denied                                                                         |
+| Desktop and website production build            |       2.80 seconds |        about 438 MiB | Passed; retained the existing desktop chunk-size warning                                                        |
+| Complete native test suite                      |       7.51 seconds |       about 1.32 GiB | Passed 133 tests; 3 deliberate live probes ignored                                                              |
+| Desktop Playwright regression                   |      17.89 seconds |        about 387 MiB | Passed 18 tests across desktop/mobile profiles                                                                  |
+| Final complete non-browser `pnpm validate` gate |      37.23 seconds |        about 942 MiB | Passed 109 JavaScript tests and 139 Rust tests; 136 Rust tests passed and 3 deliberate live probes were ignored |
+| Final desktop and website Playwright regression |      19.24 seconds |        about 390 MiB | Passed 26 tests across desktop/mobile viewport profiles                                                         |
+| Final warm unbundled native release build       |      41.50 seconds |       about 1.88 GiB | Passed, including a 37.30-second optimized compile/link                                                         |
+
+Every timed operation reported zero swaps. Approximately 43 GiB RAM and 720
+GiB NVMe were available at preflight; no competing project build, OOM event,
+throttling, dependency download, personal integration mutation, connector
+authorization, model call, or GPU workload occurred. Security review performed
+one redacted shape-only local marketplace-list read and retained no names,
+paths, URLs, account data, or raw response. Routine tests remain fully isolated
+from personal Codex state. The existing desktop bundle-size warning remains
+unchanged. Hosted publication measurements will be appended at the milestone
+completion checkpoint.

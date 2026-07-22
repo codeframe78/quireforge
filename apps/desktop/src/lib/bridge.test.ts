@@ -24,6 +24,7 @@ import {
   confirmProjectAttachment,
   confirmWorktree,
   confirmGitMutation,
+  confirmIntegrationMutation,
   decideConversationApproval,
   CONVERSATION_APPROVAL_DECIDE_COMMAND,
   CONVERSATION_ACTIVE_COMMAND,
@@ -88,11 +89,18 @@ import {
   startConversation,
   interruptConversation,
   INTEGRATION_CATALOG_READ_COMMAND,
+  INTEGRATION_MUTATION_CONFIRM_COMMAND,
+  INTEGRATION_MUTATION_PREVIEW_COMMAND,
   loadIntegrationCatalog,
+  previewIntegrationMutation,
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
 import { scaffoldProjectWorkspace } from "./project";
-import { scaffoldIntegrationCatalog } from "./integration";
+import {
+  scaffoldIntegrationCatalog,
+  scaffoldIntegrationMutationPreview,
+  scaffoldIntegrationMutationResult,
+} from "./integration";
 import {
   scaffoldWorktreeWorkspace,
   worktreePreviewSchema,
@@ -137,6 +145,72 @@ describe("desktop bridge", () => {
       rawProtocolPayload: { accountId: "private" },
     });
     await expect(loadIntegrationCatalog(invoke)).rejects.toThrow();
+  });
+
+  it("uses fixed preview-confirm commands for integration mutations", async () => {
+    const previewRequest = {
+      operation: "plugin-install" as const,
+      targetEntryId: "plugin:fixture-review",
+      repository: null,
+      reference: null,
+    };
+    const confirmationRequest = {
+      confirmationId: "018f0000-0000-7000-8000-000000000014",
+    };
+    const invoke = vi
+      .fn()
+      .mockResolvedValueOnce(scaffoldIntegrationMutationPreview)
+      .mockResolvedValueOnce(scaffoldIntegrationMutationResult);
+
+    await expect(
+      previewIntegrationMutation(previewRequest, invoke),
+    ).resolves.toEqual(scaffoldIntegrationMutationPreview);
+    await expect(
+      confirmIntegrationMutation(confirmationRequest, invoke),
+    ).resolves.toEqual(scaffoldIntegrationMutationResult);
+    expect(invoke).toHaveBeenNthCalledWith(
+      1,
+      INTEGRATION_MUTATION_PREVIEW_COMMAND,
+      { request: previewRequest },
+    );
+    expect(invoke).toHaveBeenNthCalledWith(
+      2,
+      INTEGRATION_MUTATION_CONFIRM_COMMAND,
+      { request: confirmationRequest },
+    );
+  });
+
+  it("rejects raw integration source data at the bridge boundary", async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      ...scaffoldIntegrationMutationPreview,
+      sourcePath: "/private/plugin/source",
+    });
+
+    await expect(
+      previewIntegrationMutation(
+        {
+          operation: "plugin-install",
+          targetEntryId: "plugin:fixture-review",
+          repository: null,
+          reference: null,
+        },
+        invoke,
+      ),
+    ).rejects.toThrow();
+
+    const rejected = vi.fn();
+    await expect(
+      previewIntegrationMutation(
+        {
+          operation: "marketplace-add",
+          targetEntryId: null,
+          repository: "https://user:secret@example.invalid/repo",
+          reference: "a".repeat(40),
+        },
+        rejected,
+      ),
+    ).rejects.toThrow();
+    expect(rejected).not.toHaveBeenCalled();
   });
 
   it("uses fixed typed authentication commands", async () => {
