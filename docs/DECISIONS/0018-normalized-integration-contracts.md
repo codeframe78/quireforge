@@ -45,9 +45,9 @@ The reviewed route matrix for CLI 0.145.0 is:
 
 | Domain | Read/discovery route | Mutating route | Milestone 13A classification |
 | --- | --- | --- | --- |
-| Apps/connectors | app-server `app/list`, `app/read`, `app/installed` | Supported app-server configuration or official authorization handoff only | Stable methods on an experimental server; `app/read` remains experimental |
-| Plugins | app-server catalog/read where compatible | Stable `codex plugin ... --json` fixed commands preferred | App-server plugin lifecycle remains experimental |
-| Marketplaces | app-server catalog projection plus stable CLI JSON inventory | Stable fixed `codex plugin marketplace` commands | Local paths remain native-only |
+| Apps/connectors | app-server `app/list` and `app/installed` | Supported app-server configuration or official authorization handoff only | Stable methods on an experimental server; unnecessary `app/read` is not called |
+| Plugins | Stable `codex plugin list --available --json` | Stable `codex plugin ... --json` fixed commands preferred | App-server plugin lifecycle remains experimental and disabled in production |
+| Marketplaces | Stable `codex plugin marketplace list --json` | Stable fixed `codex plugin marketplace` commands | Local paths remain native-only |
 | Skills | app-server `skills/list` and invalidation notification | app-server `skills/config/write` | Stable methods on an experimental server |
 | MCP | app-server status, resource, refresh, and OAuth methods | Official returned authorization URL and fixed refresh/config flows | Stable methods on an experimental server |
 | Policy/requirements | app-server `configRequirements/read`, `config/read`, and `permissionProfile/list` | No generic frontend configuration writer | Raw managed requirements never cross IPC |
@@ -76,9 +76,10 @@ selection request can only stage an app-owned, policy-validated choice for the
 next `turn/start`. QuireForge will not automate a web selector, call a private
 endpoint, or edit Codex-owned configuration to provide this feature.
 
-Milestone 13A records this lifecycle as `contract-only`. Registering tools,
-serving integration discovery over Tauri IPC, installation, authorization, and
-the Integration Center UI remain later milestones.
+Milestone 13A records this lifecycle as `contract-only`. Milestone 13B
+implements the read-only catalog and one fixed Tauri IPC read while keeping
+dynamic-tool registration, installation, authorization, configuration
+mutation, and the Integration Center UI in later milestones.
 
 ## Security and privacy invariants
 

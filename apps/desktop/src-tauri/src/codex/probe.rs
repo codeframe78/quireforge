@@ -85,7 +85,7 @@ async fn probe_with_program(program: &str) -> CodexRuntimeSnapshot {
     }
 }
 
-async fn probe_cli_version(program: &str) -> Result<String, CodexAdapterError> {
+pub(crate) async fn probe_cli_version(program: &str) -> Result<String, CodexAdapterError> {
     let output = timeout(
         CLI_TIMEOUT,
         Command::new(program)

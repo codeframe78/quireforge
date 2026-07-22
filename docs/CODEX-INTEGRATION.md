@@ -1,7 +1,7 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery with implementation through Milestone 12 and the
-Milestone 13A integration/dynamic-tool contracts validated locally
+Status: Milestone 0 discovery with implementation through Milestone 13B,
+including the native read-only integration catalog validated locally
 Observed: initial discovery 2026-07-19; protocol refresh 2026-07-21
 Installed CLI evidence: `codex-cli 0.144.6` baseline and `codex-cli 0.145.0`
 current refresh
@@ -89,6 +89,38 @@ thread/turn/call identity, and accepts a bounded success/content response. This
 is the supported dependency for Milestone 18. It can stage an app-owned model
 selection for the next turn but cannot replace the currently executing model.
 See [ADR 0018](DECISIONS/0018-normalized-integration-contracts.md).
+
+## Milestone 13B read-only runtime
+
+The native `IntegrationCatalogService` implements the read-only rows of
+`codex-integration-v1` and exposes only `integration_catalog_read`. It accepts no
+frontend path, URL, command, account value, or arbitrary protocol input. CLI
+0.145.x is the exact reviewed compatibility minor; other minors fail closed
+with an unavailable catalog until their schemas and routes are reviewed.
+
+Route selection follows the established adapter policy:
+
+- `app/list` and `app/installed` normalize connector availability, enabled
+  state, accessibility, and callable health.
+- `skills/list` uses a neutral temporary cwd so a catalog read does not attach
+  or inspect a user project.
+- `mcpServerStatus/list` requests only tools/auth detail, then discards endpoint,
+  resource, and tool definitions.
+- `configRequirements/read`, `permissionProfile/list`, and `config/read` retain
+  only bounded effective-policy state.
+- Stable `codex plugin list --available --json` and `codex plugin marketplace
+  list --json` provide production plugin/marketplace discovery. The
+  under-development plugin app-server RPCs are not called.
+
+All CLI output is size/time bounded and strictly normalized. Marketplace roots,
+plugin sources, URLs, paths, config contents, MCP details, raw notification
+payloads, and upstream error text are discarded. App, skill, MCP-startup,
+config-warning, and account notifications trigger category refresh through
+closed reason enums rather than carrying upstream payloads into React.
+Independent failures preserve other healthy categories and mark only the
+affected capability degraded. No installation, removal, enable/disable,
+authorization, marketplace configuration, prompt mention, or UI is included;
+those remain explicitly confirmed Milestone 14 workflows.
 
 ## Required CLI inspection
 
@@ -430,7 +462,8 @@ official documentation explicitly marks `plugin/list`, `plugin/read`,
 `plugin/install`, and `plugin/uninstall` as under development and says not to
 call them from production clients. Therefore:
 
-- Production plugin management initially uses the supported CLI JSON commands.
+- Milestone 13B production discovery uses the supported CLI JSON list commands;
+  future confirmed management operations use their matching CLI commands.
 - The app-server plugin adapter stays disabled unless a later Codex release
   promotes the methods and contract tests pass.
 - Marketplace writes and plugin install/remove actions always show a preview

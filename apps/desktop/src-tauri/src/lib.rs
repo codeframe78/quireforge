@@ -11,7 +11,7 @@ use codex::{
     types::CodexRuntimeSnapshot, AuthLoginMethod, CodexAuthService, CodexAuthSnapshot,
     CodexRuntimeService, ConversationApprovalDecisionRequest, ConversationContinueRequest,
     ConversationRegistrySnapshot, ConversationService, ConversationSnapshot,
-    ConversationStartRequest, SessionLifecycleSnapshot,
+    ConversationStartRequest, IntegrationCatalogService, SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
 use git::{
@@ -54,6 +54,13 @@ fn desktop_bootstrap() -> DesktopBootstrap {
 async fn codex_runtime_probe(
     service: tauri::State<'_, CodexRuntimeService>,
 ) -> Result<CodexRuntimeSnapshot, ()> {
+    Ok(service.snapshot().await)
+}
+
+#[tauri::command]
+async fn integration_catalog_read(
+    service: tauri::State<'_, IntegrationCatalogService>,
+) -> Result<integration::IntegrationCatalogSnapshot, ()> {
     Ok(service.snapshot().await)
 }
 
@@ -474,6 +481,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .manage(CodexRuntimeService::default())
         .manage(CodexAuthService::default())
+        .manage(IntegrationCatalogService::default())
         .manage(ConversationService::default())
         .manage(GitService::default())
         .manage(TerminalService::default())
@@ -493,6 +501,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             desktop_bootstrap,
             codex_runtime_probe,
+            integration_catalog_read,
             codex_auth_status,
             codex_auth_refresh,
             codex_auth_start,

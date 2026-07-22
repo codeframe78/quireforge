@@ -1,8 +1,9 @@
 # Compatibility
 
-Status: desktop work through Milestone 12 is implemented and verified on the
+Status: desktop work through Milestone 13B is implemented and verified on the
 discovery host. Milestone 13A refreshes the Codex 0.145.0 protocol evidence and
-defines the integration contract; live integration discovery remains 13B.
+defines the integration contract; 13B implements its live read-only native
+catalog.
 
 ## Identity compatibility contract
 
@@ -101,10 +102,10 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 | General connector authorization RPC        | Not established      | Official returned URL/browser handoff                                         | Limited                               |
 | MCP list/status/tools/auth                 | Yes                  | app-server + CLI                                                              | Stable official                       |
 | MCP OAuth                                  | Yes                  | app-server/CLI official flow                                                  | Stable official                       |
-| Plugin catalog via CLI JSON                | Yes                  | CLI adapter                                                                   | Supported CLI                         |
+| Plugin catalog via CLI JSON                | Implemented          | Bounded `plugin list --available --json` adapter                              | Supported CLI                         |
 | Plugin install/remove via CLI JSON         | Yes                  | CLI adapter with confirmation                                                 | Supported CLI                         |
 | Plugin app-server management               | Present              | Disabled in production                                                        | Under development                     |
-| Marketplace add/list/upgrade/remove        | Yes                  | CLI adapter initially                                                         | Supported CLI                         |
+| Marketplace add/list/upgrade/remove        | Read implemented     | Bounded CLI JSON list; confirmed mutations remain Milestone 14                | Supported CLI                         |
 | Managed policy read                        | Yes                  | `configRequirements/read`                                                     | Stable method on experimental server  |
 | Permission profile discovery               | Yes                  | `permissionProfile/list` with bounded summaries                               | Stable method on experimental server  |
 | Client-owned dynamic tools                 | Contract validated   | `thread/start` registration and correlated `item/tool/call` server request     | Stable methods on experimental server |
@@ -129,6 +130,14 @@ Milestone 13A did not repeat account-scoped catalog calls. Its 0.145.0 refresh
 used local CLI help and generated schemas only, then validated deterministic
 mock contracts. No personal connector, plugin, marketplace, skill, MCP,
 configuration, permission-profile, or account record was captured.
+
+Milestone 13B adds a version-gated 0.145.x runtime service. Connector, skill,
+MCP, and effective-policy reads use reviewed app-server methods; plugins and
+marketplaces use stable CLI JSON because the richer app-server plugin methods
+remain under development. Every response is bounded and normalized into the
+shared contract, and malformed or unavailable categories degrade independently.
+Deterministic fixtures—not a personal account inventory—verified the complete
+catalog path during implementation.
 
 Milestones 4–5 commit only the CLI 0.144.6 initialize, `model/list`, and stable
 account-lifecycle generated schemas, their hashes, and sanitized deterministic

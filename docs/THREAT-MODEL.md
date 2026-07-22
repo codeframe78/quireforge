@@ -259,6 +259,13 @@ Controls:
 - Reduce marketplace loader failures, MCP startup failures, policy warnings,
   and unsupported schema changes to bounded diagnostic codes; preserve partial
   and unknown states instead of silently dropping entries.
+- Gate live discovery to an explicitly reviewed CLI minor. Use stable bounded
+  CLI JSON for plugin/marketplace reads instead of under-development plugin
+  RPCs, neutral working directories for non-project catalog reads, null
+  stdin/stderr, fixed arguments, output caps, timeouts, and child reaping.
+- Treat invalidation notifications only as closed category-refresh reasons;
+  discard app rows, MCP names/failures, config paths/details, and every other raw
+  notification field before caching or IPC.
 - Treat dynamic tool arguments as native-only untrusted input. Correlate the
   exact thread, turn, request, namespace, and tool; validate one closed
   app-owned schema; and return only bounded result content.

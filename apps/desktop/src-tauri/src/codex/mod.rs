@@ -4,6 +4,7 @@ mod backend;
 mod conversation;
 mod error;
 pub mod integration;
+mod integration_service;
 #[cfg(test)]
 mod mock;
 mod probe;
@@ -18,4 +19,5 @@ pub use conversation::types::{
 pub use conversation::{
     ConversationContinueRequest, ConversationService, SessionLifecycleSnapshot, SessionListRequest,
 };
+pub use integration_service::IntegrationCatalogService;
 pub use probe::CodexRuntimeService;

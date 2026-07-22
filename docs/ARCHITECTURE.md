@@ -1,8 +1,9 @@
 # Architecture
 
 Status: Milestone 0 application proposal with the website foundation and
-desktop work implemented locally through Milestone 12. Packaging, deployment,
-and integration interfaces remain subject to separately gated milestones.
+desktop work implemented locally through Milestone 13B. Packaging, deployment,
+integration mutation, and Integration Center presentation remain subject to
+separately gated milestones.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -462,6 +463,25 @@ source, installation, enablement, authentication, permissions, requirements,
 policy, and health. Raw paths, URLs, configuration, managed requirements,
 account identity, credentials, tool arguments, and protocol payloads remain
 native-only.
+
+Milestone 13B implements `IntegrationCatalogService` as a serialized native
+owner with one fixed-purpose `integration_catalog_read` command. The service
+gates the installed CLI to the reviewed 0.145.x minor, owns and reaps one
+app-server process, and caches only a validated normalized snapshot. It uses
+`app/list` plus `app/installed` for connector state, `skills/list` from a neutral
+temporary cwd, `mcpServerStatus/list` with bounded detail, and effective policy
+reads. Plugin and marketplace discovery run through fixed stable CLI JSON
+commands with bounded stdout, timeout, null stdin/stderr, and a neutral `/`
+cwd; experimental plugin-management RPCs are not production routes.
+
+App, skill, MCP-startup, configuration-warning, and account-change
+notifications become closed refresh-reason enums; their raw payloads are
+discarded. Refreshes replace only the affected category, while independent CLI
+plugin/marketplace failures preserve healthy app-server categories. Absolute
+paths, URLs, config contents, marketplace roots, endpoint/tool definitions,
+account identity, and upstream error text remain native-only and are reduced
+to stable diagnostics. All mutation capabilities and the app-owned dynamic
+tool remain contract-only.
 
 The future app-owned dynamic-tool boundary registers a closed schema through
 `thread/start`, accepts only the correlated `item/tool/call` server request,

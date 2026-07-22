@@ -205,6 +205,13 @@ released a usable application.
   confirmation, and raw-field tests, and ADR 0018. Every capability remains
   explicitly contract-only; live discovery, installation, authorization, and
   UI are not claimed.
+- The Milestone 13B serialized native integration catalog service and narrow
+  `integration_catalog_read` IPC command. It discovers connectors, skills, MCP
+  state, and policy through reviewed app-server methods; uses bounded stable
+  CLI JSON for plugins and marketplaces; refreshes only from normalized
+  invalidation reasons; and fails closed on unsupported CLI minors or malformed
+  upstream data without exposing raw paths, URLs, configuration, credentials,
+  account identity, or tool arguments.
 
 ### Changed
 

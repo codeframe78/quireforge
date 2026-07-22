@@ -16,6 +16,7 @@ use uuid::Uuid;
 
 use super::{
     error::CodexAdapterError,
+    integration::IntegrationRefreshReason,
     types::{CodexModel, NormalizedCodexEvent},
 };
 
@@ -68,6 +69,7 @@ pub(crate) enum AppServerNotification {
     AccountUpdated,
     Conversation(ConversationNotification),
     ConversationRequest(ConversationServerRequest),
+    IntegrationRefresh(IntegrationRefreshReason),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -572,6 +574,69 @@ fn parse_notification(message: &Value) -> Result<Option<AppServerNotification>, 
             }))
         }
         "account/updated" => Ok(Some(AppServerNotification::AccountUpdated)),
+        "app/list/updated" => {
+            let params = message
+                .get("params")
+                .and_then(Value::as_object)
+                .ok_or(CodexAdapterError::InvalidProtocolMessage)?;
+            if params.len() != 1
+                || !params
+                    .get("data")
+                    .is_some_and(|data| data.as_array().is_some_and(|items| items.len() <= 512))
+            {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            Ok(Some(AppServerNotification::IntegrationRefresh(
+                IntegrationRefreshReason::AppListUpdated,
+            )))
+        }
+        "skills/changed" => {
+            if !message
+                .get("params")
+                .is_some_and(|params| params.as_object().is_some_and(|params| params.is_empty()))
+            {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            Ok(Some(AppServerNotification::IntegrationRefresh(
+                IntegrationRefreshReason::SkillsChanged,
+            )))
+        }
+        "mcpServer/startupStatus/updated" => {
+            let params = message
+                .get("params")
+                .and_then(Value::as_object)
+                .ok_or(CodexAdapterError::InvalidProtocolMessage)?;
+            if !params.get("name").is_some_and(Value::is_string)
+                || !params.get("status").is_some_and(Value::is_string)
+                || params.keys().any(|key| {
+                    !matches!(
+                        key.as_str(),
+                        "name" | "status" | "error" | "failureReason" | "threadId"
+                    )
+                })
+            {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            Ok(Some(AppServerNotification::IntegrationRefresh(
+                IntegrationRefreshReason::McpStatusUpdated,
+            )))
+        }
+        "config/warning" => {
+            let params = message
+                .get("params")
+                .and_then(Value::as_object)
+                .ok_or(CodexAdapterError::InvalidProtocolMessage)?;
+            if !params.get("summary").is_some_and(Value::is_string)
+                || params
+                    .keys()
+                    .any(|key| !matches!(key.as_str(), "summary" | "details" | "path" | "range"))
+            {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            Ok(Some(AppServerNotification::IntegrationRefresh(
+                IntegrationRefreshReason::ConfigWarning,
+            )))
+        }
         "thread/started" => {
             #[derive(Deserialize)]
             struct Thread {
@@ -1785,6 +1850,55 @@ mod tests {
 
         assert!(parse_notification(&unsafe_delta).is_err());
         assert!(parse_notification(&invalid_thread).is_err());
+    }
+
+    #[test]
+    fn normalizes_integration_invalidations_without_retaining_payloads() {
+        let notifications = [
+            (
+                json!({
+                    "method": "app/list/updated",
+                    "params": {"data": [{"installUrl": "private-app-url"}]}
+                }),
+                IntegrationRefreshReason::AppListUpdated,
+            ),
+            (
+                json!({"method": "skills/changed", "params": {}}),
+                IntegrationRefreshReason::SkillsChanged,
+            ),
+            (
+                json!({
+                    "method": "mcpServer/startupStatus/updated",
+                    "params": {
+                        "name": "private-server-name",
+                        "status": "failed",
+                        "failureReason": "private failure"
+                    }
+                }),
+                IntegrationRefreshReason::McpStatusUpdated,
+            ),
+            (
+                json!({
+                    "method": "config/warning",
+                    "params": {
+                        "summary": "private summary",
+                        "details": "private details",
+                        "path": "/private/config.toml"
+                    }
+                }),
+                IntegrationRefreshReason::ConfigWarning,
+            ),
+        ];
+
+        for (notification, expected) in notifications {
+            let parsed = parse_notification(&notification).expect("invalidation must parse");
+            assert_eq!(
+                parsed,
+                Some(AppServerNotification::IntegrationRefresh(expected))
+            );
+            let debug = format!("{parsed:?}");
+            assert!(!debug.contains("private"));
+        }
     }
 
     #[test]

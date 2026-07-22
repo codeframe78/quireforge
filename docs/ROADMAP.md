@@ -75,8 +75,9 @@ Agent-directed model and reasoning selection is deliberately deferred to
 Milestone 18. The current conversation runtime validates a user-selected model
 and effort, while Milestone 13A confirms the app-owned dynamic-tool
 registration, invocation, and result lifecycle needed for a future selector
-control. Milestones 13B–17 still need to establish the live integration,
-product-surface, and advanced-feature prerequisites before that control is
+control. Milestone 13B establishes live read-only integration discovery.
+Milestones 14–17 still need to establish the user-facing integration,
+mutation, and advanced-feature prerequisites before that control is
 implemented.
 
 ## Status
@@ -96,7 +97,7 @@ implemented.
 |        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change |
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
-|        13 | Integration discovery and compatibility                           | Very large   | 13A complete and merged; 13B planned                                |
+|        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
 |        14 | Integration Center and installation workflows                     | Very large   | Planned                                                             |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
@@ -426,8 +427,13 @@ an Integration Center UI. See
 [ADR 0018](DECISIONS/0018-normalized-integration-contracts.md).
 
 Milestone 13B implements the read-only native discovery/normalization service,
-strict IPC, version/capability routing, invalidation refresh, and deterministic
-partial-failure tests against these contracts. Mutation remains Milestone 14.
+strict IPC, exact CLI-minor routing, bounded cache invalidation, and
+deterministic partial-failure tests against these contracts. It uses supported
+app-server methods for connector, skill, MCP, and policy reads and stable CLI
+JSON commands for plugin and marketplace discovery; experimental plugin RPCs,
+raw paths/URLs/configuration, account identity, and tool arguments do not cross
+the native boundary. Mutation and the user-facing Integration Center remain
+Milestone 14.
 
 Milestone 13A publication completed through
 [PR #32](https://github.com/James-Jennison/quireforge/pull/32), merge commit

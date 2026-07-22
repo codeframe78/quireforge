@@ -1061,6 +1061,32 @@ seconds to 1 minute 41 seconds rather than repeating the Milestone 12
 GitHub-hosted cold-build path. Future forecasts should use the persistent-runner
 baseline while still allowing for cache eviction and runner availability.
 
+## Milestone 13B — Live read-only integration discovery
+
+| Field | Record |
+| --- | --- |
+| Forecast date | 2026-07-21 |
+| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
+| Preliminary forecast | Approximately 2.5–4.5 active hours; 15–35 minutes of local commands; 3–5.5 total elapsed hours; medium confidence |
+| Calibrated forecast | Approximately 2.5–4.25 active hours; 12–30 minutes of local commands; 3–5 total elapsed hours in one or possibly two sessions; medium confidence |
+| Calibration basis | Synchronized `main` at `2833436`; CLI 0.145.0 schema/routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work |
+| Local verification | Final `pnpm validate` 37.82 seconds/about 940 MiB RSS; Playwright 24.23 seconds/about 386 MiB; warm release build 40.35 seconds/about 1.85 GiB; all zero swaps |
+| Completion status | Implementation and local verification complete; publication and post-merge timing evidence pending |
+
+Critical path: exact route/schema inspection → native category normalization →
+strict IPC → deterministic invalidation/partial-failure tests → route-policy
+review and stable plugin CLI correction → complete repository/browser/release
+gates → security/diff review → publication and successful `main` CI. Independent
+documentation review overlapped only short warm checks; heavy release and
+browser gates remained sequential under the Balanced profile.
+
+The implementation deliberately uses reviewed app-server reads for connectors,
+skills, MCP, and policy and fixed stable CLI JSON for plugins and marketplaces.
+The late route-policy review removed an unnecessary `app/read` call and the
+under-development plugin RPC without materially changing the calibrated
+forecast. No personal catalog, integration mutation, authorization, package,
+deployment, or model call was used.
+
 ## Milestone 18 — Agent-directed model and reasoning selection
 
 Status: deferred and dependency-gated behind Milestones 13–17. This section

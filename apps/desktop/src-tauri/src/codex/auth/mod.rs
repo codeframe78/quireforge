@@ -300,7 +300,8 @@ async fn run_login_owner(
             }
             notification = process.next_notification() => {
                 match notification {
-                    Ok(AppServerNotification::AccountUpdated) => continue,
+                    Ok(AppServerNotification::AccountUpdated
+                        | AppServerNotification::IntegrationRefresh(_)) => continue,
                     Ok(AppServerNotification::AccountLoginCompleted { login_id: completed_id, success }) => {
                         let snapshot = complete_login(&mut process, &login_id, completed_id, success).await;
                         let _ = process.shutdown().await;
