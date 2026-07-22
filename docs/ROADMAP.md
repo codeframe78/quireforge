@@ -76,7 +76,9 @@ Milestone 18. The current conversation runtime validates a user-selected model
 and effort, while Milestone 13A confirms the app-owned dynamic-tool
 registration, invocation, and result lifecycle needed for a future selector
 control. Milestone 13B establishes live read-only integration discovery.
-Milestones 14–17 still need to establish the user-facing integration,
+Milestone 14A establishes the confirmed native plugin and marketplace mutation
+boundary without adding a user-facing Integration Center. Milestones 14B–17
+still need to establish the user-facing integration,
 mutation, and advanced-feature prerequisites before that control is
 implemented.
 
@@ -98,7 +100,7 @@ implemented.
 |        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | Planned                                                             |
+|        14 | Integration Center and installation workflows                     | Very large   | In progress; 14A implemented and verified locally                   |
 |        15 | File previews and desktop integration                             | Large        | Planned                                                             |
 |        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
@@ -459,6 +461,34 @@ mentions, and supply-chain warnings.
 
 Completion requires a supported test-plugin lifecycle and an honest limitation
 when connector management is unavailable.
+
+Milestone 14A implements the native plugin and marketplace lifecycle only. It
+uses the reviewed stable CLI 0.145.x JSON commands for plugin install/remove
+and marketplace add/remove/upgrade, never the under-development app-server
+plugin-management RPCs. Every operation starts with a fresh normalized catalog
+and policy read, resolves an opaque entry ID to native-held CLI evidence,
+reviews the source class and normalized permissions/warnings, and creates a
+five-minute one-use UUIDv7 confirmation. Confirmation serializes mutation,
+rechecks the CLI minor, policy, normalized entry, and exact raw evidence, then
+accepts only the closed documented JSON result and verifies the resulting
+catalog state. Repository marketplace adds accept only `owner/repository` plus
+a 40- or 64-hex pinned reference. Raw paths, URLs, CLI arguments/results,
+configuration, and credentials never cross IPC.
+
+The deterministic test suite uses temporary state, while the ignored explicit
+real-CLI proof runs a local fixture marketplace and plugin under temporary
+`CODEX_HOME` and `HOME`; it does not read or change personal Codex state. No
+connector authorization, MCP configuration, skill configuration, plugin
+enable/disable, generic command execution, Integration Center UI, package,
+release, deployment, or personal integration mutation is included. See
+[ADR 0019](DECISIONS/0019-confirmed-integration-mutations.md).
+
+Milestone 14B remains the user-facing browse/search/filter/details and
+permission-review Integration Center over the normalized discovery and 14A
+mutation contracts. A later separately gated Milestone 14 checkpoint must
+handle only supported connector/MCP authorization, enable/disable or update
+flows, health/troubleshooting, and prompt mentions; unsupported management must
+remain visibly unavailable.
 
 ### 15 — File Previews and Desktop Integration
 

@@ -68,7 +68,11 @@ read-only native catalog: supported app-server reads for connectors, skills,
 MCP, and policy; stable CLI JSON reads for plugins and marketplaces; strict
 normalization, version gating, cache invalidation, partial-failure handling, and
 one narrow typed IPC command. Installation, authorization, configuration
-mutation, and Integration Center UI remain Milestone 14 work.
+mutation, and Integration Center UI remain Milestone 14 work. Milestone 14A
+now adds a native, fixed-command preview/confirm boundary for pinned plugin and
+marketplace install/remove/add/upgrade operations, with one-use confirmations,
+fresh catalog revalidation, and exact postcondition checks. Its user-facing
+review UI and connector/MCP workflows remain later Milestone 14 checkpoints.
 Cloudflare Pages is the selected production host, but the site has not been
 deployed. There is no application package to install yet.
 
@@ -81,8 +85,9 @@ deployed. There is no application package to install yet.
 - Integration support: runtime compatibility retains Codex CLI 0.144.6
   fixtures and now includes a reviewed 0.145.0 integration schema subset.
   Account status and Codex-managed authentication are implemented; the 13A
-  catalog/dynamic-tool contract and 13B native read-only discovery service are
-  complete, while user-facing integration workflows remain planned.
+  catalog/dynamic-tool contract, 13B native read-only discovery service, and
+  14A native plugin/marketplace lifecycle are complete locally, while the
+  user-facing Integration Center remains planned.
 - Desktop: the Tauri 2, React, TypeScript, and Rust shell builds and launches
   locally with narrow typed IPC, a supervised non-billable Codex runtime and
   account-status probe, a verified native project-attachment workflow, and a
@@ -93,13 +98,15 @@ deployed. There is no application package to install yet.
   the Milestone 11A managed-worktree inventory/create/attach foundation and
   Milestone 11B bounded parallel task monitor, retained-worktree recovery, and
   Milestone 11C clean managed-worktree cleanup, plus the Milestone 12 native
-  integrated terminal, plus the Milestone 13B normalized read-only integration
-  catalog boundary.
+  integrated terminal, the Milestone 13B normalized read-only integration
+  catalog boundary, and the Milestone 14A confirmed native plugin/marketplace
+  mutation boundary.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 13B live read-only integration discovery is
-  complete, merged, and verified on `main`. Milestone 14 Integration Center and
-  mutation workflows require a fresh reasoning/model/start gate.
+- Current milestone: Milestone 14A native plugin and marketplace lifecycle is
+  implemented and verified locally; publication evidence is pending. Milestone
+  14B user-facing Integration Center work requires its own fresh
+  reasoning/model/start gate.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own
@@ -125,6 +132,7 @@ deployed. There is no application package to install yet.
 - [Milestone forecasts](docs/MILESTONE-FORECASTS.md)
 - [Milestone real-world time ledger](docs/MILESTONE_TIME_LEDGER.md)
 - [Normalized integration contracts decision](docs/DECISIONS/0018-normalized-integration-contracts.md)
+- [Confirmed integration mutations decision](docs/DECISIONS/0019-confirmed-integration-mutations.md)
 - [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)

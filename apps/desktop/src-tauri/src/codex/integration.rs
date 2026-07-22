@@ -5,6 +5,7 @@ use thiserror::Error;
 
 pub const INTEGRATION_SCHEMA_VERSION: u16 = 1;
 pub const INTEGRATION_ADAPTER_VERSION: &str = "codex-integration-v1";
+pub const INTEGRATION_MUTATION_SCHEMA_VERSION: u16 = 1;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -595,9 +596,169 @@ pub enum IntegrationRefreshReason {
     ConfigWarning,
 }
 
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IntegrationMutationOperation {
+    PluginInstall,
+    PluginRemove,
+    MarketplaceAdd,
+    MarketplaceRemove,
+    MarketplaceUpgrade,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationMutationPreviewRequest {
+    pub operation: IntegrationMutationOperation,
+    pub target_entry_id: Option<String>,
+    pub repository: Option<String>,
+    pub reference: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationMutationConfirmRequest {
+    pub confirmation_id: String,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IntegrationMutationPreviewState {
+    Ready,
+    Blocked,
+    Unavailable,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IntegrationMutationResultState {
+    Applied,
+    Unavailable,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IntegrationMutationWarning {
+    LocalSource,
+    RepositorySource,
+    PackageRegistrySource,
+    NetworkAccess,
+    HookExecution,
+    McpServers,
+    ConnectorApps,
+    SkillContent,
+    AuthenticationAfterInstall,
+    MutableRemoteSource,
+    RemovesCachedPlugin,
+    RemovesMarketplaceSnapshot,
+    UpdatesMarketplaceSnapshot,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum IntegrationMutationDiagnosticCode {
+    InvalidRequest,
+    CliUnavailable,
+    VersionUnsupported,
+    CatalogUnavailable,
+    TargetNotFound,
+    OperationUnavailable,
+    PolicyBlocked,
+    SourceInvalid,
+    SourceUnpinned,
+    SourceUnreviewable,
+    CapacityReached,
+    ConfirmationExpired,
+    StalePreview,
+    MutationFailed,
+    ResponseInvalid,
+    PostconditionFailed,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationMutationPreviewSnapshot {
+    pub schema_version: u16,
+    pub state: IntegrationMutationPreviewState,
+    pub operation: IntegrationMutationOperation,
+    pub target_entry_id: Option<String>,
+    pub target_display_name: Option<String>,
+    pub source: IntegrationSource,
+    pub permissions: Vec<IntegrationPermission>,
+    pub warnings: Vec<IntegrationMutationWarning>,
+    pub destructive: bool,
+    pub confirmation_id: Option<String>,
+    pub diagnostic_code: Option<IntegrationMutationDiagnosticCode>,
+}
+
+impl IntegrationMutationPreviewSnapshot {
+    pub fn unavailable(
+        request: &IntegrationMutationPreviewRequest,
+        state: IntegrationMutationPreviewState,
+        diagnostic_code: IntegrationMutationDiagnosticCode,
+    ) -> Self {
+        Self {
+            schema_version: INTEGRATION_MUTATION_SCHEMA_VERSION,
+            state,
+            operation: request.operation,
+            target_entry_id: request.target_entry_id.clone(),
+            target_display_name: None,
+            source: IntegrationSource::Unknown,
+            permissions: Vec::new(),
+            warnings: Vec::new(),
+            destructive: matches!(
+                request.operation,
+                IntegrationMutationOperation::PluginRemove
+                    | IntegrationMutationOperation::MarketplaceRemove
+            ),
+            confirmation_id: None,
+            diagnostic_code: Some(diagnostic_code),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct IntegrationMutationResultSnapshot {
+    pub schema_version: u16,
+    pub state: IntegrationMutationResultState,
+    pub operation: Option<IntegrationMutationOperation>,
+    pub target_entry_id: Option<String>,
+    pub catalog_refresh_required: bool,
+    pub diagnostic_code: Option<IntegrationMutationDiagnosticCode>,
+}
+
+impl IntegrationMutationResultSnapshot {
+    pub fn unavailable(
+        operation: Option<IntegrationMutationOperation>,
+        target_entry_id: Option<String>,
+        diagnostic_code: IntegrationMutationDiagnosticCode,
+    ) -> Self {
+        Self {
+            schema_version: INTEGRATION_MUTATION_SCHEMA_VERSION,
+            state: IntegrationMutationResultState::Unavailable,
+            operation,
+            target_entry_id,
+            catalog_refresh_required: false,
+            diagnostic_code: Some(diagnostic_code),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[derive(Deserialize, Serialize)]
+    #[serde(deny_unknown_fields)]
+    struct IntegrationMutationFixture {
+        preview: IntegrationMutationPreviewSnapshot,
+        result: IntegrationMutationResultSnapshot,
+    }
 
     #[test]
     fn shared_fixture_matches_the_native_contract() {
@@ -660,5 +821,30 @@ mod tests {
             snapshot.validate(),
             Err(IntegrationContractError::InvalidVersion)
         );
+    }
+
+    #[test]
+    fn shared_mutation_fixture_matches_the_native_contract() {
+        let raw = include_str!("../../../fixtures/integration-mutation.json");
+        let fixture: IntegrationMutationFixture =
+            serde_json::from_str(raw).expect("mutation fixture must match native types");
+        let original: serde_json::Value =
+            serde_json::from_str(raw).expect("mutation fixture must be valid JSON");
+        let round_trip =
+            serde_json::to_value(&fixture).expect("normalized mutation contract must serialize");
+
+        assert_eq!(
+            fixture.preview.schema_version,
+            INTEGRATION_MUTATION_SCHEMA_VERSION
+        );
+        assert_eq!(
+            fixture.preview.state,
+            IntegrationMutationPreviewState::Ready
+        );
+        assert_eq!(
+            fixture.result.state,
+            IntegrationMutationResultState::Applied
+        );
+        assert_eq!(round_trip, original);
     }
 }

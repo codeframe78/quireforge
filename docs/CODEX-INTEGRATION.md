@@ -1,7 +1,8 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery with implementation through Milestone 13B,
-including the native read-only integration catalog validated locally
+Status: Milestone 0 discovery with implementation through Milestone 14A,
+including the native read-only catalog and confirmed plugin/marketplace
+lifecycle validated locally
 Observed: initial discovery 2026-07-19; protocol refresh 2026-07-21
 Installed CLI evidence: `codex-cli 0.144.6` baseline and `codex-cli 0.145.0`
 current refresh
@@ -109,7 +110,7 @@ Route selection follows the established adapter policy:
 - `configRequirements/read`, `permissionProfile/list`, and `config/read` retain
   only bounded effective-policy state.
 - Stable `codex plugin list --available --json` and `codex plugin marketplace
-  list --json` provide production plugin/marketplace discovery. The
+list --json` provide production plugin/marketplace discovery. The
   under-development plugin app-server RPCs are not called.
 
 All CLI output is size/time bounded and strictly normalized. Marketplace roots,
@@ -118,9 +119,45 @@ payloads, and upstream error text are discarded. App, skill, MCP-startup,
 config-warning, and account notifications trigger category refresh through
 closed reason enums rather than carrying upstream payloads into React.
 Independent failures preserve other healthy categories and mark only the
-affected capability degraded. No installation, removal, enable/disable,
-authorization, marketplace configuration, prompt mention, or UI is included;
-those remain explicitly confirmed Milestone 14 workflows.
+affected capability degraded. Milestone 13B includes no mutation or UI.
+
+## Milestone 14A plugin and marketplace lifecycle
+
+`IntegrationMutationService` implements only the stable CLI-backed plugin
+install/remove and marketplace add/remove/upgrade routes. The frontend can call
+fixed `integration_mutation_preview` and `integration_mutation_confirm`
+commands with a closed operation and opaque catalog ID; marketplace add instead
+accepts a bounded `owner/repository` plus a 40- or 64-hex pinned reference.
+Programs, subcommands, argument vectors, paths, URLs, and arbitrary JSON are
+not frontend inputs. Default/built-in marketplace rows cannot be removed;
+remove applies only to an explicitly configured source.
+
+Preview forces a fresh 0.145.x catalog/policy read, inspects native source
+evidence, returns normalized permissions and supply-chain warnings, and stores
+the exact evidence behind a five-minute one-use UUIDv7. Confirmation consumes
+the token, serializes mutations, refreshes and revalidates policy/capability/
+entry/source evidence, executes the one selected fixed command, validates its
+closed JSON response, and performs a fresh postcondition list. CLI commands use
+neutral `/`, null stdin/stderr, removed `OPENAI_API_KEY`, a 30-second timeout,
+one-MiB stdout cap, and explicit child reaping. Upstream errors, install paths,
+marketplace roots, sources, and URLs are discarded.
+
+Local plugin manifests are bounded and cannot be symlinked; their name,
+version, hook (including default `hooks/hooks.json`), MCP, app, and skill
+declarations are reviewed. Hook execution is labeled as requiring separate
+trust rather than implied by installation. Remote plugin
+installs require safe credential-free HTTPS and a pinned commit or exact package
+version. Marketplace adds require a pinned repository reference. Marketplace
+upgrade retains an explicit mutable-remote-source warning because list evidence
+does not identify the next fetched artifact. Installation remains separate
+from connector/MCP authorization. See
+[ADR 0019](DECISIONS/0019-confirmed-integration-mutations.md).
+
+Routine tests use deterministic temporary fixtures. The separately invoked
+real-CLI proof uses temporary `CODEX_HOME` and `HOME` with one local fixture
+marketplace/plugin and does not touch personal Codex state. Plugin
+enable/disable, connector/MCP authorization, skill configuration, prompt
+mentions, and the Integration Center UI remain later gated work.
 
 ## Required CLI inspection
 
@@ -446,9 +483,9 @@ CLI 0.144.6 exposes stable-looking command surfaces with JSON output:
 ```text
 codex plugin list --available --json
 codex plugin add PLUGIN@MARKETPLACE --json
-codex plugin remove PLUGIN@MARKETPLACE --json
+codex plugin remove PLUGIN --marketplace MARKETPLACE --json
 codex plugin marketplace list --json
-codex plugin marketplace add SOURCE --json
+codex plugin marketplace add SOURCE --ref REF --json
 codex plugin marketplace upgrade [NAME] --json
 codex plugin marketplace remove NAME --json
 ```
@@ -463,7 +500,7 @@ official documentation explicitly marks `plugin/list`, `plugin/read`,
 call them from production clients. Therefore:
 
 - Milestone 13B production discovery uses the supported CLI JSON list commands;
-  future confirmed management operations use their matching CLI commands.
+  Milestone 14A confirmed management uses their matching fixed CLI commands.
 - The app-server plugin adapter stays disabled unless a later Codex release
   promotes the methods and contract tests pass.
 - Marketplace writes and plugin install/remove actions always show a preview

@@ -30,7 +30,15 @@ import { codexRuntimeSchema, type CodexRuntimeSnapshot } from "./codex";
 import { desktopBootstrapSchema, type DesktopBootstrap } from "./contract";
 import {
   integrationCatalogSchema,
+  integrationMutationConfirmRequestSchema,
+  integrationMutationPreviewRequestSchema,
+  integrationMutationPreviewSchema,
+  integrationMutationResultSchema,
   type IntegrationCatalogSnapshot,
+  type IntegrationMutationConfirmRequest,
+  type IntegrationMutationPreviewRequest,
+  type IntegrationMutationPreviewSnapshot,
+  type IntegrationMutationResultSnapshot,
 } from "./integration";
 import {
   conversationSnapshotSchema,
@@ -99,6 +107,10 @@ export const CODEX_AUTH_LOGOUT_COMMAND = "codex_auth_logout";
 export const CODEX_AUTH_OPEN_BROWSER_COMMAND = "codex_auth_open_browser";
 export const DESKTOP_BOOTSTRAP_COMMAND = "desktop_bootstrap";
 export const INTEGRATION_CATALOG_READ_COMMAND = "integration_catalog_read";
+export const INTEGRATION_MUTATION_PREVIEW_COMMAND =
+  "integration_mutation_preview";
+export const INTEGRATION_MUTATION_CONFIRM_COMMAND =
+  "integration_mutation_confirm";
 export const PROJECT_WORKSPACE_STATUS_COMMAND = "project_workspace_status";
 export const PROJECT_PICK_DIRECTORY_COMMAND = "project_pick_directory";
 export const PROJECT_PICK_RELINK_COMMAND = "project_pick_relink";
@@ -166,6 +178,30 @@ export async function loadIntegrationCatalog(
 ): Promise<IntegrationCatalogSnapshot> {
   const payload = await invokeFunction(INTEGRATION_CATALOG_READ_COMMAND);
   return integrationCatalogSchema.parse(payload);
+}
+
+export async function previewIntegrationMutation(
+  request: IntegrationMutationPreviewRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<IntegrationMutationPreviewSnapshot> {
+  const reviewedRequest =
+    integrationMutationPreviewRequestSchema.parse(request);
+  const payload = await invokeFunction(INTEGRATION_MUTATION_PREVIEW_COMMAND, {
+    request: reviewedRequest,
+  });
+  return integrationMutationPreviewSchema.parse(payload);
+}
+
+export async function confirmIntegrationMutation(
+  request: IntegrationMutationConfirmRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<IntegrationMutationResultSnapshot> {
+  const reviewedRequest =
+    integrationMutationConfirmRequestSchema.parse(request);
+  const payload = await invokeFunction(INTEGRATION_MUTATION_CONFIRM_COMMAND, {
+    request: reviewedRequest,
+  });
+  return integrationMutationResultSchema.parse(payload);
 }
 
 export async function loadCodexAuth(

@@ -1030,28 +1030,27 @@ ordinary Rust/TypeScript builds are CPU/system-memory workloads.
 
 ## Milestone 13A — Protocol refresh and integration contract architecture
 
-| Field | Record |
-| --- | --- |
-| Forecast date | 2026-07-21 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
-| Preliminary forecast | Approximately 3.5–5.5 active hours; 25–60 minutes of local commands; 4.5–7 total elapsed hours; medium confidence |
-| Calibrated forecast | Approximately 3.5–6 active hours; 20–50 minutes of local commands; 4.5–7.5 total elapsed hours across one or two sessions; medium confidence |
-| Calibration basis | Clean `main` at `3ce57b9`; Codex CLI 0.145.0 versus 0.144.6 fixtures; 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm caches; four Cargo workers; no GPU work |
-| Observed active execution | Approximately 0.43 hour across inspection, architecture, implementation, security hardening, documentation, review, and publication operations |
-| Observed local command time | About 5.2 measured minutes through security hardening and the final complete/release reruns |
-| Observed automated wait | Approximately 0.14 hour: about 0.087 hour of measured local commands plus 104-second pull-request and 83-second `main` workflow critical paths |
-| Observed counted / elapsed | 0.57 counted project hour / 0.68 total elapsed hour; a 0.11-hour environment-permission block is included only in elapsed time |
-| Forecast variance | Approximately 4.18 hours (88.0%) below the 4.75-hour calibrated active-forecast midpoint when compared with counted project time |
-| Resource observations | Final complete gate 37.77 seconds/about 935 MiB RSS; final release build 38.41 seconds/about 1.81 GiB RSS; zero swaps; persistent UpCloud CI desktop jobs completed in 1 minute 20 seconds to 1 minute 41 seconds |
-| Completion status | Complete; merged by [PR #32](https://github.com/James-Jennison/quireforge/pull/32) as `7bc5f5f`, with successful PR and `main` repository checks |
+| Field                       | Record                                                                                                                                                                                                            |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-21                                                                                                                                                                                                        |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                  |
+| Preliminary forecast        | Approximately 3.5–5.5 active hours; 25–60 minutes of local commands; 4.5–7 total elapsed hours; medium confidence                                                                                                 |
+| Calibrated forecast         | Approximately 3.5–6 active hours; 20–50 minutes of local commands; 4.5–7.5 total elapsed hours across one or two sessions; medium confidence                                                                      |
+| Calibration basis           | Clean `main` at `3ce57b9`; Codex CLI 0.145.0 versus 0.144.6 fixtures; 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm caches; four Cargo workers; no GPU work                                         |
+| Observed active execution   | Approximately 0.43 hour across inspection, architecture, implementation, security hardening, documentation, review, and publication operations                                                                    |
+| Observed local command time | About 5.2 measured minutes through security hardening and the final complete/release reruns                                                                                                                       |
+| Observed automated wait     | Approximately 0.14 hour: about 0.087 hour of measured local commands plus 104-second pull-request and 83-second `main` workflow critical paths                                                                    |
+| Observed counted / elapsed  | 0.57 counted project hour / 0.68 total elapsed hour; a 0.11-hour environment-permission block is included only in elapsed time                                                                                    |
+| Forecast variance           | Approximately 4.18 hours (88.0%) below the 4.75-hour calibrated active-forecast midpoint when compared with counted project time                                                                                  |
+| Resource observations       | Final complete gate 37.77 seconds/about 935 MiB RSS; final release build 38.41 seconds/about 1.81 GiB RSS; zero swaps; persistent UpCloud CI desktop jobs completed in 1 minute 20 seconds to 1 minute 41 seconds |
+| Completion status           | Complete; merged by [PR #32](https://github.com/James-Jennison/quireforge/pull/32) as `7bc5f5f`, with successful PR and `main` repository checks                                                                  |
 
 Critical path: installed schema inventory → route/stability classification →
 category-preserving normalized contract → dynamic-tool lifecycle decision →
 strict Rust/TypeScript fixture tests → complete repository/release gates →
 security/diff review → publication and successful `main` CI. The local work
 found the required dynamic-tool lifecycle in the installed documented schemas,
-so the recommendation-only fallback is not currently required for Milestone
-18. Runtime registration remains dependency-gated and unimplemented.
+so the recommendation-only fallback is not currently required for Milestone 18. Runtime registration remains dependency-gated and unimplemented.
 
 The calibrated forecast was conservative because this checkpoint intentionally
 stopped at contract architecture, reused established strict fixture patterns,
@@ -1063,20 +1062,20 @@ baseline while still allowing for cache eviction and runner availability.
 
 ## Milestone 13B — Live read-only integration discovery
 
-| Field | Record |
-| --- | --- |
-| Forecast date | 2026-07-21 |
-| Selected model | GPT-5.6 Sol, XHigh reasoning; manually confirmed |
-| Preliminary forecast | Approximately 2.5–4.5 active hours; 15–35 minutes of local commands; 3–5.5 total elapsed hours; medium confidence |
-| Calibrated forecast | Approximately 2.5–4.25 active hours; 12–30 minutes of local commands; 3–5 total elapsed hours in one or possibly two sessions; medium confidence |
-| Calibration basis | Synchronized `main` at `2833436`; CLI 0.145.0 schema/routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work |
-| Observed active execution | Approximately 0.61 hour across inspection, implementation, route-policy/security correction, tests, documentation, review, and publication operations |
-| Observed automated wait | Approximately 0.18 hour: about 5–6 minutes of measured local command waits plus 159-second pull-request and 133-second post-merge `main` workflow critical paths |
-| Observed counted / elapsed | 0.79 counted project hour / 0.79 total elapsed hour; no user-blocked interval after execution started |
-| Forecast variance | Approximately 2.59 hours (76.6%) below the 3.375-hour calibrated active-forecast midpoint when compared with counted project time |
-| Local verification | Final `pnpm validate` 37.82 seconds/about 940 MiB RSS; Playwright 24.23 seconds/about 386 MiB; warm release build 40.35 seconds/about 1.85 GiB; all zero swaps |
-| Hosted verification | PR workflow `29890814046` passed source/website/desktop in 6 seconds/49 seconds/2 minutes 39 seconds; post-merge `main` workflow `29890942589` passed them in 7 seconds/1 minute 9 seconds/2 minutes 13 seconds |
-| Completion status | Complete; merged by [PR #34](https://github.com/James-Jennison/quireforge/pull/34) as `007f5b7`, with successful pull-request and `main` repository checks |
+| Field                      | Record                                                                                                                                                                                                          |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date              | 2026-07-21                                                                                                                                                                                                      |
+| Selected model             | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                |
+| Preliminary forecast       | Approximately 2.5–4.5 active hours; 15–35 minutes of local commands; 3–5.5 total elapsed hours; medium confidence                                                                                               |
+| Calibrated forecast        | Approximately 2.5–4.25 active hours; 12–30 minutes of local commands; 3–5 total elapsed hours in one or possibly two sessions; medium confidence                                                                |
+| Calibration basis          | Synchronized `main` at `2833436`; CLI 0.145.0 schema/routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work    |
+| Observed active execution  | Approximately 0.61 hour across inspection, implementation, route-policy/security correction, tests, documentation, review, and publication operations                                                           |
+| Observed automated wait    | Approximately 0.18 hour: about 5–6 minutes of measured local command waits plus 159-second pull-request and 133-second post-merge `main` workflow critical paths                                                |
+| Observed counted / elapsed | 0.79 counted project hour / 0.79 total elapsed hour; no user-blocked interval after execution started                                                                                                           |
+| Forecast variance          | Approximately 2.59 hours (76.6%) below the 3.375-hour calibrated active-forecast midpoint when compared with counted project time                                                                               |
+| Local verification         | Final `pnpm validate` 37.82 seconds/about 940 MiB RSS; Playwright 24.23 seconds/about 386 MiB; warm release build 40.35 seconds/about 1.85 GiB; all zero swaps                                                  |
+| Hosted verification        | PR workflow `29890814046` passed source/website/desktop in 6 seconds/49 seconds/2 minutes 39 seconds; post-merge `main` workflow `29890942589` passed them in 7 seconds/1 minute 9 seconds/2 minutes 13 seconds |
+| Completion status          | Complete; merged by [PR #34](https://github.com/James-Jennison/quireforge/pull/34) as `007f5b7`, with successful pull-request and `main` repository checks                                                      |
 
 Critical path: exact route/schema inspection → native category normalization →
 strict IPC → deterministic invalidation/partial-failure tests → route-policy
@@ -1100,6 +1099,34 @@ acceptance path short. Later read-only adapter forecasts should use these warm
 baselines with an explicit cache-eviction allowance; Milestone 14's mutation,
 authorization, supply-chain, and UI scope requires a fresh gate rather than
 reusing this result directly.
+
+## Milestone 14A — Safe plugin and marketplace lifecycle
+
+| Field                     | Record                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date             | 2026-07-21                                                                                                                                                                                                                                                                                                                                                            |
+| Selected model            | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                                                                                      |
+| Preliminary forecast      | Approximately 3–5.5 active hours; 3.5–6.5 total elapsed hours across one or two sessions; medium-to-low confidence                                                                                                                                                                                                                                                    |
+| Calibrated forecast       | Approximately 2.75–5 active hours; 15–35 minutes of local commands; 3.25–6 total elapsed hours across one or two sessions; medium confidence                                                                                                                                                                                                                          |
+| Calibration basis         | Synchronized `main` at `861f0dc`; CLI 0.145.0 stable plugin/marketplace JSON routes; approximately 43 GiB available RAM and 720 GiB free NVMe; warm Cargo/pnpm/Playwright caches; four Cargo and two Playwright workers; no GPU work                                                                                                                                  |
+| Current measured commands | TypeScript preflight 1.71 seconds/about 266 MiB; Cargo preflight 1.39 seconds/about 486 MiB; final warm focused mutation suite 0.24 second/about 108 MiB; isolated real-CLI lifecycle 0.29 second/about 108 MiB; complete gate 37.23 seconds/about 942 MiB; browser regression 19.24 seconds/about 390 MiB; warm release 41.50 seconds/about 1.88 GiB; all zero swaps |
+| Current status            | Native service, strict IPC, deterministic/adversarial tests, isolated real-CLI proof, documentation, and all local production/browser/native gates pass; publication pending                                                                                                                                                                                          |
+
+Critical path: stable route/source review → closed preview/confirm contract →
+native fixed-command coordinator → shared strict IPC → deterministic and
+isolated real-CLI lifecycle tests → complete repository/browser/release gates →
+security/diff review → publication and successful `main` CI. The Balanced
+profile keeps four Cargo workers and two Playwright workers. Browser, release,
+and native suites remain sequential; documentation may overlap only short warm
+commands. The RTX 3050 is intentionally unused.
+
+The implementation checkpoint remains inside the calibrated range. Existing
+catalog normalization, fixed-command mutation patterns, and warm build caches
+removed much of the anticipated greenfield work. Security review added an
+explicit mutable-remote-source warning for configured marketplace upgrades;
+this did not change scope or invalidate the forecast. Completion measurements,
+forecast variance, publication evidence, and later forecasting lessons will be
+recorded after the post-merge `main` workflow.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 
