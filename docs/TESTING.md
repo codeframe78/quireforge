@@ -359,6 +359,12 @@ app-server processes and make no live model call.
 - Confirm the official notification plugin is invoked only from Rust and the
   main webview capability list remains empty. Delivery failure must not change
   task state and may retry only the same native-reviewed notification.
+- Build the disabled-by-default native probe with
+  `pnpm desktop:build:notification-probe`, launch it only with the exact
+  `--manual-notification-probe` process flag and disposable app data, and verify
+  the real desktop service receives the production fixed copy. The probe must
+  expose no Tauri command, webview permission, or caller-supplied content. Run
+  `pnpm desktop:build` afterward and confirm the normal artifact excludes it.
 - Run strict contracts, temporary-file/native state-machine tests, bridge,
   component, and application tests, desktop/mobile Playwright with axe-core and
   overflow, complete repository gates, and a warm unbundled release build.
@@ -374,8 +380,14 @@ artifact starts under native Wayland. The same artifact completed the attached-
 project picker, file picker, bounded README preview, second confirmation,
 system-default opener, and consumed-action state under XWayland with disposable
 app data. Desktop Playwright passed 24/24 and website Playwright passed 8/8.
-Interactive Wayland notification/picker and a true X11 login remain unchecked;
-the host's XWayland display is not recorded as true X11 evidence.
+The feature-gated native probe delivered the fixed completed-task copy through
+the GNOME Wayland Freedesktop notification service; a filtered D-Bus capture
+contained only QuireForge identity plus the fixed title/body. The normal
+artifact was rebuilt afterward and contains no probe flag or delivery string.
+Interactive Wayland picker/attachment flow and a true X11 login remain
+unchecked; the host's XWayland display is not recorded as true X11 evidence.
+No `/usr/share/xsessions` descriptor is installed on the discovery host, so the
+X11 gate requires a separately prepared supported host/session.
 
 ## Planned manual Milestone 18 checklist
 

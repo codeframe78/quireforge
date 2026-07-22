@@ -109,6 +109,33 @@ an own `toString` property during startup and otherwise fails before mounting.
 The explicit production CSP, restricted Tauri capability, and narrow typed IPC
 remain the primary webview/native controls.
 
+### Native-only notification probe
+
+The manual Milestone 15 notification check has a disabled-by-default Cargo
+feature. It adds no Tauri command or webview permission, accepts only the exact
+native process flag, and sends the same fixed completed-task copy used by the
+production notification state machine:
+
+```bash
+pnpm desktop:build:notification-probe
+QUIRE_FORGE_PROBE_ROOT="$(mktemp -d /tmp/quireforge-notification-probe-XXXXXX)"
+mkdir -p \
+  "$QUIRE_FORGE_PROBE_ROOT/config" \
+  "$QUIRE_FORGE_PROBE_ROOT/data" \
+  "$QUIRE_FORGE_PROBE_ROOT/cache"
+env \
+  GDK_BACKEND=wayland \
+  XDG_CONFIG_HOME="$QUIRE_FORGE_PROBE_ROOT/config" \
+  XDG_DATA_HOME="$QUIRE_FORGE_PROBE_ROOT/data" \
+  XDG_CACHE_HOME="$QUIRE_FORGE_PROBE_ROOT/cache" \
+  ./target/release/quireforge --manual-notification-probe
+```
+
+Use `GDK_BACKEND=x11` only from a confirmed true X11 login when recording X11
+evidence. The probe accepts no title, body, project, conversation, path, or
+protocol data. After the manual check, run `pnpm desktop:build` again; that
+normal artifact excludes the feature and its flag.
+
 The browser-only shell preview is available with:
 
 ```bash

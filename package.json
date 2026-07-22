@@ -14,6 +14,7 @@
     "check": "pnpm -r --if-present check",
     "codex:schema": "python3 scripts/generate_codex_schema_fixtures.py",
     "desktop:build": "pnpm --filter @quireforge/desktop tauri build --no-bundle",
+    "desktop:build:notification-probe": "pnpm --filter @quireforge/desktop tauri build --no-bundle --features manual-notification-probe",
     "desktop:dev": "pnpm --filter @quireforge/desktop tauri dev",
     "desktop:preview": "pnpm --filter @quireforge/desktop preview",
     "dev": "pnpm --filter @quireforge/website dev",

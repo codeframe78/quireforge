@@ -1262,7 +1262,7 @@ representation issues before publication.
 | Calibrated forecast  | Approximately 4.5–8 active hours; 25–55 minutes of local commands; 4–10 minutes hosted CI critical path; 5–9.5 total elapsed hours across 15A–15C; medium confidence                                             |
 | Calibration basis    | Synchronized clean `main` at `f99c078`; 44 GiB available RAM and 718 GiB free storage; low load; 12 logical CPUs; warm Cargo/pnpm caches; no GPU work; split into three independently reviewable checkpoints     |
 | Preflight commands   | Desktop TypeScript check 1.67 seconds/about 266 MiB; four-worker Cargo check 0.25 second/about 109 MiB; both passed with zero swaps                                                                              |
-| Current status       | Milestones 15A and 15B implemented and verified locally; 15C code/automated gates, production Wayland launch, and XWayland handoff are verified, while interactive Wayland notification/picker and true X11-login acceptance remain open |
+| Current status       | Milestones 15A and 15B implemented and verified locally; 15C code/automated gates, Wayland notification delivery, and XWayland handoff are verified, while interactive Wayland picker/attachment and true X11-login acceptance remain open |
 | Observed local work  | 15A: approximately 0.60 active/0.13 automated hour. 15B: approximately 0.60 active/0.08 automated hour. 15C timing remains in progress. None had a post-start user-blocked interval                                                         |
 | Acceptance timings   | 15C full validation 59.03 seconds/about 1.67 GiB; 166 Rust tests/163 passed/3 ignored; browser suites 27.17/7.16 seconds; configured native release build 45.67 seconds/about 2.35 GiB; zero product failures                         |
 
@@ -1329,9 +1329,9 @@ revalidation before the final green gates.
 | Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                        |
 | Calibrated forecast | Approximately 2–4 active hours; 15–35 minutes of local commands; 2.5–5 total elapsed hours in one session, excluding any logout/login needed for a true X11 session; medium confidence                                                                                                                  |
 | Calibration basis   | Finished 15B branch at `390434b`; closed 15A preview and conversation-state contracts; warm Cargo/pnpm/browser caches; GNOME Wayland host with XWayland but no true X11 login; TypeScript preflight 1.61 seconds/about 271 MiB and Cargo preflight 1.72 seconds/about 588 MiB, both with zero swaps         |
-| Current status      | Code and automated gates verified locally on `feat/milestone-15c-desktop-handoffs`; production Wayland launch and complete XWayland picker/preview/default-application handoff verified; interactive Wayland notification/picker and true X11-login acceptance remain open                             |
-| Observed local work | In-progress timing from the `2026-07-22T14:30:59-07:00` branch start; no post-start user-blocked interval, package, release, deployment, hosting mutation, personal Codex-state access, live model call, or fabricated notification event                                                                   |
-| Acceptance timings  | Full validation 59.03 seconds/about 1.67 GiB; 139 desktop and 3 website frontend tests; 166 Rust tests with 163 passed/3 deliberate live probes ignored; desktop Playwright 24/24 in 27.17 seconds/about 441 MiB; website 8/8 in 7.16 seconds/about 252 MiB; release 45.67 seconds/about 2.35 GiB; zero swaps |
+| Current status      | Code and automated gates verified locally on `feat/milestone-15c-desktop-handoffs`; production Wayland launch/fixed-copy notification and complete XWayland picker/preview/default-application handoff verified; interactive Wayland picker/attachment and true X11-login acceptance remain open         |
+| Observed local work | In-progress timing from the `2026-07-22T14:30:59-07:00` branch start; no post-start user-blocked interval, package, release, deployment, hosting mutation, personal Codex-state access, or live model call                                                                                                  |
+| Acceptance timings  | Post-probe full validation 74.35 seconds/about 1.62 GiB; 139 desktop and 3 website frontend tests; default Rust 166 tests/163 passed/3 ignored; feature Rust 167 tests/164 passed/3 ignored in 8.11 seconds/about 1.35 GiB; browser 24/24 in 27.47 seconds and 8/8 in 7.25 seconds; zero swaps          |
 
 The design narrowed “open with” to the system default application for exactly
 one already-previewed file. The frontend receives only a five-minute one-use
@@ -1346,6 +1346,14 @@ URL and attempted `127.0.0.1:1420`. Rebuilding with the repository's configured
 `pnpm desktop:build` command embedded `dist`; that exact artifact rendered the
 workspace and completed the XWayland handoff path. The remaining display gates
 are environmental/manual rather than code or automated-test failures.
+
+A disabled-by-default native probe subsequently closed the notification-
+delivery evidence gap without a live Codex turn or webview command. Its feature
+build passed in 38.22 seconds at about 2.36 GiB, then delivered the fixed
+completed-task copy through the GNOME Wayland notification service. The normal
+artifact was restored in 36.88 seconds at about 2.36 GiB and excluded the probe
+flag/string. Interactive Wayland picker/attachment and true X11-login evidence
+remain open.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 

@@ -133,10 +133,10 @@ deployed. There is no application package to install yet.
 - Current milestone: Milestone 15 is in progress. The 15A safe file-preview and
   15B conversation-image attachment checkpoints are implemented and verified
   locally; the 15C handoff/notification code checkpoint is implemented and its
-  production Wayland launch plus complete XWayland handoff path are verified.
-  Interactive Wayland notification/picker and true X11-login evidence remain
-  open. Unsupported generic openers, file attachments, and integration-
-  management paths remain unavailable.
+  production Wayland launch, fixed-copy notification delivery, and complete
+  XWayland handoff path are verified. Interactive Wayland picker/attachment and
+  true X11-login evidence remain open. Unsupported generic openers, file
+  attachments, and integration-management paths remain unavailable.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own

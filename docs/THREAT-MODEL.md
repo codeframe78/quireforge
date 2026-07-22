@@ -524,6 +524,10 @@ Controls:
   output, diagnostics, or raw protocol into a notification.
 - Keep the webview capability list empty for opener/notification plugins; Rust
   alone may invoke the fixed desktop operations.
+- Keep manual notification delivery behind a disabled-by-default Cargo feature
+  and exact native process flag. It may reuse only fixed production copy, accept
+  no caller content, and add no Tauri command or webview permission. Replace the
+  feature artifact with a normal build after the probe.
 - Allowlisted external URL opening with visible destination.
 - No remote content receives privileged Tauri access.
 

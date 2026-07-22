@@ -571,10 +571,10 @@ Milestones 15A and 15B are implemented and verified locally. The 15C handoff
 and notification code checkpoint is implemented with one official Rust desktop
 dependency and no source-path persistence, unrelated user-file access, billable
 model call, package, release, or deployment. Its production Wayland launch and
-complete XWayland picker/preview/default-application handoff are verified on the
-attached discovery repository. The broader Milestone 15 acceptance remains open
-until an interactive Wayland notification/picker pass and true X11-login
-verification are complete.
+fixed-copy notification delivery plus the complete XWayland picker/preview/
+default-application handoff are verified on the attached discovery repository.
+The broader Milestone 15 acceptance remains open until an interactive Wayland
+picker/attachment pass and true X11-login verification are complete.
 
 ### 16 — Complete Cloudflare Pages Website
 

@@ -24,13 +24,13 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-22T15:11:10-07:00`
+Last updated: `2026-07-22T15:34:44-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                            |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Total milestones planned                  | 22 major milestones (0–21); Milestones 13 and 14 use separately gated submilestones                                                                          |
 | Total milestone entries completed         | 20 (Milestones 0–12, 13A–13B, 14A–14C, and local 15A–15B checkpoints); Milestone 15 remains open through 15C                                                |
-| Milestones in progress                    | Milestone 15; 15A–15B are complete locally, while 15C code/XWayland evidence is complete and its interactive Wayland/true-X11 gate remains open                |
+| Milestones in progress                    | Milestone 15; 15A–15B are complete locally, while 15C code/Wayland-notification/XWayland evidence is complete and its Wayland picker/attachment and true-X11 gate remain open |
 | Confirmed/reconstructed active execution  | Approximately 22.04–29.12 hours                                                                                                                              |
 | Confirmed/reconstructed automated wait    | Approximately 6.85–7.74 hours; early uninstrumented waits excluded                                                                                           |
 | Reconstructed user-blocked time           | At least 11.73 hours, plus unmeasured early approvals/prerequisites                                                                                          |
@@ -795,19 +795,27 @@ greater precision than the underlying ranges.
 - **Start / current checkpoint:** Started at
   `2026-07-22T14:30:59-07:00`, the reflog-recorded branch checkout from finished
   15B commit `390434b`. Completion is intentionally unset while interactive
-  Wayland notification/picker and a true X11-login pass remain open.
+  Wayland picker/attachment and a true X11-login pass remain open.
 - **Model and reasoning:** GPT-5.6 Sol, XHigh; manually confirmed.
 - **Calibrated forecast:** 2–4 active hours, 15–35 minutes of local commands,
   and 2.5–5 total elapsed hours, excluding logout/login time required to reach
   a true X11 session; medium confidence.
-- **Current evidence:** Full validation passed 142 frontend and 166 Rust tests
-  in 59.03 seconds; 163 Rust tests passed and three deliberate live probes were
-  ignored. Desktop and website Playwright passed 24/24 and 8/8 in 27.17/7.16
-  seconds. The configured unbundled Tauri build passed in 45.67 seconds. All
-  timed final operations reported zero swaps. That production artifact started
-  under Wayland and completed the native attachment/file pickers, bounded
-  preview, second default-application confirmation, registered viewer launch,
-  and consumed-action state under XWayland with disposable app data.
+- **Current evidence:** Post-probe full validation passed 142 frontend and 166
+  default-feature Rust tests in 74.35 seconds; 163 Rust tests passed and three
+  deliberate live probes were ignored. The feature-enabled full Rust suite
+  passed 167 tests (164 plus the same three ignores) in 8.11 seconds. Desktop
+  and website Playwright passed 24/24 and 8/8 in 27.47/7.25 seconds. All timed
+  final operations reported zero swaps. The production artifact started under
+  Wayland and completed the native attachment/file pickers, bounded preview,
+  second default-application confirmation, registered viewer launch, and
+  consumed-action state under XWayland with disposable app data.
+- **Notification delivery evidence:** A disabled-by-default native-only probe
+  reused the production fixed completed-task copy without a conversation,
+  arbitrary input, webview command, or live model call. Its feature build passed
+  in 38.22 seconds at about 2.36 GiB and the real GNOME Wayland notification
+  service received only QuireForge identity plus the fixed title/body. A normal
+  build then passed in 36.88 seconds at about 2.36 GiB and excluded the probe
+  flag and delivery string.
 - **Correction recorded:** A raw Cargo release diagnostic retained Tauri's
   development URL and produced the observed `127.0.0.1:1420` refusal. It was
   stopped and excluded from acceptance. The repository's configured
@@ -815,5 +823,5 @@ greater precision than the underlying ranges.
 - **Status:** In progress, so no completion time, counted-project-time value,
   variance, confidence classification, or cumulative completed-entry increment
   is recorded yet. No push, merge, package, release, deployment, hosting
-  mutation, personal Codex-state access, live/billable model call, or fabricated
-  notification transition was performed.
+  mutation, personal Codex-state access, or live/billable model call was
+  performed.

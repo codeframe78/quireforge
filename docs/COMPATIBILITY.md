@@ -2,9 +2,9 @@
 
 Status: desktop work through Milestone 15B is implemented and verified on the
 discovery host. Milestone 15C's reviewed handoff and notification code is
-implemented; its production Wayland launch and complete XWayland handoff path
-are verified, while interactive Wayland notification/picker and true X11-login
-acceptance remain open.
+implemented; its production Wayland launch and fixed-copy notification delivery
+plus the complete XWayland handoff path are verified, while interactive Wayland
+picker/attachment and true X11-login acceptance remain open.
 Milestone 13 defines the Codex 0.145.0 integration contract and read-only
 catalog; Milestones 14A–14C add fixed integration workflows, and Milestones
 15A–15C add bounded local-file, conversation-image, and desktop-integration
@@ -279,9 +279,22 @@ against disposable QuireForge app data. The registered host viewer received
 the revalidated file. A raw `cargo build --release` diagnostic artifact was not
 accepted because it retained Tauri's development URL and therefore attempted
 `127.0.0.1:1420`; rebuilding through the configured Tauri command corrected
-that launch before evidence was recorded. No true X11 login was available, and
-the live notification transition was not fabricated without a real background
-conversation event.
+that launch before evidence was recorded. No true X11 login was available.
+
+The disabled-by-default `manual-notification-probe` Cargo feature supplied the
+missing non-billable delivery check without creating a conversation or adding a
+webview command. With the exact native flag and disposable app data, the
+feature-enabled Tauri artifact sent the production completed-task title/body
+through GNOME's Freedesktop notification service under `GDK_BACKEND=wayland`.
+A filtered D-Bus capture contained only the `quireforge` application identity,
+`Codex task completed`, and `Return to QuireForge to review the result.` The
+configured normal build then replaced the probe artifact; a binary string check
+confirmed that neither the probe flag nor its delivery log remained. This is
+Wayland notification-service evidence, not a substitute for the still-open
+interactive picker/attachment flow or a true X11 login. The discovery host has
+no installed `/usr/share/xsessions` session descriptor, so a true X11 pass
+requires a separately prepared supported host/session rather than relabeling
+the available XWayland display.
 
 ## Website-host compatibility
 

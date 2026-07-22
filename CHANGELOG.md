@@ -272,7 +272,10 @@ released a usable application.
   acceptance remains separately evidenced. The configured production artifact
   now has a verified native Wayland launch and complete XWayland picker,
   preview, confirmation, default-application, and consumed-action path; true
-  X11-login and interactive Wayland notification/picker evidence remain open.
+  X11-login and interactive Wayland picker/attachment evidence remain open. A
+  disabled-by-default native-only probe verifies real desktop notification
+  delivery with fixed production copy and no webview command or arbitrary
+  content; the normal artifact is rebuilt without that feature after the probe.
 
 ### Changed
 

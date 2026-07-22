@@ -905,6 +905,28 @@ pub fn run() {
                     app.manage(ConversationAttachmentService::unavailable());
                 }
             }
+            #[cfg(feature = "manual-notification-probe")]
+            if desktop::manual_notification_probe_requested() {
+                let notifications = app.state::<DesktopNotificationService>();
+                let prepared = notifications
+                    .prepare_manual_probe()
+                    .map_err(|()| std::io::Error::other("notification probe state unavailable"))?
+                    .ok_or_else(|| std::io::Error::other("notification probe already delivered"))?;
+                if let Err(error) = app
+                    .notification()
+                    .builder()
+                    .title(prepared.title())
+                    .body(prepared.body())
+                    .show()
+                {
+                    notifications.restore(prepared);
+                    return Err(error.into());
+                }
+                notifications.complete(prepared);
+                eprintln!(
+                    "QuireForge native notification probe delivered fixed completed-task copy"
+                );
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

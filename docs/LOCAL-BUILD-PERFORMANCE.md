@@ -874,9 +874,15 @@ zram change was made, and the RTX 3050 remained unused.
 | Final desktop Playwright regression             |      27.17 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
 | Final website Playwright regression             |       7.16 seconds |        about 252 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
 | Final configured unbundled Tauri release build  |      45.67 seconds |       about 2.35 GiB | Passed, including a 41.40-second optimized compile/link and the existing frontend chunk-size warning     |
+| Feature-enabled complete native test suite      |       8.11 seconds |       about 1.35 GiB | Passed 167 tests; 164 passed and 3 deliberate live probes were ignored                                   |
+| Feature-gated native notification-probe build   |      38.22 seconds |       about 2.36 GiB | Passed, including a 34.42-second optimized compile/link; enabled no webview command or arbitrary content  |
+| Restored normal unbundled Tauri release build   |      36.88 seconds |       about 2.36 GiB | Passed, including a 32.82-second optimized compile/link; binary scan found no probe flag/delivery string  |
+| Post-probe complete default `pnpm validate` gate |      74.35 seconds |       about 1.62 GiB | Passed 142 frontend tests and 166 default-feature Rust tests; 163 passed and 3 live probes were ignored   |
+| Post-probe desktop Playwright regression        |      27.47 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
+| Post-probe website Playwright regression        |       7.25 seconds |        about 253 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
 
 Every resource-timed final operation reported zero swaps. The desktop bundle
-is 788.36 kB/211.84 kB gzip and retains the existing chunk-size warning. The
+is 788.43 kB/211.88 kB gzip and retains the existing chunk-size warning. The
 configured production artifact started under Wayland and completed the native
 picker, preview, second confirmation, system-default opener, and consumed-
 action path under XWayland against disposable app data. A raw Cargo release
@@ -884,5 +890,7 @@ diagnostic was rejected because it retained the development URL and attempted
 `127.0.0.1:1420`; rebuilding through `pnpm desktop:build` embedded `dist` and
 provided the accepted native artifact. Routine tests made no personal Codex-
 state read/mutation, live/billable model call, package, release, deployment, or
-hosting change. Interactive Wayland notification/picker and true X11-login
+hosting change. The native probe delivered only fixed production copy through
+the GNOME Wayland notification service, and the normal artifact replaced it
+immediately afterward. Interactive Wayland picker/attachment and true X11-login
 evidence remain open.

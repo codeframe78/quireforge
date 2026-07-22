@@ -50,6 +50,10 @@ either plugin directly to the webview.
   webview capability remains empty, so React cannot call the notification or
   opener plugins directly. Notification delivery is best-effort and never
   changes conversation state.
+- Manual desktop delivery uses a disabled-by-default Cargo feature and one exact
+  native process flag. The probe reuses the fixed completed-task copy, accepts
+  no caller content, registers no Tauri command, and is removed again by the
+  normal build before acceptance.
 - Routine tests use temporary files, sanitized fixtures, deterministic mock
   conversations, and a mocked notification state machine. They do not open a
   user's files, inspect personal Codex state, or start a live/billable model

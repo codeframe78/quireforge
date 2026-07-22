@@ -1,3 +1,5 @@
+#[cfg(feature = "manual-notification-probe")]
+use std::ffi::OsStr;
 use std::{
     collections::{HashSet, VecDeque},
     sync::Mutex,
@@ -9,6 +11,8 @@ use crate::codex::{ConversationNotificationCandidate, ConversationState};
 
 pub const DESKTOP_NOTIFICATION_SCHEMA_VERSION: u16 = 1;
 const MAX_DELIVERED_NOTIFICATIONS: usize = 256;
+#[cfg(feature = "manual-notification-probe")]
+pub(crate) const MANUAL_NOTIFICATION_PROBE_ARGUMENT: &str = "--manual-notification-probe";
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -109,6 +113,31 @@ impl DesktopNotificationService {
             state.reserved.remove(&prepared.key);
         }
     }
+
+    #[cfg(feature = "manual-notification-probe")]
+    pub(crate) fn prepare_manual_probe(&self) -> Result<Option<PreparedDesktopNotification>, ()> {
+        self.prepare(ConversationNotificationCandidate {
+            key: "manual-probe:completed".to_owned(),
+            state: ConversationState::Completed,
+        })
+    }
+}
+
+#[cfg(feature = "manual-notification-probe")]
+pub(crate) fn manual_notification_probe_requested() -> bool {
+    arguments_request_manual_notification_probe(std::env::args_os())
+}
+
+#[cfg(feature = "manual-notification-probe")]
+fn arguments_request_manual_notification_probe<I, S>(arguments: I) -> bool
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    arguments
+        .into_iter()
+        .skip(1)
+        .any(|argument| argument.as_ref() == OsStr::new(MANUAL_NOTIFICATION_PROBE_ARGUMENT))
 }
 
 fn notification_copy(state: ConversationState) -> Option<(&'static str, &'static str)> {
@@ -209,6 +238,30 @@ mod tests {
                 "title": "private task"
             }))
             .is_err()
+        );
+    }
+
+    #[cfg(feature = "manual-notification-probe")]
+    #[test]
+    fn manual_probe_requires_the_exact_native_flag_and_reuses_fixed_copy() {
+        assert!(arguments_request_manual_notification_probe([
+            "quireforge",
+            MANUAL_NOTIFICATION_PROBE_ARGUMENT,
+        ]));
+        assert!(!arguments_request_manual_notification_probe([
+            "quireforge",
+            "--manual-notification-probe=true",
+        ]));
+
+        let service = DesktopNotificationService::default();
+        let prepared = service
+            .prepare_manual_probe()
+            .expect("probe state must be available")
+            .expect("first probe must reserve");
+        assert_eq!(prepared.title(), "Codex task completed");
+        assert_eq!(
+            prepared.body(),
+            "Return to QuireForge to review the result."
         );
     }
 }
