@@ -74,7 +74,7 @@ establish arm64, non-Ubuntu, or non-GNOME support.
 
 The source and dormant website activation pass completed:
 
-- repository validation and six package-contract tests;
+- repository validation and seven package-contract tests;
 - 157 desktop and seven website unit/contract tests;
 - 178 runnable Rust tests, with three deliberate live probes ignored;
 - TypeScript/Astro checks, ESLint, Prettier, Rust formatting, warning-denying

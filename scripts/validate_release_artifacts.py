@@ -17,6 +17,7 @@ from release_contract import (
     EXPECTED_IMAGE,
     LEGACY_DESKTOP,
     ROOT,
+    appstream_validation_command,
     debian_version,
     package_output_dir,
     replace_control_field,
@@ -86,7 +87,7 @@ def validate_desktop(path: Path) -> None:
 def validate_metainfo(path: Path) -> None:
     validator = shutil.which("appstreamcli")
     if validator:
-        run([validator, "validate", "--no-net", str(path)])
+        run(appstream_validation_command(validator, path))
 
 
 def validate_glibc_baseline(path: Path) -> None:

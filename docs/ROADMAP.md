@@ -690,7 +690,7 @@ Complete locally. The `0.1.0-beta.1` x86_64 AppImage and Debian candidates are
 built inside a digest-pinned Ubuntu 22.04 container with Rust 1.95 and Node
 22.22.1 inputs. Tauri's Linux helper downloads are checksum-pinned and verified
 before use; normalized packages have canonical identities, deterministic
-timestamps, an exact release manifest, and `SHA256SUMS`. Structural,
+timestamps, an exact release manifest, and `SHA256SUMS`. Structural, offline
 AppStream, GLIBC 2.35, visible X11 launch, install, upgrade, uninstall, data
 preservation, and repeated-normalization checks pass. The release workflow is
 manual-only, uses immutable Action revisions, uploads review artifacts, and

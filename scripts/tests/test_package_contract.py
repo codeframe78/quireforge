@@ -10,6 +10,8 @@ from pathlib import Path
 from scripts.release_contract import (
     EXPECTED_IMAGE,
     ROOT,
+    appimagetool_command,
+    appstream_validation_command,
     architectures,
     debian_version,
     matches_cleared_appimage_marker,
@@ -47,6 +49,35 @@ class PackageContractTests(unittest.TestCase):
             self.assertTrue(matches_cleared_appimage_marker(candidate, expected))
             candidate.write_bytes(tampered)
             self.assertFalse(matches_cleared_appimage_marker(candidate, expected))
+
+    def test_appstream_validation_is_offline_and_not_skipped(self) -> None:
+        metadata = Path("/app/usr/share/metainfo/quireforge.appdata.xml")
+        self.assertEqual(
+            appstream_validation_command("/usr/bin/appstreamcli", metadata),
+            [
+                "/usr/bin/appstreamcli",
+                "validate",
+                "--no-net",
+                str(metadata),
+            ],
+        )
+        command = appimagetool_command(
+            Path("/tools/appimagetool"),
+            Path("/tools/runtime"),
+            Path("/app"),
+            Path("/out/QuireForge.AppImage"),
+        )
+        self.assertEqual(
+            command,
+            [
+                "/tools/appimagetool",
+                "--no-appstream",
+                "--runtime-file",
+                "/tools/runtime",
+                "/app",
+                "/out/QuireForge.AppImage",
+            ],
+        )
 
     def test_packaging_images_and_tools_are_digest_pinned(self) -> None:
         dockerfile = (ROOT / "packaging/linux/Dockerfile").read_text(

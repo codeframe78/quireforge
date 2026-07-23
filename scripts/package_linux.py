@@ -16,6 +16,7 @@ from release_contract import (
     DEBIAN_PACKAGE,
     LEGACY_DESKTOP,
     ROOT,
+    appimagetool_command,
     architectures,
     builder_record,
     cargo_target_dir,
@@ -158,13 +159,7 @@ def rebuild_appimage(
         )
         generated = temporary_root / output.name
         run(
-            [
-                str(appimagetool),
-                "--runtime-file",
-                str(runtime),
-                str(appdir),
-                str(generated),
-            ],
+            appimagetool_command(appimagetool, runtime, appdir, generated),
             cwd=temporary_root,
             env=environment,
         )

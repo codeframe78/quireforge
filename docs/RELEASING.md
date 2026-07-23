@@ -39,6 +39,8 @@ then validates:
 
 - exact package names, versions, architecture, metadata, dependencies, files,
   desktop entry, AppStream data, and checksums;
+- offline AppStream validation with `appstreamcli validate --no-net`, without
+  making release reproducibility depend on homepage reachability;
 - a maximum GLIBC requirement of 2.35 for the packaged executable;
 - AppImage extraction and canonical desktop/AppStream layout;
 - disposable Debian install, upgrade from a synthetic prior version, removal,
