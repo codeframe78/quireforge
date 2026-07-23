@@ -1681,3 +1681,39 @@ and a light-theme mobile contrast regression in the new task affordance. The
 final isolated native launch painted the complete signed-out gate after an
 eight-second settle, emitted no refused-loopback evidence, and used isolated
 home/XDG roots with no personal credentials.
+
+## Milestone 21B — Beta release-candidate and publication handoff
+
+| Field                    | Current record                                                                                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date            | 2026-07-23                                                                                                                                                                                                                                        |
+| Selected model           | GPT-5.6 Sol, XHigh reasoning; retained for the approved Milestone 21 continuation                                                                                                                                                                  |
+| Preliminary forecast     | 3–6 active hours; 60–150 minutes of local/container commands; about 4–8 total elapsed hours; medium confidence                                                                                                                                    |
+| Calibrated forecast      | 3.5–6.5 active hours; 75–180 minutes of local/container commands; about 4.5–9 total elapsed hours; medium confidence                                                                                                                               |
+| Calibration basis        | Clean Milestone 21A lineage at `4351da2`; Docker 29.1.3; Node 22.22.1; pnpm 11.15.0; Rust 1.97.1 host; pinned Ubuntu 22.04 release container; 12 logical CPUs, about 46 GiB available RAM, 689 GiB free storage, high pre-existing swap occupancy, warm images/caches |
+| Start approval           | The user's “do it” authorizes the scoped local Milestone 21B continuation. Exact tag/release publication, workflow dispatch, push/merge, public download activation, and website deployment remain terminal external actions governed by their separately documented exact-source and rollback gates |
+| Expected usage intensity | High model usage; high local CPU/storage use for clean package builds and lifecycle tests; no GPU workload, live Codex account access, billable model call, integration authorization, or credential mutation                                      |
+| Completion boundary      | Exact local candidate source, clean AppImage/Debian rebuild, repeated hashes, package/install/launch QA, supported-platform and known-limitation review, inactive-to-published website-data preparation, rollback record, aggregate gates, and focused commits |
+| Completion status        | In progress locally                                                                                                                                                                                                                               |
+
+The pinned package pipeline, already reviewed Tauri helper hashes, strict
+manifest contract, disposable Debian lifecycle harness, and established X11
+launch smoke reduce build uncertainty. The main risks are source revision drift
+between review and tag, external protected-environment/attestation readiness,
+independent verification of immutable public downloads, and keeping release
+publication separate from website activation.
+
+| Component                                                 | Duration range | Confidence | Primary uncertainty                                      | Resource class        |
+| --------------------------------------------------------- | -------------: | ---------- | -------------------------------------------------------- | --------------------- |
+| Exact-source, release, distribution, and rollback audit   |      35–60 min | High       | Publication prerequisites and source freeze              | Model/storage-bound   |
+| Clean pinned Ubuntu 22.04 candidate rebuild               |    1.0–2.25 h  | Medium     | Container/package cache and helper availability          | CPU/network/storage   |
+| Package lifecycle, launch, repeated-hash, and platform QA |      45–90 min | Medium     | X11/AppImage/install behavior after product-readiness UI | CPU/storage-bound     |
+| Release notes, support/limitation, and download metadata  |      45–90 min | Medium     | Exact immutable URLs and public artifact record          | Model-bound           |
+| Aggregate acceptance and publication handoff             |      45–90 min | Medium     | External gate readiness and cross-document consistency   | CPU/model-bound       |
+
+Projected critical path: freeze a clean candidate source → rebuild in the
+pinned baseline → validate exact manifest/checksums and package lifecycle →
+repeat normalization/hash evidence → finalize supported-platform,
+installation, limitation, and rollback copy → prepare but do not prematurely
+activate typed website download data → run aggregate gates → present the exact
+tag/release and website-deployment operations for their terminal approval.
