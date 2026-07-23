@@ -111,7 +111,7 @@ discovery; scheduling management and execution remain unsupported.
 |        18 | Agent-directed model and reasoning selection                      | Large        | Complete and verified locally; not published                             |
 |        19 | Security, accessibility, and performance hardening                | Very large   | Complete and verified locally                                            |
 |        20 | Packaging and release automation                                  | Large        | Complete and verified locally; not published                             |
-|        21 | Product readiness, beta publication, and download activation       | Very large   | 21A complete locally; 21B publication remains approval-gated             |
+|        21 | Product readiness, beta publication, and download activation       | Very large   | 21A complete; 21B local preflight passed, publication approval-gated      |
 
 ## Milestone definitions
 
@@ -730,6 +730,17 @@ then request beta-publication approval. Update the already hosted website only
 with the approved package metadata and verify downloads, installation guidance,
 known limitations, and checksums. Website updates and application release
 publication remain independently approval-gated.
+
+The local 21B preflight now passes for the clean pinned Ubuntu 22.04 candidate,
+repeated byte-identical normalization, disposable lifecycle, current-host
+AppImage and extracted-Debian launches, and the signed-out product pixels. The
+dormant website publication path validates exact same-origin versioned
+packages, hashes, sizes, and manifest/checksum URLs while the committed state
+remains unavailable. The repository is private, so its GitHub prerelease cannot
+serve as an anonymous public download location. Exact owner-hosted package
+promotion, source/tag publication, public retrieval checks, website activation,
+and deployment remain the terminal approval gates. See the
+[Milestone 21B release-readiness report](MILESTONE_21B_RELEASE_READINESS.md).
 
 ## Forecast policy
 

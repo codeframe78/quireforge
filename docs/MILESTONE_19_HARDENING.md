@@ -50,6 +50,12 @@ before release. QuireForge does not directly use the affected
 `glib::VariantStrIter`. The audit still denies every new warning rather than
 silencing an advisory category.
 
+Milestone 21B performed the required pre-publication refresh on 2026-07-23. The
+pinned auditor scanned all 503 locked crates against 1,169 current advisories
+and reported zero unaccepted vulnerability or warning. The same 17 explicit
+exceptions remain inherited and visible; the terminal exact-source release
+gate must run the audit again.
+
 CI now installs pinned `cargo-audit` 0.22.2 and runs both Node and Rust audits.
 Dependabot adds the Cargo ecosystem. Repository validation also requires every
 non-local GitHub Action to use a full immutable commit SHA.

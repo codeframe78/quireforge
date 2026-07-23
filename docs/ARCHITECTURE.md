@@ -908,6 +908,17 @@ is checked for routes, links, assets, canonical metadata, disclaimers, inline
 code, and version-controlled headers before browser tests exercise its
 desktop/mobile structure, themes, overflow, and accessibility baseline.
 
+The dormant download record is an unavailable/published typed union. A
+published value must contain exactly one version-coherent x86_64 AppImage and
+one Debian package, positive sizes, lowercase SHA-256 values, UTC publication
+time, and credential-free HTTPS package/manifest/checksum URLs on the approved
+QuireForge origin. The website build also requires an approved private security
+reporting URL before it can render a published release. Package promotion to a
+versioned owner-hosted directory, download-record activation, and website
+deployment are independent exact-artifact operations with separate rollback
+points. The private source repository and its access-controlled release records
+are not an anonymous public package host.
+
 ## Milestone 19 hardening boundary
 
 The pre-packaging hardening pass does not add a privileged product capability.

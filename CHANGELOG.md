@@ -7,6 +7,14 @@ released a usable application.
 
 ### Added
 
+- Milestone 21B local beta-readiness preflight: a fresh clean Ubuntu 22.04
+  package/lifecycle pass, repeated byte-identical normalization, current-host
+  AppImage and extracted-Debian launches, signed-out package pixel review, and
+  reviewed initial installation, limitation, distribution, and rollback copy.
+- Dormant website release validation for exactly one version-coherent AppImage
+  and Debian package with positive sizes, lowercase SHA-256 values, UTC
+  publication time, and credential-free same-origin HTTPS package, checksum,
+  and manifest URLs. Public download state remains unavailable.
 - Milestone 21A product readiness: an authenticated startup gate, original
   responsive QuireForge home and three-region workspace hierarchy, internal
   milestone-label removal, account summary, recent threads, project and quick

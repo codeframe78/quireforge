@@ -1,9 +1,10 @@
 # Releasing QuireForge
 
-Status: Milestone 20 provides a verified local release-candidate pipeline.
-Nothing in this procedure constitutes publication approval. The first beta,
-website download activation, supported-platform statement, and rollback
-rehearsal remain separately approval-gated Milestone 21 work.
+Status: Milestone 21B has refreshed the verified local release-candidate
+pipeline and prepared dormant public-download validation. Nothing in this
+procedure constitutes publication approval. The first beta, owner-hosted
+artifact promotion, website download activation, and public rollback remain
+separately approval-gated operations.
 
 ## Release artifact contract
 
@@ -83,6 +84,29 @@ Do not select `publish-approved-beta` until all of these are true:
    has passed.
 7. Website download activation has separate approval and reviewed artifact
    URLs/hashes; publication does not silently activate the website.
+8. An approved private security-reporting URL and disclosure path are ready for
+   the public beta.
+
+## Private release and public distribution boundary
+
+The source repository is private. A prerelease created by the guarded GitHub
+workflow is therefore an access-controlled review/provenance record, not an
+anonymous public package host. Do not place private GitHub release URLs in the
+website download record.
+
+The prepared public layout is a versioned directory on the owner-hosted
+QuireForge origin:
+
+```text
+https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/
+```
+
+This path remains a proposal until the exact public distribution target,
+artifact set, source/tag, and rollback are explicitly approved. Promoting the
+four reviewed files to the Webuzo-managed origin is a distinct hosting
+operation. It must follow the private-provider handling and recovery rules in
+`docs/WEBUZO-DEPLOYMENT.md`, then prove anonymous retrieval and byte equality
+before website activation.
 
 The publish job additionally requires:
 
@@ -109,12 +133,15 @@ state: "unavailable"
 release: null
 ```
 
-until the release is published, externally retrievable, independently
+until the exact public files are anonymously retrievable, independently
 checksummed, and website activation is approved. Activation must copy the
-published version, date, manifest URL, checksum URL, artifact URLs, byte sizes,
-and SHA-256 values from the reviewed release record. Run the full website
-unit, build, generated-artifact, desktop/mobile, accessibility, and link gates
-before a separately authorized website deployment.
+published version, UTC date, same-origin manifest URL, checksum URL, artifact
+URLs, byte sizes, and SHA-256 values from the reviewed public record. The
+website validator rejects credential-bearing, non-HTTPS, query-bearing,
+fragment-bearing, cross-origin, duplicate, missing, malformed, or
+filename-incoherent release data. Run the full website unit, build,
+generated-artifact, desktop/mobile, accessibility, and link gates before a
+separately authorized website deployment.
 
 ## Rollback boundary
 
@@ -135,14 +162,14 @@ credentials, sessions, QuireForge metadata, or unrelated hosting state.
 ## Current limitations
 
 - Only x86_64 candidates are produced.
-- Ubuntu 22.04 is the build/GLIBC baseline, not yet a complete distribution
-  support matrix.
+- The initial beta target is x86_64 Ubuntu 22.04 or newer on GNOME Wayland or
+  X11; arm64, non-Ubuntu, and non-GNOME systems remain unclaimed.
 - Local artifacts are not distro-repository packages and have no distro
   repository signing.
 - GitHub provenance is created only by an approved publish job; local
   candidates have checksums and manifest evidence but no external attestation.
-- AppImage and Debian package publication, installation guidance, website
-  activation, and public rollback verification remain Milestone 21.
+- AppImage and Debian public promotion, website activation, and public
+  rollback verification remain separately approved Milestone 21B operations.
 
 References:
 

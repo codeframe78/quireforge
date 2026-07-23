@@ -135,6 +135,13 @@ unavailable states. Workspace and account-data readers do not start until the
 normalized Codex account state grants access. QuireForge does not store
 credentials, scrape ChatGPT, estimate quota, expose raw account data, or redeem
 reset credits.
+Milestone 21B has passed its local package/platform preflight and prepared the
+dormant public-download contract, installation copy, known limitations, and
+rollback sequence. The source repository remains private, so a private GitHub
+prerelease is not an anonymous download host. The committed website continues
+to report no downloads until the exact owner-hosted package location,
+source/tag publication, public retrieval, activation, and deployment operations
+receive their separate approvals.
 Webuzo is the selected static origin host, with Cloudflare retained as the DNS,
 TLS, and cache edge. The reviewed static site is publicly deployed at
 `https://quireforge.jamesjennison.net` through the approved proxied Cloudflare
@@ -143,10 +150,12 @@ download yet. The repository and development activity remain private.
 
 ## Project status
 
-- Supported distributions: no public support promise yet; the x86_64 package
-  baseline and GLIBC contract are validated on Ubuntu 22.04.
+- Supported distributions: no public support promise yet; the proposed initial
+  beta target is x86_64 Ubuntu 22.04 or newer on GNOME Wayland/X11, backed by
+  the pinned GLIBC 2.35 package baseline and separately recorded session QA.
 - Installation: local AppImage and Debian candidates are validated; public
-  download and installation guidance remain Milestone 21 approval gates.
+  installation guidance is staged, while package promotion and download
+  activation remain Milestone 21B approval gates.
 - Website: the Astro site builds, passes local responsive/accessibility checks,
   and is publicly deployed at `https://quireforge.jamesjennison.net` through
   Webuzo and Cloudflare. Live desktop/mobile accessibility and Lighthouse
@@ -183,7 +192,9 @@ download yet. The repository and development activity remain private.
   Milestone 20's package candidates and guarded release automation are also
   complete and verified locally. Milestone 21A's authenticated startup gate,
   home/workspace redesign, milestone-label removal, and normalized remaining
-  usage are complete and verified locally.
+  usage are complete and verified locally. Milestone 21B's clean package
+  preflight, platform launch review, repeat normalization, and dormant public
+  download validation are also complete locally.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Current milestone: Milestone 15 is implemented and verified locally, the
@@ -193,8 +204,10 @@ download yet. The repository and development activity remain private.
   also implemented and verified locally. Milestone 19's pre-packaging
   hardening pass and Milestone 20 packaging/release automation are implemented
   and verified locally. Milestone 21A product readiness is also implemented and
-  verified locally. Milestone 21B beta publication, supported-platform QA, and
-  website download activation are next and remain separately approval-gated.
+  verified locally. Milestone 21B local release readiness has passed; exact
+  source/tag publication, owner-hosted package promotion, anonymous retrieval,
+  website download activation, and deployment are next and remain separately
+  approval-gated.
   Native Wayland evidence covers project, file, and image pickers, bounded
   preview, a real Nautilus image drop, and fixed-copy notification delivery;
   complete XWayland and true-X11 handoff paths remain separately recorded.
@@ -210,7 +223,9 @@ download yet. The repository and development activity remain private.
   and releases do not exist yet. The Tauri Linux dependency graph retains
   explicitly reviewed GTK3 maintenance and GLib iterator advisories, and
   `freezePrototype` remains disabled because enabling it prevents the current
-  production frontend from mounting; both must be revisited before release.
+  production frontend from mounting. The Milestone 21B audit refresh found no
+  unaccepted vulnerability or warning; the exact-source terminal gate must
+  repeat it before publication.
 
 ## Discovery documents
 
@@ -230,6 +245,10 @@ download yet. The repository and development activity remain private.
 - [Website architecture](docs/WEBSITE.md)
 - [Building](docs/BUILDING.md)
 - [Testing](docs/TESTING.md)
+- [Release procedure](docs/RELEASING.md)
+- [Staged beta installation](docs/BETA-INSTALLATION.md)
+- [Draft 0.1.0-beta.1 release notes](docs/RELEASE_NOTES_0.1.0_BETA_1.md)
+- [Milestone 21B release readiness](docs/MILESTONE_21B_RELEASE_READINESS.md)
 - [Local build performance](docs/LOCAL-BUILD-PERFORMANCE.md)
 - [Milestone forecasts](docs/MILESTONE-FORECASTS.md)
 - [Milestone real-world time ledger](docs/MILESTONE_TIME_LEDGER.md)

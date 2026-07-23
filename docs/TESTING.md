@@ -32,6 +32,9 @@ inspection, checksum and release-manifest validation, a GLIBC 2.35 ceiling,
 disposable install/upgrade/uninstall preservation checks, isolated visible X11
 launch probes, inactive website-download assertions, and a guarded manual
 release-workflow policy.
+Milestone 21B adds repeated byte-equality evidence, current-host package launch
+review, signed-out package pixels, and dormant same-origin website publication
+validation while keeping the committed download state inactive.
 
 ## Repository, website, and desktop checks
 
@@ -108,6 +111,36 @@ window launches. `--require-publishable` is reserved for the exact clean,
 tagged, pinned-builder publication boundary and also requires
 `--expected-tag`. Routine local dirty builds are intentionally
 `local-candidate` manifests.
+
+## Manual Milestone 21B checklist
+
+- Start from a clean exact source commit and run the authoritative pinned
+  Ubuntu 22.04 package gate.
+- Confirm the manifest records that exact commit, `treeState: "clean"`, the
+  pinned builder digest, `state: "release-candidate"`, and exactly two
+  installable artifacts.
+- Independently verify `SHA256SUMS`, then rerun normalization from the same raw
+  bundles/source epoch into a separate output directory and require identical
+  hashes for all four files.
+- Launch the AppImage and extracted Debian executable with isolated home/XDG
+  roots. Require a stable signed-out gate, no black frame, and no localhost or
+  connection-refused evidence.
+- Review the proposed x86_64 Ubuntu 22.04-or-newer GNOME Wayland/X11 statement
+  against the baseline package gate and separately recorded display-session
+  evidence. Do not generalize it to arm64, other distributions, or other
+  desktop environments.
+- Confirm the public installation copy verifies checksums before execution,
+  uses `apt` for the Debian dependency path, documents the FUSE-less AppImage
+  fallback, and keeps uninstall separate from project/Codex/metadata deletion.
+- Keep `apps/website/src/data/downloads.ts` unavailable until the exact public
+  files can be retrieved without repository credentials. Exercise the
+  published validator with fixtures and reject private GitHub, cross-origin,
+  credential-bearing, query/fragment, malformed hash/size, duplicate/missing
+  format, and filename/version drift.
+- Before any terminal action, state the exact source commit, tag, operation,
+  public version directory, four files, hashes, and rollback. Treat the push,
+  tag, private release/provenance operation, public package promotion, website
+  data activation, and website deployment as separate approvals.
 Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
 Git repositories and linked worktrees, duplicate roots, confirmation-time

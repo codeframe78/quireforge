@@ -30,7 +30,7 @@ Last updated: `2026-07-23T11:22:11-07:00`
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Total milestones planned                  | 22 major milestones (0–21); Milestones 13 and 14 use separately gated submilestones                                                                               |
 | Total milestone entries completed         | 30 (Milestones 0–12 and submilestones 13A–21A); Milestone 21A is complete locally                                                                                 |
-| Milestones in progress                    | None; Milestone 21B publication/download activation is next and remains separately approval-gated                                                                 |
+| Milestones in progress                    | Milestone 21B local preflight is active; terminal publication/download activation remains separately approval-gated                                                |
 | Confirmed/reconstructed active execution  | Approximately 28.51–35.59 hours; uninstrumented Milestone 16 work excluded                                                                                        |
 | Confirmed/reconstructed automated wait    | Approximately 7.86–8.78 hours; early and Milestone 16 uninstrumented waits excluded                                                                               |
 | Reconstructed user-blocked time           | At least 11.73 hours, plus unmeasured early approvals/prerequisites                                                                                               |

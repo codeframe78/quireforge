@@ -1,7 +1,8 @@
 # Compatibility
 
-Status: desktop work through Milestone 20 is implemented and verified locally,
-and the static website is complete through production Milestone 16.
+Status: desktop work through Milestone 21A is implemented and verified locally,
+Milestone 21B package/platform preflight is complete, and the static website is
+complete through production Milestone 16.
 Milestone 15C has production native Wayland picker, preview, real-drop, and
 fixed-copy notification evidence plus separately recorded complete XWayland and
 true-X11 handoff/attachment paths.
@@ -223,10 +224,13 @@ Initial beta target:
   desktop tests are available.
 - Package formats: AppImage and Debian package.
 
-The packages are local beta candidates, not a published support promise.
-Milestone 21 must complete final supported-platform QA, publication approval,
-download activation, installation guidance, and rollback verification before
-the project advertises a downloadable supported distribution.
+The packages remain local beta candidates, not a published support promise.
+Milestone 21B has refreshed the Ubuntu 22.04 baseline build/lifecycle gate,
+current-host AppImage and extracted-Debian launches, repeated normalization,
+and the combined Wayland/X11 evidence. Public artifact promotion, anonymous
+download verification, website activation, and rollback remain separately
+approval-gated before the project advertises the proposed initial support
+statement.
 
 ## Native directory picker
 
