@@ -13,7 +13,7 @@
 > or distributed by OpenAI. QuireForge is an unofficial native Linux workspace
 > for Codex.
 
-QuireForge is an early-stage privately developed project building a native
+QuireForge is an early-stage community-developed project building a native
 graphical Codex workspace for Linux. It works toward a direct, local-first project model:
 user-selected directories remain in place and Codex operates against those
 original directories through supported interfaces. The original Codex
@@ -137,16 +137,15 @@ credentials, scrape ChatGPT, estimate quota, expose raw account data, or redeem
 reset credits.
 Milestone 21B has passed its local package/platform preflight and prepared the
 dormant public-download contract, installation copy, known limitations, and
-rollback sequence. The source repository remains private, so a private GitHub
-prerelease is not an anonymous download host. The committed website continues
-to report no downloads until the exact owner-hosted package location,
-source/tag publication, public retrieval, activation, and deployment operations
-receive their separate approvals.
+rollback sequence. The source repository and GitHub prerelease/provenance
+records are public. The committed website continues to report no downloads
+until the exact owner-hosted package location, public retrieval, activation,
+and deployment operations receive their separate approvals.
 Webuzo is the selected static origin host, with Cloudflare retained as the DNS,
 TLS, and cache edge. The reviewed static site is publicly deployed at
 `https://quireforge.jamesjennison.net` through the approved proxied Cloudflare
 record, with trusted edge and origin TLS. There is no public application
-download yet. The repository and development activity remain private.
+download yet. The source repository and development activity are public.
 
 ## Project status
 
@@ -249,6 +248,8 @@ download yet. The repository and development activity remain private.
 - [Staged beta installation](docs/BETA-INSTALLATION.md)
 - [Draft 0.1.0-beta.1 release notes](docs/RELEASE_NOTES_0.1.0_BETA_1.md)
 - [Milestone 21B release readiness](docs/MILESTONE_21B_RELEASE_READINESS.md)
+- [Public disclosure audit](docs/PUBLIC_DISCLOSURE_AUDIT.md)
+- [Public-source and runner-boundary decision](docs/DECISIONS/0027-public-source-and-runner-boundary.md)
 - [Local build performance](docs/LOCAL-BUILD-PERFORMANCE.md)
 - [Milestone forecasts](docs/MILESTONE-FORECASTS.md)
 - [Milestone real-world time ledger](docs/MILESTONE_TIME_LEDGER.md)
@@ -277,7 +278,7 @@ guaranteed public catalog.
 
 ## Permanent identity
 
-The private repository is `James-Jennison/quireforge`. Future application and
+The public repository is `James-Jennison/quireforge`. Future application and
 packaging work must use `quireforge` for the executable and Debian package,
 `QuireForge` for the desktop display name and AppImage basename, and
 `io.github.codeframe78.QuireForge` as the application identifier. Its syntax is
@@ -291,8 +292,8 @@ The canonical desktop entry is
 The production website target is
 `https://quireforge.jamesjennison.net`, hosted as a static Astro site on
 Webuzo. Cloudflare remains the authoritative DNS, proxied TLS, and cache edge.
-The source repository, CI, issues, and development activity remain private and
-are not linked from the public artifact. GitHub Pages and Cloudflare Pages are
+The source repository, CI, issues, and development activity are public and are
+linked from the static website source. GitHub Pages and Cloudflare Pages are
 disabled and are not production fallbacks. The website source is under
 `apps/website/`; future DNS, TLS, hosting, and deployment changes remain
 separately approval-gated.

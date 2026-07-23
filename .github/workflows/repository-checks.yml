@@ -16,6 +16,7 @@ concurrency:
 jobs:
   validate:
     name: Validate tracked sources
+    # Public fork code must never reach the persistent organization runners.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 10
@@ -27,13 +28,14 @@ jobs:
         run: python3 scripts/validate_repository.py
 
       - name: Test package contracts
-        run: python3 -m unittest discover -s scripts/tests -p 'test_package_*.py'
+        run: python3 -m unittest discover -s scripts/tests -p 'test_*.py'
 
       - name: Verify Git object graph
         run: git fsck --full --no-dangling
 
   security:
     name: Dependency security audit
+    # Public fork code must never reach the persistent organization runners.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 20
@@ -73,6 +75,7 @@ jobs:
 
   website:
     name: Website quality gate
+    # Public fork code must never reach the persistent organization runners.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 20
@@ -128,6 +131,7 @@ jobs:
 
   desktop:
     name: Desktop quality gate
+    # Public fork code must never reach the persistent organization runners.
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: [self-hosted, Linux, X64, upcloud, build]
     timeout-minutes: 35

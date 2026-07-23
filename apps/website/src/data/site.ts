@@ -12,6 +12,7 @@ export const site = {
   origin: "https://quireforge.jamesjennison.net",
   masterOrigin: "https://jamesjennison.net",
   statusOrigin: "https://status.jamesjennison.net",
+  repository: "https://github.com/James-Jennison/quireforge",
   securityReportUrl: "https://github.com/codeframe78",
 } as const;
 
@@ -71,6 +72,7 @@ export const footerNavigation: Array<{
       { label: "Documentation", href: "/documentation/" },
       { label: "Security & privacy", href: "/security/" },
       { label: "Development", href: "/contributing/" },
+      { label: "Source on GitHub", href: site.repository },
       { label: "About", href: "/about/" },
     ],
   },
@@ -108,7 +110,7 @@ export const sitePages: SitePage[] = [
     title: "A Linux workspace shaped around the project you already have.",
     description:
       "QuireForge is being designed for direct local-directory work, observable Codex tasks, deliberate approvals, and native Linux workflows.",
-    status: "Product direction · private development",
+    status: "Product direction · public source",
     sections: [
       {
         heading: "Projects stay where they are",
@@ -312,7 +314,7 @@ export const sitePages: SitePage[] = [
   {
     slug: "documentation",
     eyebrow: "Documentation",
-    title: "Public guidance, without exposing private engineering work.",
+    title: "Public guidance backed by inspectable source.",
     description:
       "This website documents QuireForge's public purpose, product direction, availability, compatibility boundaries, and safety principles.",
     status: "Public project overview available",
@@ -328,9 +330,10 @@ export const sitePages: SitePage[] = [
         ],
       },
       {
-        heading: "Engineering material remains private",
+        heading: "Public source and safety boundary",
         paragraphs: [
-          "Source code, detailed architecture records, internal milestones, development activity, and issue tracking are not publicly linked while QuireForge is in private development.",
+          "Source code, architecture decisions, milestones, development activity, and issue tracking are public in the QuireForge GitHub repository.",
+          "Credentials, local project content, Codex account data, provider identifiers, and private diagnostics remain outside the repository.",
           "Planned behavior is labeled separately from available behavior throughout this site.",
         ],
       },
@@ -399,7 +402,7 @@ export const sitePages: SitePage[] = [
         ],
       },
       {
-        heading: "Private development",
+        heading: "Public-source development",
         items: [
           "Native Linux workspace and local-project workflows",
           "Observable Codex tasks, approvals, review, and recovery",
@@ -442,7 +445,7 @@ export const sitePages: SitePage[] = [
       : "QuireForge has not published an application release. Future packages require verification, documentation, and separate owner approval.",
     status: publishedRelease
       ? `Published ${publishedRelease.publishedAt.slice(0, 10)}`
-      : "Pre-release private development",
+      : "Pre-release development",
     sections: publishedRelease
       ? [
           {
@@ -540,30 +543,31 @@ export const sitePages: SitePage[] = [
   {
     slug: "contributing",
     eyebrow: "Development",
-    title: "Public contribution intake is not open yet.",
+    title: "Inspect the source and propose focused changes.",
     description:
-      "QuireForge is currently developed in a private repository, without public source, issues, pull requests, or contribution workflows.",
-    status: "Private development",
+      "QuireForge source, issues, pull requests, and contribution guidance are public on GitHub.",
+    status: "Public source",
     sections: [
       {
         heading: "Current boundary",
         items: [
-          "The source repository is private and is not linked from this website.",
-          "Development activity and detailed internal milestones are not published.",
-          "Public issue and pull-request intake are not available.",
-          "Private access is not an invitation to redistribute project material.",
+          "Review the roadmap, architecture, and relevant decisions before proposing substantial work.",
+          "Use sanitized fixtures and never submit credentials, personal Codex data, private project content, or provider diagnostics.",
+          "Fork-origin pull requests cannot execute code on QuireForge's persistent self-hosted runners.",
+          "A passing automated check does not replace security, architecture, accessibility, or compatibility review.",
         ],
       },
       {
-        heading: "A future contribution model",
+        heading: "Contribution workflow",
         paragraphs: [
-          "If public contribution opens later, this page will document the supported workflow, conduct expectations, security boundary, license treatment, and review requirements before accepting submissions.",
+          "Open an issue before investing heavily in architectural, security-sensitive, integration, storage, packaging, or externally visible changes. Focus pull requests, explain their security and compatibility effects, and run the documented local checks.",
         ],
       },
     ],
     links: [
+      { label: "View source on GitHub", href: site.repository },
+      { label: "Browse issues", href: `${site.repository}/issues` },
       { label: "Follow the public roadmap", href: "/roadmap/" },
-      { label: "About QuireForge", href: "/about/" },
     ],
   },
   {
@@ -571,7 +575,7 @@ export const sitePages: SitePage[] = [
     eyebrow: "FAQ",
     title: "Straight answers for an early-stage project.",
     description:
-      "QuireForge's public website separates product direction from current availability and keeps private engineering work private.",
+      "QuireForge's public website separates product direction from current availability and links to its inspectable source.",
     sections: [
       {
         heading: "Is QuireForge made by OpenAI?",
@@ -590,7 +594,7 @@ export const sitePages: SitePage[] = [
       {
         heading: "Is the source repository public?",
         paragraphs: [
-          "No. The project website is public, while the source repository, issue tracking, detailed milestones, and development activity remain private.",
+          "Yes. The QuireForge source, issue tracking, milestones, pull requests, and development activity are public on GitHub.",
         ],
       },
       {
@@ -676,13 +680,14 @@ export const sitePages: SitePage[] = [
         ],
       },
       {
-        heading: "Public project, private development",
+        heading: "Public project and source",
         paragraphs: [
-          "This website presents the approved public project identity and product direction. Source code, issue tracking, detailed milestones, and development activity remain private for now.",
+          "This website presents the approved public project identity and product direction. Source code, issue tracking, milestones, and development activity are available in the public GitHub repository.",
         ],
       },
     ],
     links: [
+      { label: "View source on GitHub", href: site.repository },
       { label: "James Jennison project hub", href: site.masterOrigin },
       { label: "Read the public roadmap", href: "/roadmap/" },
     ],

@@ -1,6 +1,7 @@
 # ADR 0024: Host the Static Website on Webuzo
 
-- Status: Accepted
+- Status: Accepted; public-source boundary amended on 2026-07-23 by
+  [ADR 0027](0027-public-source-and-runner-boundary.md)
 - Date: 2026-07-22
 - Decision owners: Project owner and maintainers
 - Supersedes: [ADR 0006](0006-cloudflare-pages-production-hosting.md)
@@ -34,8 +35,9 @@ decision.
   exact document root Webuzo reports for the approved hostname.
 - Apache behavior is limited to the artifact's domain-scoped `.htaccess`; no
   generated VirtualHost or global web-server configuration is hand-edited.
-- The source repository remains private and is not linked or synchronized into
-  the public website.
+- The public source repository is not synchronized into the website document
+  root. The static site may link to it, but website deployment remains an
+  independent owner-hosted operation.
 - GitHub Pages and Cloudflare Pages remain disabled and are not fallbacks.
 
 ## Approval boundaries

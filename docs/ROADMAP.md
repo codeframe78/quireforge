@@ -736,10 +736,12 @@ repeated byte-identical normalization, disposable lifecycle, current-host
 AppImage and extracted-Debian launches, and the signed-out product pixels. The
 dormant website publication path validates exact same-origin versioned
 packages, hashes, sizes, and manifest/checksum URLs while the committed state
-remains unavailable. The repository is private, so its GitHub prerelease cannot
-serve as an anonymous public download location. Exact owner-hosted package
-promotion, source/tag publication, public retrieval checks, website activation,
-and deployment remain the terminal approval gates. See the
+remains unavailable. A full-history disclosure audit found no credentials or
+secrets, the accepted residual identity/path/log disclosures are documented,
+and the repository is approved for public visibility with fork-origin code
+excluded from persistent self-hosted runners. GitHub release/provenance and
+exact owner-hosted package promotion, public retrieval checks, website
+activation, and deployment remain separate terminal gates. See the
 [Milestone 21B release-readiness report](MILESTONE_21B_RELEASE_READINESS.md).
 
 ## Forecast policy

@@ -1,7 +1,9 @@
 # ADR 0003: Permanent QuireForge Identity
 
 - Status: Accepted; source location and website hosting amended on 2026-07-22
-  by [ADR 0024](0024-webuzo-static-website-hosting.md)
+  by [ADR 0024](0024-webuzo-static-website-hosting.md), and repository
+  visibility amended on 2026-07-23 by
+  [ADR 0027](0027-public-source-and-runner-boundary.md)
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -25,7 +27,7 @@ The permanent identity is:
 | Product display name | `QuireForge` |
 | Tagline | `Build boldly. Work locally.` |
 | Description | `An unofficial native Linux workspace for Codex` |
-| GitHub repository | `James-Jennison/quireforge` (private) |
+| GitHub repository | `James-Jennison/quireforge` (public) |
 | Executable | `quireforge` |
 | Debian package | `quireforge` |
 | AppImage basename | `QuireForge` |
@@ -48,8 +50,10 @@ application identity. Functional validation against the actual Tauri, GTK,
 desktop-entry, D-Bus, and packaging versions remains mandatory during
 application scaffolding. The desktop filename decision is explained in
 [ADR 0004](0004-linux-desktop-entry-identity.md).
-The current production-hosting and private-source boundary is explained in
-[ADR 0024](0024-webuzo-static-website-hosting.md). The legacy reverse-DNS
+The current production-hosting boundary is explained in
+[ADR 0024](0024-webuzo-static-website-hosting.md), and the public-source and
+persistent-runner boundary is explained in
+[ADR 0027](0027-public-source-and-runner-boundary.md). The legacy reverse-DNS
 application identifier is intentionally retained as an installed compatibility
 contract; transferring the source repository does not authorize changing it.
 

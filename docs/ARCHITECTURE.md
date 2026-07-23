@@ -897,8 +897,8 @@ and account data never enter the site build.
 
 Production is `https://quireforge.jamesjennison.net` on a Webuzo-managed
 Apache origin, with Cloudflare retained as authoritative DNS and the proxied
-TLS/cache edge. Source, validation, issues, and development activity remain
-private; GitHub Pages and Cloudflare Pages remain disabled. The deployment
+TLS/cache edge. Source, validation, issues, and development activity are public
+on GitHub; GitHub Pages and Cloudflare Pages remain disabled. The deployment
 workflow builds outside public storage, records a per-file artifact manifest,
 uses origin-only staging, applies a version-controlled Apache `.htaccess`, and
 promotes only an exact approved artifact to the Webuzo-reported document root.
@@ -916,8 +916,9 @@ QuireForge origin. The website build also requires an approved private security
 reporting URL before it can render a published release. Package promotion to a
 versioned owner-hosted directory, download-record activation, and website
 deployment are independent exact-artifact operations with separate rollback
-points. The private source repository and its access-controlled release records
-are not an anonymous public package host.
+points. Public GitHub release records are secondary provenance and artifact
+records; the website download contract continues to require credential-free
+same-origin files on the owner-hosted QuireForge origin.
 
 ## Milestone 19 hardening boundary
 

@@ -1,11 +1,12 @@
 # Milestone 21B Release-Readiness Report
 
-Status: local package/platform preflight and dormant website activation
-hardening are complete on `feat/milestone-21b-beta-readiness`. External
-publication is not complete. No branch or tag was pushed, no workflow was
-dispatched, no release or attestation was created, no package was installed on
-the host, no public download was activated, and no website or hosting state
-changed.
+Status: local package/platform preflight, dormant website activation hardening,
+and the guarded GitHub package build are complete. The first tagged publication
+attempt built, uploaded, and revalidated the exact packages but could not create
+an attestation while the organization repository was private on its current
+plan. The full-history disclosure audit and public-source transition are
+approved. No GitHub release, owner-hosted package promotion, website download
+activation, or website deployment has completed.
 
 ## Outcome
 
@@ -92,10 +93,11 @@ mutation occurred.
 
 ## Distribution finding
 
-The configured source repository is private. A GitHub prerelease in that
-repository is therefore an access-controlled review/provenance record, not an
-anonymous public download channel. The public website must not link those
-private release URLs or imply that they are publicly retrievable.
+The configured source repository and its guarded GitHub prerelease are public.
+The prerelease is a secondary artifact and provenance record. The public
+website intentionally accepts only credential-free same-origin package,
+manifest, and checksum URLs on the owner-hosted QuireForge origin; it must not
+substitute GitHub release URLs for that independently verified distribution.
 
 The `quireforge-release` environment now exists with one custom deployment
 policy admitting only tags matching `v*`. The current GitHub plan rejected
@@ -124,9 +126,9 @@ vulnerability details in the initial message.
 The remaining terminal sequence is deliberately split:
 
 1. Freeze and rebuild the exact clean source; record its manifest and hashes.
-2. Approve the exact commit, tag `v0.1.0-beta.1`, private GitHub
-   review/provenance operation, and rollback boundary before any push, tag, or
-   workflow dispatch.
+2. Approve the exact commit, tag `v0.1.0-beta.1`, public GitHub
+   release/provenance operation, and rollback boundary before any push, tag,
+   or workflow dispatch.
 3. Independently verify the four resulting files against the reviewed
    manifest and `SHA256SUMS`.
 4. Separately approve promotion of those exact bytes to the exact
@@ -141,9 +143,9 @@ The remaining terminal sequence is deliberately split:
    link, origin, and rollback gates, then obtain separate website-deployment
    approval.
 
-No step inherits authority from the previous one. In particular, a private
-GitHub prerelease does not authorize a public server upload, and a public
-package upload does not authorize changing the website.
+No step inherits authority from the previous one. In particular, a public
+GitHub prerelease does not authorize an owner-hosted server upload, and a
+public package upload does not authorize changing the website.
 
 ## Rollback
 

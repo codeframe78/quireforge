@@ -89,12 +89,13 @@ Do not select `publish-approved-beta` until all of these are true:
 8. An approved private security-reporting URL and disclosure path are ready for
    the public beta.
 
-## Private release and public distribution boundary
+## Public source and owner-hosted distribution boundary
 
-The source repository is private. A prerelease created by the guarded GitHub
-workflow is therefore an access-controlled review/provenance record, not an
-anonymous public package host. Do not place private GitHub release URLs in the
-website download record.
+The source repository and guarded GitHub prerelease are public. The prerelease
+is a secondary artifact and provenance record, while the website download
+contract intentionally accepts only credential-free same-origin URLs on the
+owner-hosted QuireForge origin. Do not place GitHub release URLs in the website
+download record.
 
 The prepared public layout is a versioned directory on the owner-hosted
 QuireForge origin:
@@ -122,8 +123,9 @@ The publish job additionally requires:
 - the protected environment gate.
 
 Only that job receives scoped `contents`, `id-token`, and `attestations` write
-permissions. It creates a GitHub prerelease with `--verify-tag`; there is no
-automatic stable release or website deployment.
+permissions. It creates a public GitHub prerelease with `--verify-tag`; there
+is no automatic stable release, owner-hosted package promotion, or website
+deployment.
 
 ## Website activation
 

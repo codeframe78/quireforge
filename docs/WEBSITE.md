@@ -1,14 +1,14 @@
 # Website
 
 Status: complete through Milestone 16D. The static Astro website is public
-through a Webuzo-managed origin and Cloudflare DNS/proxy edge while source and
-development activity remain private.
+through a Webuzo-managed origin and Cloudflare DNS/proxy edge. Source and
+development activity are public on GitHub.
 
 ## Purpose
 
 The QuireForge website explains the product direction, current availability,
 compatibility boundaries, integrations, security and privacy principles,
-public roadmap, releases, support state, and private-development boundary. It
+public roadmap, releases, support state, and public-source boundary. It
 clearly identifies QuireForge as an unofficial independent project and does not
 imply OpenAI ownership or endorsement.
 
@@ -22,34 +22,32 @@ imply OpenAI ownership or endorsement.
 - Generator: Astro with TypeScript and static output.
 - Production base: `/` on the dedicated subdomain.
 - Runtime services and database: none.
-- Source, issues, development activity, and internal documentation: private and
-  absent from the public artifact.
+- Source, issues, and development activity: public on GitHub and linked from
+  the static artifact.
+- Credentials, local project content, provider identifiers, and private
+  diagnostics: absent from the public artifact and source.
 
 The source generates Home, Features, Integrations, Downloads, Installation,
 Documentation, Compatibility, Roadmap, Releases, Security, Development,
-FAQ, Troubleshooting, About, and a custom 404. The production artifact is not
-linked to the private source repository.
+FAQ, Troubleshooting, About, and a custom 404. The production artifact links
+to the public source and issue tracker.
 
 GitHub Pages remains disabled. The previously selected Cloudflare Pages project
 was never created and is not a fallback host. Cloudflare remains authoritative
 DNS and the public edge; Webuzo is authoritative for the application origin,
 document root, certificate renewal, ownership, backup, and rollback.
 
-## Public/private boundary
+## Public-source boundary
 
-The public site may name QuireForge and James Jennison, explain the approved
-product direction, state that no release exists, and present high-level planned
-capabilities. It must not expose or link:
+The public site may link the QuireForge repository and issue tracker, explain
+the approved product direction and availability, and present high-level planned
+capabilities. It must not expose credentials, private paths, personal Codex
+data, provider identifiers, runner registration details, private diagnostics,
+or user project content.
 
-- the private source repository;
-- issue, pull-request, release, or contribution systems;
-- commit, branch, workflow, or detailed milestone activity;
-- internal architecture and security documents;
-- private paths, accounts, integrations, logs, credentials, or diagnostics.
-
-The `/contributing/` route is retained to avoid a broken public URL, but it
-honestly explains that public contribution intake is closed during private
-development.
+The `/contributing/` route links the public source and issue tracker, describes
+the security boundary, and explains that fork-origin pull requests cannot run
+code on the persistent organization runners.
 
 ## Quality contract
 

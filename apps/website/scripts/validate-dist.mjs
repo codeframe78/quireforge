@@ -29,13 +29,7 @@ const requiredFiles = [
 ];
 
 const errors = [];
-const privateSourceMarkers = [
-  "github.com/codeframe78/quireforge",
-  "github.com/James-Jennison/quireforge",
-  "View source on GitHub",
-  "Built in the open",
-  "Open development",
-];
+const publicSourceUrl = "https://github.com/James-Jennison/quireforge";
 
 async function exists(path) {
   try {
@@ -95,10 +89,8 @@ for (const htmlFile of htmlFiles) {
   if (!html.includes(`<link rel="canonical" href="${origin}`)) {
     errors.push(`missing production canonical URL: ${name}`);
   }
-  for (const marker of privateSourceMarkers) {
-    if (html.toLowerCase().includes(marker.toLowerCase())) {
-      errors.push(`private-source marker in ${name}: ${marker}`);
-    }
+  if (!html.includes(publicSourceUrl)) {
+    errors.push(`missing public-source link: ${name}`);
   }
   if (/<style(?:\s|>)/i.test(html) || /\sstyle=/i.test(html)) {
     errors.push(`inline style conflicts with the production CSP: ${name}`);

@@ -184,12 +184,14 @@ REQUIRED_PATHS = (
     "docs/BUILDING.md",
     "docs/DECISIONS/0025-read-only-scheduled-task-catalog.md",
     "docs/DECISIONS/0026-policy-bounded-next-turn-selection.md",
+    "docs/DECISIONS/0027-public-source-and-runner-boundary.md",
     "docs/LOCAL-BUILD-PERFORMANCE.md",
     "docs/MILESTONE-FORECASTS.md",
     "docs/MILESTONE_19_HARDENING.md",
     "docs/MILESTONE_20_PACKAGING.md",
     "docs/MILESTONE_21A_PRODUCT_READINESS.md",
     "docs/RELEASING.md",
+    "docs/PUBLIC_DISCLOSURE_AUDIT.md",
     "docs/MILESTONE_16A_WEBSITE_RECONCILIATION.md",
     "docs/ROADMAP.md",
     "docs/TESTING.md",
@@ -220,6 +222,11 @@ REQUIRED_PATHS = (
     "packaging/linux/Dockerfile",
     "packaging/linux/tauri-tools.json",
     "packaging/release-manifest.schema.json",
+)
+
+SELF_HOSTED_PULL_REQUEST_GUARD = (
+    "if: ${{ github.event_name != 'pull_request' || "
+    "github.event.pull_request.head.repo.full_name == github.repository }}"
 )
 
 IDENTITY_EXPECTATIONS = {
@@ -332,6 +339,48 @@ IDENTITY_EXPECTATIONS = {
         "GitService",
     ),
 }
+
+
+def validate_self_hosted_pull_request_boundary(workflow: str) -> list[str]:
+    """Require fork isolation for every persistent self-hosted PR job."""
+
+    errors: list[str] = []
+    if "pull_request_target:" in workflow:
+        errors.append(
+            "repository checks must never use pull_request_target with "
+            "self-hosted runners"
+        )
+    if "self-hosted" not in workflow:
+        return errors
+    if not re.search(r"(?m)^  pull_request:\s*$", workflow):
+        errors.append("self-hosted repository checks must retain pull_request")
+
+    jobs_marker = re.search(r"(?m)^jobs:\s*$", workflow)
+    if jobs_marker is None:
+        errors.append("self-hosted repository checks are missing jobs")
+        return errors
+
+    jobs_text = workflow[jobs_marker.end() :]
+    job_markers = list(
+        re.finditer(r"(?m)^  ([A-Za-z_][A-Za-z0-9_-]*):\s*$", jobs_text)
+    )
+    for index, marker in enumerate(job_markers):
+        end = (
+            job_markers[index + 1].start()
+            if index + 1 < len(job_markers)
+            else len(jobs_text)
+        )
+        block = jobs_text[marker.start() : end]
+        if not re.search(
+            r"(?m)^    runs-on:\s*\[self-hosted(?:,|\])", block
+        ):
+            continue
+        if f"    {SELF_HOSTED_PULL_REQUEST_GUARD}" not in block:
+            errors.append(
+                "self-hosted pull-request job is missing the same-repository "
+                f"head guard: {marker.group(1)}"
+            )
+    return errors
 
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 HTML_LINK = re.compile(r"(?:href|src)=[\"']([^\"']+)[\"']", re.IGNORECASE)
@@ -668,6 +717,17 @@ def validate() -> list[str]:
                 errors.append(f"Linux release workflow is missing guard: {control}")
         if "pull_request_target:" in release_workflow:
             errors.append("Linux release workflow must never use pull_request_target")
+
+    repository_workflow_path = (
+        ROOT / ".github/workflows/repository-checks.yml"
+    )
+    if repository_workflow_path.is_file():
+        repository_workflow = repository_workflow_path.read_text(
+            encoding="utf-8"
+        )
+        errors.extend(
+            validate_self_hosted_pull_request_boundary(repository_workflow)
+        )
 
     downloads_path = ROOT / "apps/website/src/data/downloads.ts"
     if downloads_path.is_file():

@@ -26,19 +26,17 @@ describe("site information architecture", () => {
     }
   });
 
-  it("keeps private source and development systems out of public content", () => {
+  it("publishes the reviewed source and contribution boundary", () => {
     const publicContent = JSON.stringify({ footerNavigation, site, sitePages });
 
-    for (const marker of [
-      "James-Jennison/quireforge",
-      "/issues",
-      "/pulls",
-      "/blob/",
-      "/tree/",
-    ]) {
-      expect(publicContent.toLowerCase()).not.toContain(marker.toLowerCase());
+    expect(site.repository).toBe(
+      "https://github.com/James-Jennison/quireforge",
+    );
+    expect(publicContent).toContain(site.repository);
+    expect(publicContent).toContain(`${site.repository}/issues`);
+    for (const marker of ["/pulls/", "/blob/", "/tree/"]) {
+      expect(publicContent).not.toContain(marker);
     }
-    expect(site).not.toHaveProperty("repository");
   });
 
   it("limits external navigation to the approved public ecosystem", () => {
@@ -49,7 +47,11 @@ describe("site information architecture", () => {
       "quireforge.jamesjennison.net",
       "status.jamesjennison.net",
     ]);
-    const allowedExactUrls = new Set(["https://github.com/codeframe78"]);
+    const allowedExactUrls = new Set([
+      "https://github.com/codeframe78",
+      "https://github.com/James-Jennison/quireforge",
+      "https://github.com/James-Jennison/quireforge/issues",
+    ]);
 
     for (const link of [...pageLinks, ...footerLinks]) {
       if (link.href.startsWith("https://")) {

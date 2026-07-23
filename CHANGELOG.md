@@ -7,6 +7,16 @@ released a usable application.
 
 ### Added
 
+- A dedicated full-history public-disclosure audit covering every reachable
+  branch, tag, pull-request head, Git object, collaboration record, Actions
+  run/log, and exact release artifact; no credential, token, private key, or
+  private server address was found.
+- ADR 0027 and enforced workflow validation for the public-source boundary:
+  persistent organization runners remain selected for trusted QuireForge
+  branches, while fork-origin pull requests and `pull_request_target` are
+  prohibited from reaching self-hosted jobs.
+- Public source, issue, pull-request, and contribution links in the static
+  website content model without changing the owner-hosted deployment.
 - Milestone 21B local beta-readiness preflight: a fresh clean Ubuntu 22.04
   package/lifecycle pass, repeated byte-identical normalization, current-host
   AppImage and extracted-Debian launches, signed-out package pixel review, and
@@ -486,9 +496,10 @@ released a usable application.
 - The GitHub repository was renamed in place to `codeframe78/quireforge`, and
   the intact working copy moved to `/mnt/faststorage/quireforge`, through
   separate approval-gated operations.
-- The repository was later transferred to the private
+- The repository was later transferred to the
   `James-Jennison/quireforge` organization location without changing the
-  installed application identifier or publishing source links.
+  installed application identifier, and was deliberately made public only
+  after a dedicated full-history disclosure audit.
 - No released or development application data was detected under the temporary
   identity, so there is currently no user configuration to move. Future
   releases must preserve old data and never modify Codex-owned authentication

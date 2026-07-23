@@ -1694,7 +1694,7 @@ home/XDG roots with no personal credentials.
 | Start approval           | The user's “do it” authorizes the scoped local Milestone 21B continuation. Exact tag/release publication, workflow dispatch, push/merge, public download activation, and website deployment remain terminal external actions governed by their separately documented exact-source and rollback gates |
 | Expected usage intensity | High model usage; high local CPU/storage use for clean package builds and lifecycle tests; no GPU workload, live Codex account access, billable model call, integration authorization, or credential mutation                                      |
 | Completion boundary      | Exact local candidate source, clean AppImage/Debian rebuild, repeated hashes, package/install/launch QA, supported-platform and known-limitation review, inactive-to-published website-data preparation, rollback record, aggregate gates, and focused commits |
-| Completion status        | Local release readiness complete; exact push/tag, private release/provenance operation, owner-hosted package promotion, website activation, and deployment remain separately approval-gated                                                     |
+| Completion status        | Local release readiness complete; public-source disclosure accepted; exact release/provenance completion, owner-hosted package promotion, website activation, and deployment remain separately approval-gated                              |
 
 The pinned package pipeline, already reviewed Tauri helper hashes, strict
 manifest contract, disposable Debian lifecycle harness, and established X11

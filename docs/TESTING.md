@@ -134,12 +134,12 @@ tagged, pinned-builder publication boundary and also requires
   fallback, and keeps uninstall separate from project/Codex/metadata deletion.
 - Keep `apps/website/src/data/downloads.ts` unavailable until the exact public
   files can be retrieved without repository credentials. Exercise the
-  published validator with fixtures and reject private GitHub, cross-origin,
+  published validator with fixtures and reject off-origin GitHub, cross-origin,
   credential-bearing, query/fragment, malformed hash/size, duplicate/missing
   format, and filename/version drift.
 - Before any terminal action, state the exact source commit, tag, operation,
   public version directory, four files, hashes, and rollback. Treat the push,
-  tag, private release/provenance operation, public package promotion, website
+  tag, public release/provenance operation, public package promotion, website
   data activation, and website deployment as separate approvals.
 Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
