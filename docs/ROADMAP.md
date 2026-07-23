@@ -111,7 +111,7 @@ discovery; scheduling management and execution remain unsupported.
 |        18 | Agent-directed model and reasoning selection                      | Large        | Complete and verified locally; not published                             |
 |        19 | Security, accessibility, and performance hardening                | Very large   | Complete and verified locally                                            |
 |        20 | Packaging and release automation                                  | Large        | Complete and verified locally; not published                             |
-|        21 | Beta package publication and download activation                  | Very large   | Planned/approval-gated                                                   |
+|        21 | Product readiness, beta publication, and download activation       | Very large   | 21A in progress locally; publication remains approval-gated              |
 
 ## Milestone definitions
 
@@ -700,7 +700,18 @@ create a prerelease. Website download data remains explicitly unavailable.
 See the [Milestone 20 packaging report](MILESTONE_20_PACKAGING.md) and
 [release procedure](RELEASING.md).
 
-### 21 — Beta Package Publication and Download Activation
+### 21 — Product Readiness, Beta Publication, and Download Activation
+
+Milestone 21A closes the remaining user-facing beta-readiness gaps before any
+publication: remove internal milestone scaffolding from the product UI, require
+a verified Codex account state before exposing Codex work surfaces, introduce
+an original QuireForge home/workspace hierarchy informed by the approved visual
+reference, and display read-only remaining Codex usage only when the documented
+app-server rate-limit endpoint provides it. QuireForge must not scrape a
+website, estimate quota, read Codex credential files, expose raw account
+metadata, or redeem reset credits.
+
+Milestone 21B retains the external release boundary:
 
 Run final package and supported-platform QA; confirm the approved distribution
 location, release artifact, checksums, provenance, download data, and rollback;

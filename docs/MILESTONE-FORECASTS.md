@@ -1631,3 +1631,41 @@ both package formats → exercise disposable lifecycle and launch checks →
 validate guarded workflow/download metadata → complete repository, security,
 package, secret, and diff gates → record local completion. GitHub publication
 and production download activation remain Milestone 21 approval gates.
+
+## Milestone 21A — Product readiness and usage visibility
+
+| Field                    | Current record                                                                                                                                                                                                 |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date            | 2026-07-23                                                                                                                                                                                                     |
+| Selected model           | GPT-5.6 Sol, XHigh reasoning; retained for the local product-readiness pass                                                                                                                                     |
+| Preliminary forecast     | 4–7 active hours; 30–75 minutes of local commands; about 5–9 total elapsed hours; medium confidence                                                                                                            |
+| Calibration basis        | Clean Milestone 20 lineage at `735abcb`; Codex CLI 0.145.0; documented `account/rateLimits/read`; 12 logical CPUs, about 16 GiB available RAM, 689 GiB free storage, high existing swap occupancy, and warm caches |
+| Start approval           | The user's attached UI reference and explicit requirements authorize the scoped local product-readiness implementation; external publication, deployment, push, merge, authentication, and website activation remain unauthorized |
+| Expected usage intensity | High model usage; moderate local CPU/memory use; no GPU workload, external mutation, live login, billable model call, reset-credit redemption, or personal Codex-state mutation                                |
+| Completion boundary      | Authenticated startup gate, original QuireForge home/workspace shell, removal of user-facing milestone scaffolding, normalized read-only usage display, deterministic tests, docs, visual review, and local commits |
+| Completion status        | In progress locally                                                                                                                                                                                            |
+
+The existing Codex-owned authentication service, strict app-server process
+boundary, project/session fixtures, and established visual test harness reduce
+implementation uncertainty. The main risks are separating authenticated and
+signed-out render states without destabilizing the large existing application
+component, normalizing multi-bucket rate limits without leaking account
+metadata, and changing the information hierarchy while preserving access to
+every implemented workspace.
+
+| Component                                                | Duration range | Confidence | Primary uncertainty                                  | Resource class      |
+| -------------------------------------------------------- | -------------: | ---------- | ---------------------------------------------------- | ------------------- |
+| Product/auth/usage architecture and protocol review      |      35–60 min | High       | Multi-bucket normalization and signed-out boundaries | Model/storage-bound |
+| Native usage service and strict typed IPC                |      45–90 min | Medium     | Sparse/optional upstream rate-limit fields            | Model/CPU-bound     |
+| Authenticated startup gate and recovery states           |      45–75 min | Medium     | Existing cached and non-OpenAI provider states        | Model-bound         |
+| Home/workspace shell and responsive visual redesign      |    1.25–2.25 h | Medium     | Large-screen density and small-screen preservation    | Model/browser-bound |
+| Deterministic, accessibility, and visual tests           |      45–90 min | Medium     | Async state timing and screenshot stability           | CPU/browser-bound   |
+| Documentation, full acceptance, and commit preparation   |      45–90 min | Medium     | Cross-document and package-contract consistency       | CPU/model-bound     |
+
+Projected critical path: lock the read-only usage contract → implement native
+normalization and typed IPC → gate Codex work surfaces on verified account
+state → replace internal milestone presentation with the QuireForge home shell
+→ update deterministic fixtures and browser coverage → run full repository,
+native, accessibility, build, and visual gates → record local completion.
+Package publication and website activation remain a separately approved
+Milestone 21B operation.
