@@ -1583,3 +1583,47 @@ application, and terminal chunks and retaining an opaque loader through the
 first committed paints closed that gap. The final 193,549-byte entry is 76.0%
 below the 805,736-byte baseline; the full pre-terminal path is 42.9% below it.
 All accepted commands reported zero swaps.
+
+## Milestone 20 — Packaging and release automation
+
+| Field                    | Current record                                                                                                                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date            | 2026-07-23                                                                                                                                                                                                                                            |
+| Selected model           | GPT-5.6 Sol, XHigh reasoning; retained for the approved autonomous local pass                                                                                                                                                                          |
+| Preliminary forecast     | 4–7 active hours; 45–120 minutes of local commands; about 5.5–10 total elapsed hours; medium confidence                                                                                                                                               |
+| Calibrated forecast      | 4.5–7.5 active hours; 60–150 minutes of local commands; about 6–11 total elapsed hours; medium confidence                                                                                                                                             |
+| Calibration basis        | Clean Milestone 19 lineage at `9e2f08d`; Ubuntu 26.04 host, Docker 29.1.3, 12 logical CPUs, about 45 GiB available RAM, 690 GiB free storage, warm host Rust/Node caches, and an initially cold Ubuntu 22.04 packaging image                               |
+| Start approval           | Full local Milestone 20 explicitly approved by the user's “Proceed”; publication, website activation, push, merge, deployment, host package installation, and external release mutation remain unauthorized                                             |
+| Expected usage intensity | High model usage; high local CPU/storage/network use for the cold baseline image and dependency graph; no GPU workload, external authentication, billable model call, or personal Codex-state mutation                                                   |
+| Completion boundary      | Reproducible local AppImage/Debian artifacts, checksums and manifest, guarded immutable-SHA workflow source, disposable package lifecycle tests, inactive website download data, documentation, audits, and focused local commits; no public release |
+
+The calibrated range is wider than the preliminary command-time range because
+the development host is newer than the selected Ubuntu 22.04 packaging
+baseline. Acceptance therefore includes a cold, pinned baseline-container build
+instead of treating a faster Ubuntu 26.04 artifact as portable evidence.
+Official Tauri guidance identifies Ubuntu 22.04 as a suitable oldest baseline
+with WebKitGTK 4.1 and warns that a newer builder can raise the minimum glibc
+requirement.
+
+The existing verified production build, canonical identity ADRs, warm host
+caches, and deterministic test boundary reduce application uncertainty. The
+main risks are Tauri's generated Debian desktop filename, package dependency
+metadata, AppImage behavior without FUSE, safe install/upgrade/uninstall
+simulation, immutable workflow dependencies, and keeping not-yet-approved
+download metadata visibly inactive.
+
+| Component                                               | Duration range | Confidence | Primary uncertainty                                      | Resource class        |
+| ------------------------------------------------------- | -------------: | ---------- | -------------------------------------------------------- | --------------------- |
+| Package/release architecture and baseline audit         |      30–50 min | High       | Existing identity and release constraints                | Model/storage-bound   |
+| Reproducible baseline build and artifact normalization  |    1.25–2.25 h | Medium     | Cold toolchain, Tauri bundler, AppImage dependencies     | CPU/network/storage   |
+| Package manifest, checksums, and website data contract  |      45–75 min | Medium     | Strict inactive-to-active promotion boundary             | Model-bound           |
+| Disposable install/upgrade/uninstall and launch tests   |      1–1.75 h  | Medium     | Debian maintainer behavior and headless WebKit smoke     | CPU/storage-bound     |
+| Guarded release workflow and validation policy          |      45–90 min | Medium     | Permission minimization and artifact handoff             | Model-bound           |
+| Full acceptance, documentation, and commit preparation  |      45–90 min | Medium     | Cold rebuild variance and cross-document consistency     | CPU/model-bound       |
+
+Projected critical path: select and pin the Ubuntu 22.04 baseline → define one
+release-manifest contract → configure canonical bundles → build and normalize
+both package formats → exercise disposable lifecycle and launch checks →
+validate guarded workflow/download metadata → complete repository, security,
+package, secret, and diff gates → record local completion. GitHub publication
+and production download activation remain Milestone 21 approval gates.
