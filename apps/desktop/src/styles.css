@@ -69,8 +69,7 @@ a {
   font: inherit;
 }
 
-button:focus-visible,
-a:focus-visible {
+:where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--accent-bright);
   outline-offset: 3px;
 }
@@ -97,6 +96,25 @@ button:disabled {
       transparent 30%
     ),
     var(--bg);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border: 2px solid var(--accent-bright);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-weight: 750;
+  text-decoration: none;
+  transform: translateY(calc(-100% - 20px));
+}
+
+.skip-link:focus {
+  transform: translateY(0);
 }
 
 .sidebar {
@@ -202,6 +220,7 @@ button:disabled {
   font-size: 13px;
   font-weight: 600;
   text-align: left;
+  text-decoration: none;
 }
 
 .nav-item--active {
@@ -227,6 +246,56 @@ button:disabled {
   margin-left: auto;
   font-size: 10px;
   font-weight: 700;
+}
+
+.workspace-loading {
+  min-height: 240px;
+  padding: 36px 40px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.workspace-loading h2,
+.workspace-loading p {
+  max-width: 680px;
+}
+
+.crash-recovery {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    radial-gradient(circle at 50% 20%, var(--accent-soft), transparent 35%),
+    var(--bg);
+}
+
+.app-loading-overlay {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+}
+
+.crash-recovery__card {
+  width: min(100%, 620px);
+  padding: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-raised);
+  box-shadow: 0 24px 80px var(--shadow);
+}
+
+.crash-recovery__card h1 {
+  margin: 8px 0 16px;
+  font-size: clamp(28px, 5vw, 42px);
+}
+
+.crash-recovery__card > p:not(.eyebrow) {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.65;
 }
 
 .project-panel {
@@ -4960,5 +5029,27 @@ button:disabled {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: color-mix(in srgb, var(--text) 42%, transparent);
+    --border-strong: color-mix(in srgb, var(--text) 70%, transparent);
+    --text-muted: var(--text);
+    --text-subtle: var(--text);
+  }
+}
+
+@media (forced-colors: active) {
+  .nav-item--active,
+  .state-badge,
+  .auth-state,
+  .status-dot {
+    forced-color-adjust: none;
+  }
+
+  .nav-item--active {
+    outline: 2px solid Highlight;
   }
 }

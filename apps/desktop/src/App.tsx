@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
 import { ConversationWorkspace } from "./ConversationWorkspace";
@@ -8,7 +15,6 @@ import { IntegrationCenter } from "./IntegrationCenter";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ScheduledWorkspace } from "./ScheduledWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
-import { TerminalWorkspace } from "./TerminalWorkspace";
 import {
   WorktreeWorkspace,
   type WorktreeExecutionView,
@@ -167,6 +173,12 @@ import {
 } from "./lib/worktree";
 
 import "./styles.css";
+
+const TerminalWorkspace = lazy(() =>
+  import("./TerminalWorkspace").then(({ TerminalWorkspace: workspace }) => ({
+    default: workspace,
+  })),
+);
 
 type BridgeState = "connecting" | "native" | "preview";
 type RuntimeState =
@@ -392,6 +404,14 @@ function initialTheme(): Theme {
   return window.matchMedia?.("(prefers-color-scheme: light)").matches
     ? "light"
     : "dark";
+}
+
+function scrollToWorkspace(target: string): void {
+  document.getElementById(target)?.scrollIntoView({
+    behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+  });
 }
 
 function Glyph({ name }: { name: string }) {
@@ -2116,6 +2136,9 @@ export default function App({
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#workspace-top">
+        Skip to workspace
+      </a>
       <aside className="sidebar">
         <div className="brand-lockup">
           <img src={brandMark} alt="" className="brand-mark" />
@@ -2129,11 +2152,7 @@ export default function App({
           className="primary-action"
           type="button"
           disabled={conversationState !== "native"}
-          onClick={() =>
-            document.getElementById("conversation")?.scrollIntoView({
-              behavior: "smooth",
-            })
-          }
+          onClick={() => scrollToWorkspace("conversation")}
         >
           <Glyph name="plus" />
           New thread
@@ -2142,16 +2161,9 @@ export default function App({
         <nav className="primary-nav" aria-label="Primary navigation">
           <p className="nav-label">Workbench</p>
           {navigation.map((item, index) => (
-            <button
+            <a
               className={`nav-item ${index === 0 ? "nav-item--active" : ""}`}
-              type="button"
-              aria-current={index === 0 ? "page" : undefined}
-              disabled={!item.ready}
-              onClick={() =>
-                document.getElementById(item.target)?.scrollIntoView({
-                  behavior: "smooth",
-                })
-              }
+              href={`#${item.target}`}
               key={item.label}
             >
               <Glyph name={item.icon} />
@@ -2159,7 +2171,7 @@ export default function App({
               {index !== 0 && (
                 <span className="nav-milestone">M{item.milestone}</span>
               )}
-            </button>
+            </a>
           ))}
         </nav>
 
@@ -2189,7 +2201,7 @@ export default function App({
         </div>
       </aside>
 
-      <main className="workspace" id="workspace-top">
+      <main className="workspace" id="workspace-top" tabIndex={-1}>
         <header className="topbar">
           <div className="breadcrumb" aria-label="Current location">
             <span>QuireForge</span>
@@ -2358,29 +2370,42 @@ export default function App({
             onSelectProject={selectProject}
             onOpenExecution={(projectId) => {
               selectProject(projectId);
-              window.setTimeout(
-                () =>
-                  document.getElementById("conversation")?.scrollIntoView({
-                    behavior: "smooth",
-                  }),
-                0,
-              );
+              window.setTimeout(() => scrollToWorkspace("conversation"), 0);
             }}
           />
 
-          <TerminalWorkspace
-            availability={terminalState}
-            registry={terminals}
-            projects={projects}
-            busy={terminalBusy}
-            actionError={terminalActionError}
-            onStart={beginTerminal}
-            onPoll={pollActiveTerminal}
-            onWrite={writeActiveTerminal}
-            onResize={resizeActiveTerminal}
-            onClose={endTerminal}
-            onSnapshot={trackTerminal}
-          />
+          <Suspense
+            fallback={
+              <section
+                className="workspace-loading"
+                id="terminal"
+                aria-labelledby="terminal-loading-title"
+                aria-busy="true"
+              >
+                <p className="eyebrow">Integrated terminal</p>
+                <h2 id="terminal-loading-title">
+                  Preparing the terminal view.
+                </h2>
+                <p role="status" aria-live="polite">
+                  Loading the local terminal renderer.
+                </p>
+              </section>
+            }
+          >
+            <TerminalWorkspace
+              availability={terminalState}
+              registry={terminals}
+              projects={projects}
+              busy={terminalBusy}
+              actionError={terminalActionError}
+              onStart={beginTerminal}
+              onPoll={pollActiveTerminal}
+              onWrite={writeActiveTerminal}
+              onResize={resizeActiveTerminal}
+              onClose={endTerminal}
+              onSnapshot={trackTerminal}
+            />
+          </Suspense>
 
           <GitWorkspace
             availability={gitState}

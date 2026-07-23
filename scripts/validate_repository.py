@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 REQUIRED_PATHS = (
     ".editorconfig",
+    ".cargo/audit.toml",
     ".gitignore",
     "AGENTS.md",
     "CHANGELOG.md",
@@ -123,6 +124,9 @@ REQUIRED_PATHS = (
     "apps/desktop/fixtures/codex-schema/0.145.0/v2/PluginReadParams.json",
     "apps/desktop/fixtures/codex-schema/0.145.0/v2/PluginReadResponse.json",
     "apps/desktop/package.json",
+    "apps/desktop/scripts/validate-dist.mjs",
+    "apps/desktop/src/AppCrashBoundary.tsx",
+    "apps/desktop/src/AppLoader.tsx",
     "apps/desktop/src/App.tsx",
     "apps/desktop/src/ModelSelectionPanel.tsx",
     "apps/desktop/src/ProjectWorkspace.tsx",
@@ -174,6 +178,7 @@ REQUIRED_PATHS = (
     "docs/DECISIONS/0026-policy-bounded-next-turn-selection.md",
     "docs/LOCAL-BUILD-PERFORMANCE.md",
     "docs/MILESTONE-FORECASTS.md",
+    "docs/MILESTONE_19_HARDENING.md",
     "docs/MILESTONE_16A_WEBSITE_RECONCILIATION.md",
     "docs/ROADMAP.md",
     "docs/TESTING.md",
@@ -321,6 +326,16 @@ SECRET_PATTERNS = (
     re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b"),
 )
+FORBIDDEN_FRONTEND_PATTERNS = (
+    re.compile(r"\bdangerouslySetInnerHTML\b"),
+    re.compile(r"\b(?:innerHTML|outerHTML)\s*="),
+    re.compile(r"\bdocument\.write\s*\("),
+    re.compile(r"\beval\s*\("),
+    re.compile(r"\bnew\s+Function\s*\("),
+    re.compile(r"\bfetch\s*\("),
+    re.compile(r"\bXMLHttpRequest\b"),
+    re.compile(r"\bWebSocket\s*\("),
+)
 
 
 def repository_files() -> list[Path]:
@@ -374,6 +389,30 @@ def validate() -> list[str]:
         for pattern in SECRET_PATTERNS:
             if pattern.search(text):
                 errors.append(f"high-confidence secret pattern: {relative}")
+        if (
+            relative.startswith("apps/desktop/src/")
+            and path.suffix in {".ts", ".tsx"}
+            and ".test." not in path.name
+            and "/test/" not in relative
+        ):
+            for pattern in FORBIDDEN_FRONTEND_PATTERNS:
+                if pattern.search(text):
+                    errors.append(
+                        f"forbidden direct frontend capability in {relative}: "
+                        f"{pattern.pattern}"
+                    )
+        if relative.startswith(".github/workflows/") and path.suffix in {
+            ".yaml",
+            ".yml",
+        }:
+            for action in re.findall(r"(?m)^\s*uses:\s*([^\s#]+)", text):
+                if action.startswith("./"):
+                    continue
+                reference = action.rsplit("@", 1)[-1] if "@" in action else ""
+                if not re.fullmatch(r"[0-9a-f]{40}", reference):
+                    errors.append(
+                        f"GitHub Action must use a full commit SHA: {relative}: {action}"
+                    )
         for number, line in enumerate(text.splitlines(), start=1):
             if line.endswith((" ", "\t")) and path.suffix != ".md":
                 errors.append(f"trailing whitespace: {relative}:{number}")
@@ -411,6 +450,49 @@ def validate() -> list[str]:
             if value not in text:
                 errors.append(f"missing identity value in {relative}: {value}")
 
+    package_path = ROOT / "package.json"
+    if package_path.is_file():
+        package = json.loads(package_path.read_text(encoding="utf-8"))
+        scripts = package.get("scripts", {})
+        if scripts.get("security:audit:node") != "pnpm audit --audit-level high":
+            errors.append("root package must retain the high-severity Node audit gate")
+        if scripts.get("security:audit:rust") != "cargo audit --deny warnings":
+            errors.append("root package must retain the warning-denying RustSec audit gate")
+
+    workspace_path = ROOT / "pnpm-workspace.yaml"
+    if workspace_path.is_file():
+        workspace_text = workspace_path.read_text(encoding="utf-8")
+        if not re.search(r"(?m)^overrides:\n  fast-uri: 3\.1\.4$", workspace_text):
+            errors.append("workspace must retain the reviewed fast-uri 3.1.4 override")
+
+    audit_config_path = ROOT / ".cargo/audit.toml"
+    if audit_config_path.is_file():
+        audit_config_text = audit_config_path.read_text(encoding="utf-8")
+        expected_advisory_exceptions = {
+            "RUSTSEC-2024-0370",
+            "RUSTSEC-2024-0411",
+            "RUSTSEC-2024-0412",
+            "RUSTSEC-2024-0413",
+            "RUSTSEC-2024-0414",
+            "RUSTSEC-2024-0415",
+            "RUSTSEC-2024-0416",
+            "RUSTSEC-2024-0417",
+            "RUSTSEC-2024-0418",
+            "RUSTSEC-2024-0419",
+            "RUSTSEC-2024-0420",
+            "RUSTSEC-2024-0429",
+            "RUSTSEC-2025-0075",
+            "RUSTSEC-2025-0080",
+            "RUSTSEC-2025-0081",
+            "RUSTSEC-2025-0098",
+            "RUSTSEC-2025-0100",
+        }
+        recorded_advisory_exceptions = set(
+            re.findall(r'"(RUSTSEC-\d{4}-\d{4})"', audit_config_text)
+        )
+        if recorded_advisory_exceptions != expected_advisory_exceptions:
+            errors.append("RustSec exceptions must match the reviewed Tauri graph")
+
     capability_path = ROOT / "apps/desktop/src-tauri/capabilities/main.json"
     if capability_path.is_file():
         capability = json.loads(capability_path.read_text(encoding="utf-8"))
@@ -424,15 +506,57 @@ def validate() -> list[str]:
     tauri_path = ROOT / "apps/desktop/src-tauri/tauri.conf.json"
     if tauri_path.is_file():
         tauri_config = json.loads(tauri_path.read_text(encoding="utf-8"))
-        security = tauri_config.get("app", {}).get("security", {})
-        if not security.get("csp"):
+        app_config = tauri_config.get("app", {})
+        security = app_config.get("security", {})
+        production_csp = security.get("csp", "")
+        if not production_csp:
             errors.append("desktop production CSP must be explicit")
+        required_csp_directives = (
+            "default-src 'none'",
+            "script-src 'self'",
+            "connect-src ipc: http://ipc.localhost",
+            "img-src 'self' data:",
+            "style-src 'self' 'unsafe-inline'",
+            "object-src 'none'",
+            "base-uri 'none'",
+            "form-action 'none'",
+            "frame-src 'none'",
+            "frame-ancestors 'none'",
+            "worker-src 'none'",
+        )
+        for directive in required_csp_directives:
+            if directive not in production_csp:
+                errors.append(f"desktop production CSP missing directive: {directive}")
+        for forbidden_source in ("asset:", "http://asset.localhost", "unsafe-eval"):
+            if forbidden_source in production_csp:
+                errors.append(
+                    f"desktop production CSP must not include {forbidden_source}"
+                )
+        if app_config.get("withGlobalTauri") is not False:
+            errors.append("desktop must not expose the global Tauri API")
+        if tauri_config.get("build", {}).get("removeUnusedCommands") is not True:
+            errors.append("desktop release builds must prune unused plugin commands")
         if security.get("freezePrototype") is not False:
             errors.append(
                 "desktop Object.prototype freezing must remain disabled for the verified frontend bundle"
             )
+        if security.get("dangerousDisableAssetCspModification") is not False:
+            errors.append("desktop must retain Tauri's asset CSP injection")
+        if security.get("assetProtocol") != {"enable": False, "scope": []}:
+            errors.append("desktop asset protocol must remain explicitly disabled")
+        expected_headers = {
+            "Cross-Origin-Opener-Policy": "same-origin",
+            "Cross-Origin-Resource-Policy": "same-origin",
+            "Permissions-Policy": (
+                "camera=(), display-capture=(), geolocation=(), "
+                "microphone=(), payment=(), usb=()"
+            ),
+            "X-Content-Type-Options": "nosniff",
+        }
+        if security.get("headers") != expected_headers:
+            errors.append("desktop security response headers must match the reviewed set")
         if tauri_config.get("bundle", {}).get("active") is not False:
-            errors.append("desktop packaging must remain disabled before Milestone 19")
+            errors.append("desktop packaging must remain disabled before release work")
 
     schema_root = ROOT / "apps/desktop/fixtures/codex-schema/0.144.6"
     manifest_path = schema_root / "manifest.json"

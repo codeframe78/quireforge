@@ -800,13 +800,26 @@ test("native terminal fixture mounts the app-owned xterm tab", async ({
     page.getByRole("heading", { name: "A real shell, rooted where you work." }),
   ).toBeVisible();
   await expect(
-    page.getByRole("tab", { name: /Terminal 1 Running/u }),
-  ).toHaveAttribute("aria-selected", "true");
+    page.getByRole("button", { name: /Terminal 1 Running/u }),
+  ).toHaveAttribute("aria-pressed", "true");
   await expect(page.locator(".terminal-pane__viewport .xterm")).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Close Terminal 1" }),
-  ).toBeVisible();
+  const closeButton = page.getByRole("button", { name: "Close Terminal 1" });
+  await expect(closeButton).toBeVisible();
   await expect(page.getByText(/Linux account privileges/u)).toBeVisible();
+
+  await closeButton.click();
+  const closeReview = page.getByRole("alertdialog", {
+    name: "Close Terminal 1?",
+  });
+  await expect(closeReview).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "End processes and close" }),
+  ).toBeFocused();
+  const accessibility = await new AxeBuilder({ page }).analyze();
+  expect(accessibility.violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(closeReview).toHaveCount(0);
+  await expect(closeButton).toBeFocused();
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
@@ -1094,6 +1107,104 @@ test("desktop preview has no automatically detectable accessibility violations",
   const results = await new AxeBuilder({ page }).analyze();
 
   expect(results.violations).toEqual([]);
+});
+
+test("keyboard users can bypass navigation and use semantic workspace links", async ({
+  page,
+  isMobile,
+}) => {
+  await page.goto("/");
+
+  const skipLink = page.getByRole("link", { name: "Skip to workspace" });
+  await expect(skipLink).toBeAttached();
+  await page.keyboard.press("Tab");
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
+
+  if (isMobile) return;
+
+  const terminalLink = page.getByRole("link", { name: /Terminal\s*M12/u });
+  await expect(terminalLink).toHaveAttribute("href", "#terminal");
+  await terminalLink.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#terminal$/u);
+  await expect(
+    page.getByRole("heading", {
+      name: "A real shell, rooted where you work.",
+    }),
+  ).toBeVisible();
+});
+
+test("reduced-motion preference disables animation and scripted smooth scrolling", async ({
+  page,
+  isMobile,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.addInitScript(() => {
+    const state = window as typeof window & {
+      __quireforgeScrollBehaviors: ScrollBehavior[];
+    };
+    state.__quireforgeScrollBehaviors = [];
+    Element.prototype.scrollIntoView = function (
+      options?: boolean | ScrollIntoViewOptions,
+    ) {
+      if (typeof options === "object" && options.behavior) {
+        state.__quireforgeScrollBehaviors.push(options.behavior);
+      }
+    };
+  });
+  await installNativeFixture(page, nativeResponses);
+  await page.goto("/");
+
+  await page.evaluate(() => {
+    const probe = document.createElement("span");
+    probe.className = "conversation-pulse";
+    probe.dataset.testid = "motion-probe";
+    document.body.append(probe);
+  });
+  const animationDuration = await page
+    .locator('[data-testid="motion-probe"]')
+    .evaluate((element) => getComputedStyle(element).animationDuration);
+  const animationDurationMs = animationDuration.endsWith("ms")
+    ? Number.parseFloat(animationDuration)
+    : Number.parseFloat(animationDuration) * 1_000;
+  expect(animationDurationMs).toBeLessThanOrEqual(0.01);
+
+  if (isMobile) return;
+
+  const newThread = page.getByRole("button", { name: "New thread" });
+  await expect(newThread).toBeEnabled();
+  await newThread.click();
+  const behaviors = await page.evaluate(
+    () =>
+      (
+        window as typeof window & {
+          __quireforgeScrollBehaviors: ScrollBehavior[];
+        }
+      ).__quireforgeScrollBehaviors,
+  );
+  expect(behaviors).toEqual(["auto"]);
+});
+
+test("forced-colors mode retains visible controls without horizontal overflow", async ({
+  page,
+}) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.goto("/");
+
+  const toggle = page.getByRole("button", { name: /use (dark|light) theme/iu });
+  await expect(toggle).toBeVisible();
+  await toggle.focus();
+  const outlineStyle = await toggle.evaluate(
+    (element) => getComputedStyle(element).outlineStyle,
+  );
+  expect(outlineStyle).not.toBe("none");
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
 });
 
 test("theme control changes and persists the selected theme", async ({

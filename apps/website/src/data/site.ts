@@ -307,7 +307,7 @@ export const sitePages: SitePage[] = [
       {
         heading: "Before public availability",
         items: [
-          "Complete security, accessibility, performance, and compatibility review",
+          "Revalidate security, accessibility, performance, and compatibility against release packages",
           "Produce and verify supported installation packages",
           "Publish release notes, checksums, installation guidance, and known limitations",
           "Obtain separate approval for beta publication and downloads",

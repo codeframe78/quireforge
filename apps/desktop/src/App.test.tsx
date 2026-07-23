@@ -911,7 +911,7 @@ describe("QuireForge desktop shell", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /IntegrationsM14/u }),
+      screen.getByRole("link", { name: /IntegrationsM14/u }),
     ).toBeEnabled();
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "plugin" },

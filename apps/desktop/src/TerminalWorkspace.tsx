@@ -263,7 +263,7 @@ function TerminalPane({
     <div
       className="terminal-pane"
       hidden={!visible}
-      role="tabpanel"
+      role="region"
       aria-label={`${snapshot.title ?? "Terminal"} output`}
     >
       <div className="terminal-pane__viewport" ref={hostRef} />
@@ -308,7 +308,56 @@ export function TerminalWorkspace({
     ? requestedTerminalId
     : (registry.terminals[0]?.terminalId ?? null);
   const [confirmCloseId, setConfirmCloseId] = useState<string | null>(null);
+  const closeReviewRef = useRef<HTMLDivElement>(null);
+  const busyRef = useRef(busy);
   const nativeReady = availability === "native";
+
+  useEffect(() => {
+    busyRef.current = busy;
+  }, [busy]);
+
+  useEffect(() => {
+    if (!confirmCloseId) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape" && !busyRef.current) {
+        event.preventDefault();
+        setConfirmCloseId(null);
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(
+        closeReviewRef.current?.querySelectorAll<HTMLButtonElement>(
+          "button:not(:disabled)",
+        ) ?? [],
+      );
+      if (controls.length === 0) {
+        event.preventDefault();
+        closeReviewRef.current?.focus();
+        return;
+      }
+      const first = controls[0]!;
+      const last = controls.at(-1)!;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    const frame = window.requestAnimationFrame(() => {
+      closeReviewRef.current
+        ?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+        ?.focus();
+    });
+    return () => {
+      window.cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previous?.isConnected) previous.focus();
+    };
+  }, [confirmCloseId]);
 
   async function start() {
     if (!projectId) return;
@@ -419,15 +468,14 @@ export function TerminalWorkspace({
         </div>
       ) : (
         <div className="terminal-surface">
-          <div className="terminal-tabs" role="tablist" aria-label="Terminals">
+          <div className="terminal-tabs" role="list" aria-label="Terminals">
             {registry.terminals.map((terminal) => {
               const terminalId = terminal.terminalId!;
               return (
-                <div className="terminal-tab" key={terminalId}>
+                <div className="terminal-tab" role="listitem" key={terminalId}>
                   <button
                     type="button"
-                    role="tab"
-                    aria-selected={terminalId === activeTerminalId}
+                    aria-pressed={terminalId === activeTerminalId}
                     className={
                       terminalId === activeTerminalId
                         ? "terminal-tab__select terminal-tab__select--active"
@@ -459,7 +507,8 @@ export function TerminalWorkspace({
                 return (
                   <div
                     className="terminal-recovered"
-                    role="tabpanel"
+                    role="region"
+                    aria-label={`${terminal.title ?? "Terminal"} recovery status`}
                     hidden={terminalId !== activeTerminalId}
                     key={terminalId}
                   >
@@ -490,19 +539,23 @@ export function TerminalWorkspace({
 
       {confirmCloseId && (
         <div
+          ref={closeReviewRef}
           className="terminal-close-review"
           role="alertdialog"
           aria-modal="true"
+          aria-labelledby="terminal-close-review-title"
+          aria-describedby="terminal-close-review-description"
+          tabIndex={-1}
         >
           <div>
-            <strong>
+            <strong id="terminal-close-review-title">
               Close{" "}
               {registry.terminals.find(
                 (terminal) => terminal.terminalId === confirmCloseId,
               )?.title ?? "terminal"}
               ?
             </strong>
-            <p>
+            <p id="terminal-close-review-description">
               This ends the shell and its owned foreground and background jobs.
               It does not delete project files.
             </p>

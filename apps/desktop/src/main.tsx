@@ -1,7 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import App from "./App";
+import { AppCrashBoundary } from "./AppCrashBoundary";
+import { AppLoader } from "./AppLoader";
 
 import "./styles.css";
 
@@ -13,6 +14,8 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <AppCrashBoundary>
+      <AppLoader />
+    </AppCrashBoundary>
   </StrictMode>,
 );

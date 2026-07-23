@@ -86,8 +86,8 @@ for (const htmlFile of htmlFiles) {
   const name = relative(distRoot, htmlFile);
   const html = await readFile(htmlFile, "utf8");
 
-  if (!html.includes('<main id="main-content">')) {
-    errors.push(`missing main landmark: ${name}`);
+  if (!html.includes('<main id="main-content" tabindex="-1">')) {
+    errors.push(`missing focusable main landmark: ${name}`);
   }
   if (!html.includes("QuireForge is an unofficial community project")) {
     errors.push(`missing unofficial-project disclaimer: ${name}`);

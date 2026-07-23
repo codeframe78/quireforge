@@ -47,6 +47,37 @@ test("all public routes have no automatically detectable accessibility violation
   }
 });
 
+test("keyboard and user media preferences retain an operable shell", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  await page.keyboard.press("Tab");
+  const skipLink = page.getByRole("link", { name: "Skip to main content" });
+  await expect(skipLink).toBeFocused();
+  await expect(skipLink).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
+
+  const transitionDuration = await page
+    .getByRole("link", { name: "Explore the roadmap" })
+    .evaluate((element) => getComputedStyle(element).transitionDuration);
+  const transitionDurationMs = transitionDuration.endsWith("ms")
+    ? Number.parseFloat(transitionDuration)
+    : Number.parseFloat(transitionDuration) * 1_000;
+  expect(transitionDurationMs).toBeLessThanOrEqual(0.01);
+
+  await page.emulateMedia({ forcedColors: "active" });
+  await page.reload();
+  const toggle = page.getByRole("button", { name: /use (dark|light) theme/i });
+  await toggle.focus();
+  const borderWidth = await toggle.evaluate(
+    (element) => getComputedStyle(element).borderTopWidth,
+  );
+  expect(Number.parseFloat(borderWidth)).toBeGreaterThanOrEqual(2);
+});
+
 test("theme control changes and persists the selected theme", async ({
   page,
 }) => {

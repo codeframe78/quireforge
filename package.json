@@ -25,9 +25,12 @@
     "rust:check": "cargo check --locked --workspace",
     "rust:clippy": "cargo clippy --locked --workspace --all-targets -- -D warnings",
     "rust:test": "cargo test --locked --workspace",
+    "security:audit": "pnpm security:audit:node && pnpm security:audit:rust",
+    "security:audit:node": "pnpm audit --audit-level high",
+    "security:audit:rust": "cargo audit --deny warnings",
     "test": "pnpm -r --if-present test",
     "test:e2e": "pnpm -r --if-present test:e2e",
     "validate": "python3 scripts/validate_repository.py && pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm validate:dist && pnpm rust:check && pnpm rust:clippy && pnpm rust:test",
-    "validate:dist": "pnpm --filter @quireforge/website validate:dist"
+    "validate:dist": "pnpm --filter @quireforge/website validate:dist && pnpm --filter @quireforge/desktop validate:dist"
   }
 }
