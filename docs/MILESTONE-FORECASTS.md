@@ -1542,3 +1542,44 @@ tests → full repository/browser/release/native gates → security and diff rev
 → approved publication and successful `main` CI. Independent documentation and
 fixture review may overlap warm targeted builds; simultaneous release, browser,
 and native suites will be avoided to preserve responsiveness.
+
+## Milestone 19 — Security, accessibility, and performance hardening
+
+| Field                    | Current record                                                                                                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date            | 2026-07-23                                                                                                                                                                              |
+| Selected model           | GPT-5.6 Sol, XHigh reasoning; retained for the approved autonomous local pass                                                                                                            |
+| Preliminary forecast     | 4–7 active hours; 25–60 minutes of local commands; about 5–9 total elapsed hours; medium confidence                                                                                     |
+| Calibrated forecast      | 4.5–7.5 active hours; 30–75 minutes of local commands; about 5.5–9.5 total elapsed hours; medium confidence                                                                              |
+| Calibration basis        | Clean Milestone 18 lineage at `902e0e2`; Node 22.22.1, pnpm 11.15.0, Rust 1.97.1, Codex CLI 0.145.0, warm caches, about 44 GiB available RAM, 690 GiB free storage, and low system load |
+| Start approval           | Full local Milestone 19 authorized through the continuing autonomous milestone approval                                                                                                |
+| Expected usage intensity | High model usage; moderate local CPU/memory use; no GPU workload, external mutation, live connector authorization, or billable model call                                               |
+| Completion boundary      | Local source, browser, native, supply-chain, release-build, documentation, and secret/diff gates; no push, merge, package publication, deployment, or integration installation          |
+| Observed active time     | Approximately 0.90 hour                                                                                                                                                                 |
+| Observed command time    | Approximately 12–14 minutes, including dependency scans, aggregate/browser gates, configured builds, policy bisection, and isolated native visual probes                                |
+| Observed user wait       | 0.00 post-start hour                                                                                                                                                                    |
+| Observed total elapsed   | Approximately 1.12 hours from branch start through local closure                                                                                                                        |
+| Completion status       | Complete and verified locally; Milestone 20 remains separately approval-gated                                                                                                           |
+
+The calibrated range is wider than the preliminary lower bound because the
+baseline found a current high-severity development dependency advisory and an
+805.73 KiB initial desktop JavaScript bundle. The acceptance scope therefore
+includes dependency remediation and repeatable audit coverage, explicit Tauri
+policy assertions, initial-bundle code splitting and budgets, crash-safe UI
+recovery, and expanded keyboard, contrast, reduced-motion, responsive, and
+adversarial checks.
+
+The existing strict typed IPC boundary, empty webview capability permission
+set, deterministic native mocks, startup recovery paths, and prior accessibility
+coverage reduce implementation uncertainty. The main risks are preserving the
+native React mount behavior while tightening CSP, ensuring command pruning does
+not remove required Rust-only plugin functionality, and keeping asynchronous
+workspace loading deterministic in browser and production builds.
+
+The final pass preserved the CSP, response headers, and command-pruning
+settings. Native visual inspection caught that the original three-second smoke
+ended before cold WebKit compilation painted React. Separating the startup,
+application, and terminal chunks and retaining an opaque loader through the
+first committed paints closed that gap. The final 193,549-byte entry is 76.0%
+below the 805,736-byte baseline; the full pre-terminal path is 42.9% below it.
+All accepted commands reported zero swaps.

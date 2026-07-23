@@ -94,6 +94,18 @@ allowlist or reasoning ceiling. Effective and pending choices, provenance, and
 rationale remain visibly distinct; every pending choice is refreshed and
 revalidated before the next `turn/start`, and registration failure degrades
 honestly without web automation or Codex configuration edits.
+Milestone 19 hardens the implemented product boundary before packaging. Tauri
+now explicitly disables the global JavaScript API and asset protocol, prunes
+unused plugin commands, narrows CSP and response headers, and retains an empty
+main-window permission set. Node and RustSec dependency audits, immutable
+workflow-action checks, frontend active-content checks, and production asset
+budgets are repeatable gates. Keyboard skip/focus, reduced motion, forced
+colors, terminal confirmation focus ownership, and raw-error-free reload
+recovery are verified across desktop and website profiles. A bounded native
+startup view remains visible while WebKit loads the application shell, and the
+terminal renderer is a third production chunk. The 193,549-byte startup entry
+is about 76% smaller than the former 805,736-byte monolith; the pre-terminal
+application path remains about 43% smaller.
 Milestone 15A adds a native-selected safe file-preview surface. Rust revalidates
 the selected project attachment and file identity, keeps absolute paths native,
 and sends React only bounded normalized UTF-8 text, PNG/JPEG data, or
@@ -151,13 +163,17 @@ install yet. The repository and development activity remain private.
   conversation-image staging and explicit attachment flow, plus the Milestone
   15C reviewed default-application handoff and privacy-safe notification code
   checkpoint, plus the Milestone 17A read-only scheduled-template workspace.
+  Milestone 18's policy-bounded next-turn selector and Milestone 19's security,
+  accessibility, performance, and recovery hardening are complete locally.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Current milestone: Milestone 15 is implemented and verified locally, the
   Webuzo-hosted static website is complete through production Milestone 16,
   and Milestone 17A's read-only scheduled task catalog is implemented and
   verified locally. Milestone 18's policy-bounded next-turn model selector is
-  also implemented and verified locally.
+  also implemented and verified locally. Milestone 19's pre-packaging
+  hardening pass is implemented and verified locally; Milestone 20 packaging
+  and release automation is next and remains separately approval-gated.
   Native Wayland evidence covers project, file, and image pickers, bounded
   preview, a real Nautilus image drop, and fixed-copy notification delivery;
   complete XWayland and true-X11 handoff paths remain separately recorded.
@@ -170,7 +186,10 @@ install yet. The repository and development activity remain private.
   Concurrency is capped at four active worktree tasks; durable
   task recovery, automatic conflict resolution, attached-worktree cleanup,
   force/prune workflows, advanced remote operations, installable packages,
-  and releases do not exist yet.
+  and releases do not exist yet. The Tauri Linux dependency graph retains
+  explicitly reviewed GTK3 maintenance and GLib iterator advisories, and
+  `freezePrototype` remains disabled because enabling it prevents the current
+  production frontend from mounting; both must be revisited before release.
 
 ## Discovery documents
 

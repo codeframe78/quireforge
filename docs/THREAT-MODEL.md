@@ -13,8 +13,10 @@ staging, reviewed desktop-handoff, and privacy-safe notification controls.
 Milestone 18 applies app-owned next-turn selector policy, provenance,
 completion-time staging, fresh-catalog revalidation, and visible degradation
 controls.
-It must be revisited before packaging and release milestones or any expansion
-of the supported integration-management surface.
+Milestone 19 applies the pre-packaging Tauri, active-content, dependency,
+workflow, accessibility, performance-budget, and crash-recovery review. It
+must be revisited during packaging and release milestones or before any
+expansion of the supported integration-management surface.
 
 ## Assets
 
@@ -491,11 +493,25 @@ URLs, huge/decompression-bomb files, and webview-to-native command abuse.
 Controls:
 
 - Strict Tauri capabilities and content security policy.
+- Keep the only capability Linux/main-window scoped with an empty permission
+  set. Explicitly disable the global Tauri JavaScript API and asset protocol,
+  preserve Tauri's compile-time CSP injection, and remove unused plugin
+  commands from production builds.
+- Set production `default-src` to `none`; admit only local scripts/fonts/styles,
+  local/data images, and Tauri IPC. Deny objects, forms, frames, workers, media,
+  manifests, base changes, external origins, and production code evaluation.
+- Add same-origin opener/resource response policy, deny unused camera,
+  display-capture, location, microphone, payment, and USB features, and disable
+  MIME sniffing.
 - Keep Tauri `freezePrototype` disabled for the current verified Vite/React
   bundle: enabling it prevents the application from mounting. Compensate with
   the explicit CSP, no privileged remote content, dependency locking, strict
   capability allowlisting, and narrow validated IPC instead of claiming a
   hardening control the shipped frontend cannot execute under.
+- Retain `style-src 'unsafe-inline'` only for the stable xterm renderer; do not
+  widen any other directive to compensate.
+- Reject direct production-frontend HTML injection, string evaluation, fetch,
+  XHR, and WebSocket primitives in the dependency-free repository gate.
 - Treat previews as untrusted data; no arbitrary active HTML execution.
 - File selection remains native; React supplies only a canonical app-owned
   UUIDv7 project ID and never a path, URL, claimed MIME type, or renderer.
@@ -561,6 +577,12 @@ Controls:
 
 - Lock dependency graphs and use dependency review/update automation.
 - Pin actions to reviewed immutable SHAs and use minimum workflow permissions.
+- Run the high-severity Node audit and warning-denying RustSec audit in CI.
+  Keep every RustSec exception as an exact reviewed advisory ID, fail on every
+  new warning, and revisit Tauri/GTK3 maintenance exceptions on upstream
+  updates and before release.
+- Apply Dependabot to npm, Cargo, and GitHub Actions. Validate that every
+  non-local workflow action uses a full commit SHA.
 - Build PRs without deploy permissions or secrets.
 - Make deployment secrets available only after a protected production-
   environment approval and only to an approved default-branch artifact.
@@ -636,6 +658,13 @@ Controls:
   frontend response protection, normalized registry privacy, and complete
   multi-child reaping.
 - Tauri capability/CSP review and preview fuzzing.
+- Production-frontend active-content scans, generated desktop origin and bundle
+  budgets, Node/Rust dependency audits, and exact advisory-exception checks.
+- Keyboard skip/focus, reduced-motion CSS and scripted scrolling, forced-color
+  controls, modal focus trap/restore, responsive overflow, and desktop/website
+  axe-core tests.
+- Render-crash tests must prove that raw error text is absent and the recovery
+  action reconciles state without implying source or Codex-history deletion.
 - Conversation-attachment fixture tests for strict IDs, source ownership,
   content/type/size limits, tamper and expiry refusal, path non-disclosure,
   one-use claim, terminal cleanup, browser honesty, and default-drop disabling.

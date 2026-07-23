@@ -21,6 +21,12 @@ real display-session results remain separately labeled manual evidence.
 Milestone 17A adds schema-v2 scheduled-template contract, installed-plugin
 lookup, strict `plugin/read` normalization, prompt/schedule safety, component,
 responsive browser, overflow, and axe-core coverage.
+Milestone 18 adds next-turn selector policy, lifecycle, migration,
+revalidation, prompt-injection, ownership, and responsive control coverage.
+Milestone 19 adds Node/Rust dependency audits, immutable-action and
+active-content repository checks, Tauri policy assertions, desktop asset
+budgets, crash-boundary privacy tests, and keyboard/reduced-motion/forced-color
+coverage for desktop and website.
 
 ## Repository, website, and desktop checks
 
@@ -52,6 +58,19 @@ compilation against the locked Cargo graph. Codex adapter tests cover CLI
 version validation, deterministic mock snapshots, selected generated schemas,
 response correlation, notification-payload discard, catalog normalization,
 duplicate/default rejection, early exit, timeout, and child reaping.
+
+Dependency audits are deliberately separate because they refresh external
+advisory databases:
+
+```bash
+pnpm security:audit:node
+cargo install cargo-audit --locked --version 0.22.2
+pnpm security:audit:rust
+```
+
+CI installs the pinned RustSec auditor before running both audits. Local
+`cargo-audit` installation is a developer-tool prerequisite, not a project
+runtime dependency.
 Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
 Git repositories and linked worktrees, duplicate roots, confirmation-time
@@ -467,6 +486,36 @@ schema-v3 IPC, provenance, effective versus pending presentation,
 recommendation acceptance/dismissal, automatic opt-in limits, lock controls,
 desktop/mobile overflow, and axe-core accessibility. Routine verification uses
 no live turn or personal account mutation.
+
+## Milestone 19 acceptance checklist
+
+- Run the dependency-free repository validator and confirm the capability stays
+  Linux/main-window scoped and permission-empty, all remote Actions use full
+  SHAs, reviewed CSP/header/asset-protocol settings remain exact, and no direct
+  active-content/evaluation/network primitive enters production frontend code.
+- Run the Node high-severity audit and warning-denying RustSec audit. Confirm
+  the lock graph uses `fast-uri` 3.1.4 and every ignored RustSec ID matches the
+  reviewed Tauri/GTK3 or `tauri-utils` transitive graph.
+- Build the desktop frontend and run `desktop validate:dist`. Confirm the
+  startup entry, application shell, and terminal renderer remain separate, the
+  per-chunk/total JS/CSS budgets pass, and the generated HTML loads no external
+  origin.
+- Trigger the React render boundary with sensitive-shaped fixture text.
+  Confirm the raw value is absent and only the bounded reload/reconciliation
+  copy is presented.
+- Navigate both surfaces by keyboard. Verify skip-link focus transfer, visible
+  focus, semantic desktop navigation, reduced-motion CSS and scripted
+  scrolling, and forced-color control boundaries in both browser profiles.
+- Open the terminal close review. Verify accessible name/description, initial
+  focus, Tab/Shift+Tab containment, Escape dismissal, prior-focus restoration,
+  axe-core, and the no-project-deletion copy.
+- Run all source, website, desktop, browser, native, configured production
+  build, secret, and diff gates. Do not package, deploy, authorize an
+  integration, inspect personal Codex state, or make a live/billable model call.
+- Launch the configured production binary without a Vite server and with
+  isolated QuireForge/Codex data. Capture the first cold frames and the complete
+  workspace; the bounded startup overlay must remain visible until the app
+  paints, with no intermediate black frame or surviving child process.
 
 ## Manual Milestone 12 checklist
 

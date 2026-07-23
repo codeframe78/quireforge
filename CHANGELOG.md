@@ -313,9 +313,26 @@ released a usable application.
   resume revalidation, typed IPC, and responsive effective/pending controls.
   Registration rejection degrades visibly without private endpoints, website
   automation, Codex configuration edits, credentials, or billable test calls.
+- Milestone 19 pre-packaging hardening: warning-denying Node/Rust dependency
+  audits, Cargo Dependabot, exact reviewed RustSec exceptions, immutable-action
+  and frontend active-content validation, explicit Tauri asset/global-API
+  disablement, command pruning, narrow CSP/response headers, production asset
+  budgets, raw-error-free render recovery, keyboard skip targets, reduced
+  motion, forced colors, and terminal confirmation focus ownership.
 
 ### Changed
 
+- Split the desktop startup entry, application shell, and stable xterm terminal
+  renderer into separate production chunks. The 193,549-byte entry is about
+  76% smaller than the former 805,736-byte monolith, while the 459,684-byte
+  pre-terminal path remains about 43% smaller and all three asset classes have
+  enforced ceilings.
+- Kept a bounded native startup overlay visible through the first committed
+  application paints so cold WebKit compilation never presents an unexplained
+  black window.
+- Replaced invalid terminal tablist/close-button nesting with an accessible
+  selector list, and replaced desktop navigation buttons with semantic
+  workspace anchors.
 - Validated the documented app-owned dynamic-tool lifecycle through
   `thread/start` registration and correlated `item/tool/call` requests, giving
   Milestone 18 a supported next-turn control dependency without web automation,

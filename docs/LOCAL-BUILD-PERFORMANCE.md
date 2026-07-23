@@ -917,3 +917,44 @@ approved Remote Desktop session supplied test-only compositor input and was
 closed after the pass; it added no QuireForge dependency or permission. This
 closed the remaining Milestone 15 display-session evidence without a package,
 release, deployment, hosting mutation, or live model call.
+
+## Milestone 19 measurements
+
+The pre-packaging hardening pass reused warm Cargo, pnpm, Vite, Astro, and
+browser caches. It added no clean build, cache reset, linker, driver, CUDA,
+swap, or zram change, and the GPU remained unused.
+
+| Operation                                      | Observed wall time | Approximate peak RSS | Result                                                                                                    |
+| ---------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------- |
+| Complete non-browser `pnpm validate` gate      |      43.91 seconds |       about 1.09 GiB | Passed 152 desktop tests, 5 website tests, and 177 Rust tests; 174 passed and 3 live probes were ignored |
+| Final desktop Playwright regression            |      33.71 seconds |        about 466 MiB | Passed all 32 desktop/mobile checks, including axe, keyboard, motion, contrast, focus, and overflow      |
+| Final website Playwright regression            |      13.12 seconds |        about 336 MiB | Passed all 8 desktop/mobile checks, including axe, keyboard, motion, contrast, and overflow               |
+| Final configured unbundled Tauri release build |      26.37 seconds |       about 1.78 GiB | Passed with the reviewed production CSP, response headers, command pruning, and embedded frontend         |
+| Exact cold isolated native visual probe        |        8.44-second sample |                  n/a | Loading view visible at 1.27 seconds; complete workspace visible at 8.44 seconds                         |
+
+Every resource-timed accepted operation reported zero swaps. The configured
+binary is 18,341,600 bytes. Generated desktop assets are a 193,549-byte startup
+entry, 266,135-byte application shell, 350,014-byte terminal chunk, 809,698
+total JavaScript bytes, and 84,133 total CSS bytes. Compared with the former
+805,736-byte monolith, the entry is 76.0% smaller and the full 459,684-byte
+pre-terminal path is 42.9% smaller.
+
+The initial process-only native smoke was insufficient: its three-second window
+showed only the native background, even though process, D-Bus, and database
+checks passed. Production-policy bisection ruled out CSP, response headers, and
+unused-command pruning. An explicit app-module split plus a loading overlay
+retained through the first committed paints removed the black interval. The
+final probe ran with no Vite listener and isolated QuireForge and Codex data,
+emitted no stdout/stderr, used `0700`/`0600` metadata permissions, applied all
+six migrations, persisted no records, and reaped its dry Codex app-server child
+on exit.
+
+The dependency gates also passed: the Node graph resolves the reviewed
+`fast-uri` 3.1.4 correction, and warning-denying `cargo audit` scanned all 503
+locked dependencies with only the 17 exact reviewed Tauri/GTK3 and
+`tauri-utils` exceptions. No personal Codex state, connector authorization,
+live/billable model call, package, release, publication, deployment, or hosting
+mutation was used by the automated gates or accepted final probe. One earlier
+visual diagnostic inherited the ordinary host Codex home while exercising the
+real application startup; it retained and logged no account identity, was
+replaced by the isolated accepted probe, and made no model call or mutation.

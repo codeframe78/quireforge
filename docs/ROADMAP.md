@@ -666,6 +666,20 @@ Revisit the threat model; audit secret handling, injection, filesystem races,
 integration supply chain, credentials, Tauri permissions/CSP, accessibility,
 performance, reliability, and crash recovery.
 
+Complete locally. The main capability remains Linux/window-scoped and
+permission-empty; the global Tauri API and asset protocol are explicitly
+disabled, unused plugin commands are removed from production builds, CSP and
+response headers are narrowed, and repository validation rejects unpinned
+Actions or direct frontend active-content/network primitives. High-severity
+pnpm and warning-denying RustSec audits now run in CI with exact reviewed
+Tauri/GTK3 exceptions. Keyboard skip/focus, reduced motion, forced colors,
+terminal confirmation focus ownership, and raw-error-free reload recovery are
+covered across desktop and website profiles. Separate startup, application,
+and terminal chunks reduce the startup entry from 805,736 to 193,549 bytes and
+the pre-terminal application path to 459,684 bytes, with an opaque startup
+overlay and enforced generated-asset budgets. See the
+[Milestone 19 hardening review](MILESTONE_19_HARDENING.md).
+
 ### 20 — Packaging and Release Automation
 
 Produce AppImage and Debian packages on an appropriate baseline, checksums,

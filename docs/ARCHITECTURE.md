@@ -1,9 +1,10 @@
 # Architecture
 
-Status: desktop implementation is locally verified through Milestone 17A and
-the static website is complete through production Milestone 16. Packaging,
-release publication, and unsupported integration-management expansion remain
-subject to separately gated work.
+Status: desktop implementation is locally verified through Milestone 19 and
+the static website is complete through production Milestone 16 with Milestone
+19 accessibility hardening applied locally. Packaging, release publication,
+and unsupported integration-management expansion remain subject to separately
+gated work.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -879,6 +880,35 @@ separate approvals and remain independently recoverable. The generated artifact
 is checked for routes, links, assets, canonical metadata, disclaimers, inline
 code, and version-controlled headers before browser tests exercise its
 desktop/mobile structure, themes, overflow, and accessibility baseline.
+
+## Milestone 19 hardening boundary
+
+The pre-packaging hardening pass does not add a privileged product capability.
+It makes the existing boundary repeatable and fail-closed:
+
+- the main Linux webview capability remains permission-empty, the global Tauri
+  object and asset protocol are explicitly disabled, and production builds
+  prune unused plugin commands;
+- the production CSP begins at `default-src 'none'`, admits only local
+  frontend assets, data images, and Tauri IPC, and pairs with restrictive
+  response headers;
+- direct production-frontend active HTML insertion, string evaluation,
+  fetch/XHR, and WebSocket primitives fail repository validation;
+- pnpm and Cargo dependency audits run in CI, GitHub Actions must use immutable
+  SHAs, and the exact unavoidable Tauri/GTK3 RustSec exceptions remain visible;
+- the startup entry, application shell, and heavy xterm workspace are separate
+  production chunks with deterministic per-chunk and total asset budgets; an
+  opaque loading overlay remains mounted until the application commits and
+  paints;
+- keyboard skip targets, reduced motion, forced colors, terminal confirmation
+  focus ownership, and a raw-error-free React recovery boundary are covered in
+  both unit and browser gates.
+
+Tauri's `freezePrototype` remains disabled because enabling it breaks the
+verified Vite/React production mount. Inline style permission remains limited
+to the stable xterm renderer. These exceptions, the inherited GTK3 advisory
+set, and the full acceptance record are documented in the
+[Milestone 19 hardening review](MILESTONE_19_HARDENING.md).
 
 ## Testing seams
 
