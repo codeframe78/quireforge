@@ -2,7 +2,7 @@
 import BrandMark from "../components/BrandMark.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import StatusPill from "../components/StatusPill.astro";
-import { site } from "../data/site";
+import { publishedRelease, site } from "../data/site";
 
 const featureCards = [
   {
@@ -35,7 +35,12 @@ const integrationTypes = [
   <section class="hero">
     <div class="hero-grid shell">
       <div class="hero-copy">
-        <StatusPill label="Early development · no release yet" tone="active" />
+        <StatusPill
+          label={publishedRelease
+            ? `Public beta · ${publishedRelease.version}`
+            : "Early development · no release yet"}
+          tone={publishedRelease ? "complete" : "active"}
+        />
         <p class="eyebrow">Native Linux workspace for Codex</p>
         <h1>Build boldly.<br /><em>Work locally.</em></h1>
         <p class="lede">
@@ -49,7 +54,13 @@ const integrationTypes = [
             >Understand the project <span aria-hidden="true">→</span></a
           >
         </div>
-        <p class="hero-note">Unofficial. Local-first. Privately developed.</p>
+        <p class="hero-note">
+          Unofficial. Local-first. {
+            publishedRelease
+              ? "Available for the declared Ubuntu beta target."
+              : "Privately developed."
+          }
+        </p>
       </div>
 
       <div
@@ -87,7 +98,11 @@ const integrationTypes = [
           </ol>
         </div>
         <p class="concept-caption">
-          Interface concept · product capabilities remain in private development
+          {
+            publishedRelease
+              ? "Native workspace · availability remains capability-dependent"
+              : "Interface concept · product capabilities remain in private development"
+          }
         </p>
       </div>
     </div>
@@ -203,14 +218,28 @@ const integrationTypes = [
           ><span>Webuzo static origin</span>
         </div>
         <div>
-          <StatusPill label="In progress" tone="active" /><strong
-            >Native Linux workspace</strong
-          ><span>Private development</span>
+          <StatusPill
+            label={publishedRelease ? "Beta" : "In progress"}
+            tone={publishedRelease ? "complete" : "active"}
+          /><strong>Native Linux workspace</strong><span
+            >{
+              publishedRelease
+                ? "Declared Ubuntu target"
+                : "Private development"
+            }</span
+          >
         </div>
         <div>
-          <StatusPill label="Planned" tone="planned" /><strong
-            >Packaging, verification, and beta</strong
-          ><span>Future availability</span>
+          <StatusPill
+            label={publishedRelease ? "Published" : "Planned"}
+            tone={publishedRelease ? "complete" : "planned"}
+          /><strong>Packaging, verification, and beta</strong><span
+            >{
+              publishedRelease
+                ? `Version ${publishedRelease.version}`
+                : "Future availability"
+            }</span
+          >
         </div>
       </div>
     </div>

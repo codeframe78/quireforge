@@ -1,4 +1,8 @@
-import { downloadAvailability } from "./downloads";
+import {
+  downloadAvailability,
+  getPublishedRelease,
+  validateDownloadAvailability,
+} from "./downloads";
 
 export const site = {
   name: "QuireForge",
@@ -8,7 +12,24 @@ export const site = {
   origin: "https://quireforge.jamesjennison.net",
   masterOrigin: "https://jamesjennison.net",
   statusOrigin: "https://status.jamesjennison.net",
+  securityReportUrl: null as string | null,
 } as const;
+
+const availabilityErrors = validateDownloadAvailability(
+  downloadAvailability,
+  site.origin,
+);
+if (availabilityErrors.length > 0) {
+  throw new Error(
+    `Invalid download availability: ${availabilityErrors.join("; ")}`,
+  );
+}
+export const publishedRelease = getPublishedRelease(downloadAvailability);
+if (publishedRelease && !site.securityReportUrl) {
+  throw new Error(
+    "A published release requires an approved private security-reporting URL",
+  );
+}
 
 export type NavigationItem = {
   label: string;
@@ -166,56 +187,123 @@ export const sitePages: SitePage[] = [
   {
     slug: "downloads",
     eyebrow: "Downloads",
-    title: "Packages will arrive after the application earns them.",
-    description:
-      "QuireForge has no public or supported download. AppImage and Debian packages remain planned for a later, separately approved release milestone.",
+    title: publishedRelease
+      ? `Download QuireForge ${publishedRelease.version}.`
+      : "Packages will arrive after the application earns them.",
+    description: publishedRelease
+      ? "Choose the approved x86_64 package for your Ubuntu system, then verify its published SHA-256 checksum before running it."
+      : "QuireForge has no public or supported download. AppImage and Debian packages remain planned for a later, separately approved release milestone.",
     status: downloadAvailability.statusLabel,
-    sections: [
-      {
-        heading: "Planned formats",
-        items: [
-          "AppImage for a portable Linux installation",
-          "Debian package for supported Ubuntu systems",
-          "Published checksums and release notes for every approved artifact",
-          "Documented upgrade and uninstall behavior that preserves user projects",
+    sections: publishedRelease
+      ? [
+          {
+            heading: "Approved packages",
+            items: publishedRelease.downloads.map(
+              (download) =>
+                `${download.filename} · ${download.byteSize.toLocaleString("en-US")} bytes · SHA-256 ${download.sha256}`,
+            ),
+          },
+          {
+            heading: "Verify before opening",
+            paragraphs: [
+              "Download SHA256SUMS and your selected package into the same directory. Run sha256sum --check --ignore-missing SHA256SUMS and continue only when the selected filename reports OK.",
+              "QuireForge is an unofficial community project. OpenAI does not make, endorse, support, or distribute these packages.",
+            ],
+          },
+        ]
+      : [
+          {
+            heading: "Planned formats",
+            items: [
+              "AppImage for a portable Linux installation",
+              "Debian package for supported Ubuntu systems",
+              "Published checksums and release notes for every approved artifact",
+              "Documented upgrade and uninstall behavior that preserves user projects",
+            ],
+          },
+          {
+            heading: "Avoid unofficial artifacts",
+            paragraphs: [
+              "No file currently claiming to be a QuireForge installer is an approved project release. When verified packages exist, this website will provide the authoritative download and verification guidance.",
+            ],
+          },
         ],
-      },
-      {
-        heading: "Avoid unofficial artifacts",
-        paragraphs: [
-          "No file currently claiming to be a QuireForge installer is an approved project release. When verified packages exist, this website will provide the authoritative download and verification guidance.",
+    links: publishedRelease
+      ? [
+          ...publishedRelease.downloads.map((download) => ({
+            label:
+              download.format === "appimage"
+                ? "Download AppImage"
+                : "Download Debian package",
+            href: download.url,
+          })),
+          { label: "Download SHA256SUMS", href: publishedRelease.checksumUrl },
+          {
+            label: "Review release manifest",
+            href: publishedRelease.manifestUrl,
+          },
+          { label: "Read installation guidance", href: "/installation/" },
+        ]
+      : [
+          { label: "Read the release policy", href: "/releases/" },
+          { label: "Follow the public roadmap", href: "/roadmap/" },
         ],
-      },
-    ],
-    links: [
-      { label: "Read the release policy", href: "/releases/" },
-      { label: "Follow the public roadmap", href: "/roadmap/" },
-    ],
   },
   {
     slug: "installation",
     eyebrow: "Installation",
-    title: "Installation guidance will follow verified packages.",
-    description:
-      "There is no supported QuireForge installation today. Development builds are not public packages or releases.",
-    status: "Not yet installable",
-    sections: [
-      {
-        heading: "Target environment",
-        items: [
-          "Ubuntu LTS is the initial Linux distribution target.",
-          "Wayland and X11 behavior require separate validation.",
-          "Codex and Git are expected to remain external prerequisites.",
-          "Application data should follow Linux XDG location conventions.",
+    title: publishedRelease
+      ? `Install QuireForge ${publishedRelease.version}.`
+      : "Installation guidance will follow verified packages.",
+    description: publishedRelease
+      ? "The beta targets x86_64 Ubuntu 22.04 or newer on GNOME Wayland or X11, with compatible Codex and Git installations available on the system."
+      : "There is no supported QuireForge installation today. Development builds are not public packages or releases.",
+    status: publishedRelease
+      ? `Beta ${publishedRelease.version} · x86_64 Ubuntu`
+      : "Not yet installable",
+    sections: publishedRelease
+      ? [
+          {
+            heading: "Before installation",
+            items: [
+              "Confirm the package and SHA256SUMS came from this website.",
+              "Verify the selected package and require an OK result before continuing.",
+              "Install compatible Codex and Git separately; QuireForge does not bundle or own their credentials or data.",
+            ],
+          },
+          {
+            heading: "AppImage",
+            items: [
+              "Mark the downloaded AppImage executable with chmod 0755, then launch it directly.",
+              "If FUSE is unavailable, use the AppImage runtime's --appimage-extract-and-run mode.",
+              "The AppImage is not registered with a distribution package manager and must be replaced manually for upgrades.",
+            ],
+          },
+          {
+            heading: "Debian package",
+            items: [
+              "Install the local file with apt so Ubuntu can resolve the declared WebKitGTK and GTK dependencies.",
+              "Remove it with apt remove quireforge. Package removal does not delete attached projects, Git repositories, Codex state, or QuireForge user metadata.",
+            ],
+          },
+        ]
+      : [
+          {
+            heading: "Target environment",
+            items: [
+              "Ubuntu LTS is the initial Linux distribution target.",
+              "Wayland and X11 behavior require separate validation.",
+              "Codex and Git are expected to remain external prerequisites.",
+              "Application data should follow Linux XDG location conventions.",
+            ],
+          },
+          {
+            heading: "Uninstall safety",
+            paragraphs: [
+              "Removing QuireForge must not delete attached directories, Git repositories, worktrees, uncommitted changes, or Codex-owned sessions. Application metadata cleanup should remain a separate, explicit operation.",
+            ],
+          },
         ],
-      },
-      {
-        heading: "Uninstall safety",
-        paragraphs: [
-          "Removing QuireForge must not delete attached directories, Git repositories, worktrees, uncommitted changes, or Codex-owned sessions. Application metadata cleanup should remain a separate, explicit operation.",
-        ],
-      },
-    ],
     links: [
       { label: "Check download availability", href: "/downloads/" },
       { label: "Track the release path", href: "/roadmap/" },
@@ -258,17 +346,27 @@ export const sitePages: SitePage[] = [
     title: "Detected at runtime, stated with evidence.",
     description:
       "QuireForge is intended to distinguish supported interfaces, experimental interfaces, local functionality, and unavailable features.",
-    status: "Linux support targets under evaluation",
+    status: publishedRelease
+      ? `Beta ${publishedRelease.version} · x86_64 Ubuntu 22.04+`
+      : "Linux support targets under evaluation",
     sections: [
       {
         heading: "Current public baseline",
-        items: [
-          "Ubuntu LTS is the initial target; supported versions are not yet declared.",
-          "Codex capabilities may vary by installed version and should be checked at runtime.",
-          "Wayland and X11 behavior require separate evidence.",
-          "AppImage and Debian packaging remain unavailable.",
-          "The static project website is public from a Webuzo-managed origin behind Cloudflare DNS and proxying.",
-        ],
+        items: publishedRelease
+          ? [
+              "The initial beta target is x86_64 Ubuntu 22.04 or newer on GNOME Wayland and X11.",
+              "AppImage and Debian packages are available only through the approved Downloads page.",
+              "Codex and Git are external prerequisites; Codex capability is checked at runtime.",
+              "Arm64, non-Ubuntu distributions, and non-GNOME desktops are not part of the initial support statement.",
+              "The project website and approved packages are served from the owner-hosted QuireForge origin behind Cloudflare DNS and proxying.",
+            ]
+          : [
+              "Ubuntu LTS is the initial target; supported versions are not yet declared.",
+              "Codex capabilities may vary by installed version and should be checked at runtime.",
+              "Wayland and X11 behavior require separate evidence.",
+              "AppImage and Debian packaging remain unavailable.",
+              "The static project website is public from a Webuzo-managed origin behind Cloudflare DNS and proxying.",
+            ],
       },
       {
         heading: "Honest degradation",
@@ -288,7 +386,9 @@ export const sitePages: SitePage[] = [
     title: "A gated path from product foundation to verified release.",
     description:
       "QuireForge moves through reviewable phases while detailed milestones, source activity, and internal implementation records remain private.",
-    status: "Early development · no release date announced",
+    status: publishedRelease
+      ? `Public beta ${publishedRelease.version}`
+      : "Early development · no release date announced",
     sections: [
       {
         heading: "Foundation",
@@ -306,15 +406,25 @@ export const sitePages: SitePage[] = [
           "Capability-aware integration and desktop behavior",
         ],
       },
-      {
-        heading: "Before public availability",
-        items: [
-          "Revalidate security, accessibility, performance, and compatibility against release packages",
-          "Produce and verify supported installation packages",
-          "Publish release notes, checksums, installation guidance, and known limitations",
-          "Obtain separate approval for beta publication and downloads",
-        ],
-      },
+      publishedRelease
+        ? {
+            heading: "Public beta",
+            items: [
+              "Verified AppImage and Debian packages with published checksums and manifest",
+              "Initial x86_64 Ubuntu support statement and installation guidance",
+              "Authenticated product home, bounded usage visibility, and established local-workspace flows",
+              "Ongoing compatibility, security, accessibility, and upgrade validation before a stable release",
+            ],
+          }
+        : {
+            heading: "Before public availability",
+            items: [
+              "Revalidate security, accessibility, performance, and compatibility against release packages",
+              "Produce and verify supported installation packages",
+              "Publish release notes, checksums, installation guidance, and known limitations",
+              "Obtain separate approval for beta publication and downloads",
+            ],
+          },
     ],
     links: [
       { label: "Check current availability", href: "/downloads/" },
@@ -324,28 +434,54 @@ export const sitePages: SitePage[] = [
   {
     slug: "releases",
     eyebrow: "Releases",
-    title: "No release until the core workflow is safe and testable.",
-    description:
-      "QuireForge has not published an application release. Future packages require verification, documentation, and separate owner approval.",
-    status: "Pre-release private development",
-    sections: [
-      {
-        heading: "Release requirements",
-        items: [
-          "Install, upgrade, and uninstall tests on declared Linux targets",
-          "Verified local-project and Codex working-directory behavior",
-          "Security, accessibility, and integration supply-chain review",
-          "Reproducible AppImage and Debian artifacts with checksums",
-          "Separately approved publication and website download links",
+    title: publishedRelease
+      ? `QuireForge ${publishedRelease.version} beta.`
+      : "No release until the core workflow is safe and testable.",
+    description: publishedRelease
+      ? "The first public beta packages the native Linux workspace, authenticated Codex access gate, local-project workflows, and bounded integrations for the declared Ubuntu target."
+      : "QuireForge has not published an application release. Future packages require verification, documentation, and separate owner approval.",
+    status: publishedRelease
+      ? `Published ${publishedRelease.publishedAt.slice(0, 10)}`
+      : "Pre-release private development",
+    sections: publishedRelease
+      ? [
+          {
+            heading: "Highlights",
+            items: [
+              "Attach existing local projects in place and preserve their filesystem ownership.",
+              "Run observable Codex conversations with explicit approvals, Git review, worktrees, and native terminals.",
+              "Use the Codex-owned authentication flow and see documented remaining usage when Codex provides it.",
+              "Inspect bounded integrations, preview safe project files, and attach reviewed PNG/JPEG images.",
+            ],
+          },
+          {
+            heading: "Known limitations",
+            items: [
+              "The initial beta targets x86_64 Ubuntu 22.04 or newer on GNOME Wayland or X11.",
+              "Codex and Git are external prerequisites, and integration availability remains environment-dependent.",
+              "The AppImage has no automatic updater; the Debian package is not an APT-repository release.",
+              "Scheduled-task discovery is read-only and several advanced operations remain deliberately unavailable.",
+            ],
+          },
+        ]
+      : [
+          {
+            heading: "Release requirements",
+            items: [
+              "Install, upgrade, and uninstall tests on declared Linux targets",
+              "Verified local-project and Codex working-directory behavior",
+              "Security, accessibility, and integration supply-chain review",
+              "Reproducible AppImage and Debian artifacts with checksums",
+              "Separately approved publication and website download links",
+            ],
+          },
+          {
+            heading: "Authoritative release channel",
+            paragraphs: [
+              "When a release is approved, this website will identify the supported version, provide verification guidance, and link only to the owner-approved distribution location.",
+            ],
+          },
         ],
-      },
-      {
-        heading: "Authoritative release channel",
-        paragraphs: [
-          "When a release is approved, this website will identify the supported version, provide verification guidance, and link only to the owner-approved distribution location.",
-        ],
-      },
-    ],
     links: [
       { label: "Check downloads", href: "/downloads/" },
       { label: "Review compatibility", href: "/compatibility/" },
@@ -357,7 +493,9 @@ export const sitePages: SitePage[] = [
     title: "Local access deserves explicit boundaries.",
     description:
       "QuireForge is designed to keep directory access, command approval, integration permissions, and credential ownership visible and separate.",
-    status: "Public principles · private engineering review",
+    status: publishedRelease
+      ? `Beta ${publishedRelease.version} security boundary`
+      : "Public principles · private engineering review",
     sections: [
       {
         heading: "Data ownership",
@@ -368,15 +506,30 @@ export const sitePages: SitePage[] = [
           "Connector secrets do not belong in QuireForge application data or support bundles.",
         ],
       },
-      {
-        heading: "Security reporting before release",
-        paragraphs: [
-          "There is no public application release to report against today. A dedicated private security-reporting path and disclosure guidance must be published before beta availability.",
-          "Do not send credentials, private source code, access tokens, or exploit details through ordinary public contact channels.",
-        ],
-      },
+      publishedRelease
+        ? {
+            heading: "Report a beta security issue privately",
+            paragraphs: [
+              "Use the dedicated security-reporting link for suspected vulnerabilities. Do not send credentials, private source code, access tokens, or exploit details through ordinary public contact channels.",
+            ],
+          }
+        : {
+            heading: "Security reporting before release",
+            paragraphs: [
+              "There is no public application release to report against today. A dedicated private security-reporting path and disclosure guidance must be published before beta availability.",
+              "Do not send credentials, private source code, access tokens, or exploit details through ordinary public contact channels.",
+            ],
+          },
     ],
     links: [
+      ...(publishedRelease && site.securityReportUrl
+        ? [
+            {
+              label: "Report a security issue privately",
+              href: site.securityReportUrl,
+            },
+          ]
+        : []),
       { label: "Read the project FAQ", href: "/faq/" },
       {
         label: "General project contact",
@@ -429,7 +582,9 @@ export const sitePages: SitePage[] = [
       {
         heading: "Can I install it today?",
         paragraphs: [
-          "No. There is no approved AppImage, Debian package, beta, or supported installation. The downloads page will remain explicit until verified packages exist.",
+          publishedRelease
+            ? `Yes. QuireForge ${publishedRelease.version} is available as a verified x86_64 AppImage and Debian package for the declared Ubuntu beta target. Use only the Downloads page and verify SHA256SUMS before installation.`
+            : "No. There is no approved AppImage, Debian package, beta, or supported installation. The downloads page will remain explicit until verified packages exist.",
         ],
       },
       {
@@ -459,20 +614,36 @@ export const sitePages: SitePage[] = [
   {
     slug: "troubleshooting",
     eyebrow: "Troubleshooting",
-    title: "There is no public application build to support yet.",
-    description:
-      "Current guidance covers website availability and future diagnostic boundaries without implying that a supported QuireForge package exists.",
-    status: "Application support not yet open",
+    title: publishedRelease
+      ? `Troubleshoot QuireForge ${publishedRelease.version}.`
+      : "There is no public application build to support yet.",
+    description: publishedRelease
+      ? "Separate package verification, Codex runtime/account state, Git/project access, Linux desktop services, and integrations before deciding what failed."
+      : "Current guidance covers website availability and future diagnostic boundaries without implying that a supported QuireForge package exists.",
+    status: publishedRelease
+      ? "Public beta troubleshooting"
+      : "Application support not yet open",
     sections: [
-      {
-        heading: "Before public release",
-        items: [
-          "Do not install files presented as unofficial QuireForge packages.",
-          "Use the downloads page to confirm whether an approved release exists.",
-          "Check the public service-status page if this website is unavailable.",
-          "Never include credentials, tokens, private source, or personal Codex data in ordinary support requests.",
-        ],
-      },
+      publishedRelease
+        ? {
+            heading: "Start with the boundary that failed",
+            items: [
+              "Recheck the package against the published SHA256SUMS before debugging it.",
+              "If the account gate remains visible, verify the compatible Codex runtime and use only the Codex-owned sign-in flow.",
+              "If a project is unavailable, review its current path, mount, permissions, Git state, and project instructions without relocating it.",
+              "For AppImage FUSE errors, use the documented --appimage-extract-and-run fallback.",
+              "Never include credentials, tokens, private source, or personal Codex data in an ordinary support request.",
+            ],
+          }
+        : {
+            heading: "Before public release",
+            items: [
+              "Do not install files presented as unofficial QuireForge packages.",
+              "Use the downloads page to confirm whether an approved release exists.",
+              "Check the public service-status page if this website is unavailable.",
+              "Never include credentials, tokens, private source, or personal Codex data in ordinary support requests.",
+            ],
+          },
       {
         heading: "Future diagnostic boundary",
         paragraphs: [
