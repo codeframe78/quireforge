@@ -974,7 +974,9 @@ describe("QuireForge desktop shell", () => {
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "plugin" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Install plugin" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Install plugin" }),
+    );
     await waitFor(() =>
       expect(previewIntegrationMutationTask).toHaveBeenCalledWith({
         operation: "plugin-install",
@@ -983,7 +985,9 @@ describe("QuireForge desktop shell", () => {
         reference: null,
       }),
     );
-    fireEvent.click(screen.getByRole("button", { name: "Confirm change" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Confirm change" }),
+    );
     await waitFor(() =>
       expect(confirmIntegrationMutationTask).toHaveBeenCalledWith({
         confirmationId: scaffoldIntegrationMutationPreview.confirmationId,
