@@ -1,6 +1,6 @@
 # Compatibility
 
-Status: desktop work through Milestone 17A is implemented and verified locally,
+Status: desktop work through Milestone 18 is implemented and verified locally,
 and the static website is complete through production Milestone 16.
 Milestone 15C has production native Wayland picker, preview, real-drop, and
 fixed-copy notification evidence plus separately recorded complete XWayland and
@@ -10,7 +10,9 @@ catalog; Milestones 14A–14C add fixed integration workflows, and Milestones
 15A–15C add bounded local-file, conversation-image, and desktop-integration
 contracts.
 Milestone 17A adds read-only installed-plugin scheduled-template compatibility;
-task management and execution remain unsupported.
+task management and execution remain unsupported. Milestone 18 adds the
+policy-bounded dynamic-tool request lifecycle and fresh next-turn
+revalidation.
 
 ## Identity compatibility contract
 
@@ -26,8 +28,8 @@ the real toolchain rather than inferred from documentation alone:
 | Application identifier         | `io.github.codeframe78.QuireForge`         | Verified as the running GTK/D-Bus application identity on Wayland                          |
 | XDG directory leaf             | `quireforge`                               | Verified with isolated temporary XDG data; no personal persistent application data created |
 | GitHub repository              | `James-Jennison/quireforge`                | Private source location; not a public website link                                         |
-| Production website             | `https://quireforge.jamesjennison.net`     | Public through the approved Webuzo origin and proxied Cloudflare record                     |
-| Website host                   | Webuzo-managed Apache behind Cloudflare    | Production active; private provider identifiers remain outside source control                |
+| Production website             | `https://quireforge.jamesjennison.net`     | Public through the approved Webuzo origin and proxied Cloudflare record                    |
+| Website host                   | Webuzo-managed Apache behind Cloudflare    | Production active; private provider identifiers remain outside source control              |
 
 Tauri, Cargo, React, TypeScript, Vite, and Astro configuration now consume the
 applicable identity contracts. Package installation, desktop-entry output,
@@ -89,39 +91,39 @@ baseline examples in the [official AppImage guidance](https://v2.tauri.app/distr
 
 ## Codex feature compatibility
 
-| Capability                                 | CLI 0.145.0          | Intended application route                                                                                     | Classification                        |
-| ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| Detect version                             | Implemented          | Fixed `codex --version` probe                                                                                  | Stable official                       |
-| List account-visible models/efforts        | Implemented          | Bounded `model/list` normalization                                                                             | Stable method on experimental server  |
-| Apply model/effort to the next turn        | Yes                  | Revalidated `turn/start` model/effort overrides                                                                | Stable method on experimental server  |
-| Agent-directed selector request lifecycle  | Contract validated   | `thread/start` dynamic-tool registration plus correlated `item/tool/call`; implementation remains Milestone 18 | Stable methods on experimental server |
-| Start in an absolute local cwd             | Yes                  | `thread/start` / `turn/start`; CLI fallback                                                                    | Stable method + stable CLI            |
-| Additional writable roots                  | Yes                  | sandbox `writableRoots`; CLI `--add-dir`                                                                       | Stable official                       |
-| Stream turns, commands, plans, diffs       | Yes                  | app-server events                                                                                              | Stable methods on experimental server |
-| Approve commands/file changes              | Yes                  | app-server server requests                                                                                     | Stable methods on experimental server |
-| Resume/fork/archive/restore                | Yes                  | app-server; CLI fallback                                                                                       | Stable official                       |
-| Search/list conversations                  | Partial              | stable thread title/cwd filters; experimental deeper paging                                                    | Mixed                                 |
-| Codex-managed ChatGPT login                | Implemented          | Bounded app-server browser/device flow, cancel, logout, and normalized events                                  | Stable official                       |
-| List skills by cwd                         | Yes                  | `skills/list`                                                                                                  | Stable method on experimental server  |
-| Enable/disable skills                      | Implemented          | 14C native preview/confirmation, exact `skills/config/write`, and list postcondition                           | Stable method on experimental server  |
-| List apps/connectors                       | Yes                  | `app/list`                                                                                                     | Stable method on experimental server  |
-| Attach app to prompt                       | Implemented          | 14C native re-resolution and constructed documented `mention`/`app://` item                                    | Stable method on experimental server  |
-| Attach local image to turn                 | Implemented          | 15B private PNG/JPEG staging and native-constructed `localImage` item                                           | Stable method on experimental server  |
-| General connector authorization RPC        | Not established      | 14C confirmed official returned-URL handoff plus refreshed accessibility state                                 | Limited                               |
-| MCP list/status/tools/auth                 | Yes                  | app-server + CLI                                                                                               | Stable official                       |
-| MCP OAuth                                  | Implemented          | 14C native URL ownership and exact `mcpServer/oauthLogin/completed` correlation                                | Stable official                       |
-| Plugin catalog via CLI JSON                | Implemented          | Bounded `plugin list --available --json` adapter                                                               | Supported CLI                         |
-| Plugin install/remove via CLI JSON         | Implemented          | 14A fixed-command source review, one-use confirmation, and postcondition                                       | Supported CLI 0.145.x                 |
-| Plugin app-server management               | Present              | Disabled in production                                                                                         | Under development                     |
-| Marketplace add/list/upgrade/remove        | Implemented natively | Bounded list plus 14A confirmed fixed mutations; upgrade warns on mutable source                               | Supported CLI 0.145.x                 |
-| Managed policy read                        | Yes                  | `configRequirements/read`                                                                                      | Stable method on experimental server  |
-| Permission profile discovery               | Yes                  | `permissionProfile/list` with bounded summaries                                                                | Stable method on experimental server  |
-| Client-owned dynamic tools                 | Contract validated   | `thread/start` registration and correlated `item/tool/call` server request                                     | Stable methods on experimental server |
-| Integrated process API                     | Present              | Do not use as default terminal                                                                                 | Experimental/outside Codex sandbox    |
-| Plugin scheduled task templates            | Implemented read-only | Bounded stable `plugin/read` metadata for installed, enabled plugins                                           | Stable method on experimental server  |
-| Scheduled task management/execution        | Not established      | No create/edit/enable/run/pause/delete route; no QuireForge scheduler                                          | Unsupported until discovered          |
-| Repository status and staged/worktree diff | Git 2.53.0 available | Fixed native shell-free Git service over a revalidated attachment                                              | Implemented locally in Milestone 10A  |
-| Stage, unstage, bounded revert, and commit | Git 2.53.0 available | Native-held preview/confirmation plans with fixed Git operations                                               | Implemented locally in Milestone 10B  |
+| Capability                                 | CLI 0.145.0           | Intended application route                                                                                        | Classification                        |
+| ------------------------------------------ | --------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| Detect version                             | Implemented           | Fixed `codex --version` probe                                                                                     | Stable official                       |
+| List account-visible models/efforts        | Implemented           | Bounded `model/list` normalization                                                                                | Stable method on experimental server  |
+| Apply model/effort to the next turn        | Yes                   | Revalidated `turn/start` model/effort overrides                                                                   | Stable method on experimental server  |
+| Agent-directed selector request lifecycle  | Implemented locally   | Closed `thread/start` dynamic tool plus correlated `item/tool/call`, bounded policy staging, and visible fallback | Stable methods on experimental server |
+| Start in an absolute local cwd             | Yes                   | `thread/start` / `turn/start`; CLI fallback                                                                       | Stable method + stable CLI            |
+| Additional writable roots                  | Yes                   | sandbox `writableRoots`; CLI `--add-dir`                                                                          | Stable official                       |
+| Stream turns, commands, plans, diffs       | Yes                   | app-server events                                                                                                 | Stable methods on experimental server |
+| Approve commands/file changes              | Yes                   | app-server server requests                                                                                        | Stable methods on experimental server |
+| Resume/fork/archive/restore                | Yes                   | app-server; CLI fallback                                                                                          | Stable official                       |
+| Search/list conversations                  | Partial               | stable thread title/cwd filters; experimental deeper paging                                                       | Mixed                                 |
+| Codex-managed ChatGPT login                | Implemented           | Bounded app-server browser/device flow, cancel, logout, and normalized events                                     | Stable official                       |
+| List skills by cwd                         | Yes                   | `skills/list`                                                                                                     | Stable method on experimental server  |
+| Enable/disable skills                      | Implemented           | 14C native preview/confirmation, exact `skills/config/write`, and list postcondition                              | Stable method on experimental server  |
+| List apps/connectors                       | Yes                   | `app/list`                                                                                                        | Stable method on experimental server  |
+| Attach app to prompt                       | Implemented           | 14C native re-resolution and constructed documented `mention`/`app://` item                                       | Stable method on experimental server  |
+| Attach local image to turn                 | Implemented           | 15B private PNG/JPEG staging and native-constructed `localImage` item                                             | Stable method on experimental server  |
+| General connector authorization RPC        | Not established       | 14C confirmed official returned-URL handoff plus refreshed accessibility state                                    | Limited                               |
+| MCP list/status/tools/auth                 | Yes                   | app-server + CLI                                                                                                  | Stable official                       |
+| MCP OAuth                                  | Implemented           | 14C native URL ownership and exact `mcpServer/oauthLogin/completed` correlation                                   | Stable official                       |
+| Plugin catalog via CLI JSON                | Implemented           | Bounded `plugin list --available --json` adapter                                                                  | Supported CLI                         |
+| Plugin install/remove via CLI JSON         | Implemented           | 14A fixed-command source review, one-use confirmation, and postcondition                                          | Supported CLI 0.145.x                 |
+| Plugin app-server management               | Present               | Disabled in production                                                                                            | Under development                     |
+| Marketplace add/list/upgrade/remove        | Implemented natively  | Bounded list plus 14A confirmed fixed mutations; upgrade warns on mutable source                                  | Supported CLI 0.145.x                 |
+| Managed policy read                        | Yes                   | `configRequirements/read`                                                                                         | Stable method on experimental server  |
+| Permission profile discovery               | Yes                   | `permissionProfile/list` with bounded summaries                                                                   | Stable method on experimental server  |
+| Client-owned dynamic tools                 | Contract validated    | `thread/start` registration and correlated `item/tool/call` server request                                        | Stable methods on experimental server |
+| Integrated process API                     | Present               | Do not use as default terminal                                                                                    | Experimental/outside Codex sandbox    |
+| Plugin scheduled task templates            | Implemented read-only | Bounded stable `plugin/read` metadata for installed, enabled plugins                                              | Stable method on experimental server  |
+| Scheduled task management/execution        | Not established       | No create/edit/enable/run/pause/delete route; no QuireForge scheduler                                             | Unsupported until discovered          |
+| Repository status and staged/worktree diff | Git 2.53.0 available  | Fixed native shell-free Git service over a revalidated attachment                                                 | Implemented locally in Milestone 10A  |
+| Stage, unstage, bounded revert, and commit | Git 2.53.0 available  | Native-held preview/confirmation plans with fixed Git operations                                                  | Implemented locally in Milestone 10B  |
 
 Account-scoped inspection on 2026-07-19 returned a multi-page app directory
 from both the default OpenAI catalog and ecosystem directory, with only a small

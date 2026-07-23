@@ -1254,17 +1254,17 @@ representation issues before publication.
 
 ## Milestone 15 — File previews and desktop integration
 
-| Field                | Record                                                                                                                                                                                                           |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Forecast date        | 2026-07-22                                                                                                                                                                                                       |
-| Selected model       | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                 |
-| Preliminary forecast | Approximately 4–7 active hours; 20–45 minutes of local commands; 4.5–8 total elapsed hours; medium confidence                                                                                                    |
-| Calibrated forecast  | Approximately 4.5–8 active hours; 25–55 minutes of local commands; 4–10 minutes hosted CI critical path; 5–9.5 total elapsed hours across 15A–15C; medium confidence                                             |
-| Calibration basis    | Synchronized clean `main` at `f99c078`; 44 GiB available RAM and 718 GiB free storage; low load; 12 logical CPUs; warm Cargo/pnpm caches; no GPU work; split into three independently reviewable checkpoints     |
-| Preflight commands   | Desktop TypeScript check 1.67 seconds/about 266 MiB; four-worker Cargo check 0.25 second/about 109 MiB; both passed with zero swaps                                                                              |
-| Current status       | Milestones 15A–15C implemented and verified locally; native Wayland and separately recorded XWayland/true-X11 display-session gates are complete                                                                                 |
-| Observed local work  | 15A: approximately 0.60 active/0.13 automated hour. 15B: approximately 0.60 active/0.08 automated hour. 15C: approximately 3.01 active/0.18 automated hours. None had a post-start user-blocked interval                  |
-| Acceptance timings   | Latest 15C validation 62.29 seconds/about 1.34 GiB; 143 frontend tests; 167 Rust tests/164 passed/3 ignored; browser suites 27.18/7.02 seconds; corrected guest release build 37.38 seconds; zero product failures                         |
+| Field                | Record                                                                                                                                                                                                             |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Forecast date        | 2026-07-22                                                                                                                                                                                                         |
+| Selected model       | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                   |
+| Preliminary forecast | Approximately 4–7 active hours; 20–45 minutes of local commands; 4.5–8 total elapsed hours; medium confidence                                                                                                      |
+| Calibrated forecast  | Approximately 4.5–8 active hours; 25–55 minutes of local commands; 4–10 minutes hosted CI critical path; 5–9.5 total elapsed hours across 15A–15C; medium confidence                                               |
+| Calibration basis    | Synchronized clean `main` at `f99c078`; 44 GiB available RAM and 718 GiB free storage; low load; 12 logical CPUs; warm Cargo/pnpm caches; no GPU work; split into three independently reviewable checkpoints       |
+| Preflight commands   | Desktop TypeScript check 1.67 seconds/about 266 MiB; four-worker Cargo check 0.25 second/about 109 MiB; both passed with zero swaps                                                                                |
+| Current status       | Milestones 15A–15C implemented and verified locally; native Wayland and separately recorded XWayland/true-X11 display-session gates are complete                                                                   |
+| Observed local work  | 15A: approximately 0.60 active/0.13 automated hour. 15B: approximately 0.60 active/0.08 automated hour. 15C: approximately 3.01 active/0.18 automated hours. None had a post-start user-blocked interval           |
+| Acceptance timings   | Latest 15C validation 62.29 seconds/about 1.34 GiB; 143 frontend tests; 167 Rust tests/164 passed/3 ignored; browser suites 27.18/7.02 seconds; corrected guest release build 37.38 seconds; zero product failures |
 
 Critical path: safe preview threat/format decision → native picker and
 attachment-contained read boundary → strict shared contract → responsive
@@ -1296,14 +1296,14 @@ temporary port.
 
 ### Milestone 15B checkpoint
 
-| Field               | Record                                                                                                                                                                                                                                                                                         |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Forecast date       | 2026-07-22                                                                                                                                                                                                                                                                                     |
-| Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                               |
-| Calibrated forecast | Approximately 2.5–4.5 active hours; 20–40 minutes of local commands; 3–5.5 total elapsed hours in one session; medium confidence                                                                                                                                                              |
-| Calibration basis   | Finished 15A branch at `4c2600a`; reviewed Codex 0.145.0 turn schema; warm Cargo/pnpm/browser caches; no dependency or GPU work; desktop TypeScript preflight 1.63 seconds/about 260 MiB and four-worker Cargo preflight 0.26 second/about 109 MiB                                               |
-| Current status      | Implemented and verified locally on `feat/milestone-15b-conversation-attachments`; local commit prepared without push, merge, package, release, deployment, personal-file inspection, personal Codex-state access, or live model call                                                           |
-| Observed local work | Approximately 0.60 active hour and 0.08 automated-wait hour from branch creation through final local verification; approximately 0.69 hour elapsed with no post-start user-blocked interval                                                                                                    |
+| Field               | Record                                                                                                                                                                                                                                                                                                        |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date       | 2026-07-22                                                                                                                                                                                                                                                                                                    |
+| Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                              |
+| Calibrated forecast | Approximately 2.5–4.5 active hours; 20–40 minutes of local commands; 3–5.5 total elapsed hours in one session; medium confidence                                                                                                                                                                              |
+| Calibration basis   | Finished 15A branch at `4c2600a`; reviewed Codex 0.145.0 turn schema; warm Cargo/pnpm/browser caches; no dependency or GPU work; desktop TypeScript preflight 1.63 seconds/about 260 MiB and four-worker Cargo preflight 0.26 second/about 109 MiB                                                            |
+| Current status      | Implemented and verified locally on `feat/milestone-15b-conversation-attachments`; local commit prepared without push, merge, package, release, deployment, personal-file inspection, personal Codex-state access, or live model call                                                                         |
+| Observed local work | Approximately 0.60 active hour and 0.08 automated-wait hour from branch creation through final local verification; approximately 0.69 hour elapsed with no post-start user-blocked interval                                                                                                                   |
 | Acceptance timings  | Full validation 68.50 seconds/about 1.51 GiB; 135 desktop and 3 website frontend tests; final Rust rerun 161 tests with 158 passed/3 deliberate live probes ignored; desktop Playwright 24/24 in 26.81 seconds/about 436 MiB; website 8/8 in 7.10 seconds/about 253 MiB; release 39.63 seconds/about 2.28 GiB |
 
 The official app-server guide and pinned schema established `localImage` but
@@ -1323,15 +1323,15 @@ revalidation before the final green gates.
 
 ### Milestone 15C checkpoint
 
-| Field               | Record                                                                                                                                                                                                                                                                                                  |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Forecast date       | 2026-07-22                                                                                                                                                                                                                                                                                              |
-| Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                        |
-| Calibrated forecast | Approximately 2–4 active hours; 15–35 minutes of local commands; 2.5–5 total elapsed hours in one session, excluding any logout/login needed for a true X11 session; medium confidence                                                                                                                  |
-| Calibration basis   | Finished 15B branch at `390434b`; closed 15A preview and conversation-state contracts; warm Cargo/pnpm/browser caches; GNOME Wayland host with XWayland but no true X11 login; TypeScript preflight 1.61 seconds/about 271 MiB and Cargo preflight 1.72 seconds/about 588 MiB, both with zero swaps         |
-| Current status      | Implemented and verified locally on `feat/milestone-15c-desktop-handoffs`; native Wayland project/file/image picker, preview, real-drop, and notification evidence plus complete XWayland/true-X11 handoff evidence close the display-session gate |
+| Field               | Record                                                                                                                                                                                                                                                                                                                            |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date       | 2026-07-22                                                                                                                                                                                                                                                                                                                        |
+| Selected model      | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                                                                                                                                                  |
+| Calibrated forecast | Approximately 2–4 active hours; 15–35 minutes of local commands; 2.5–5 total elapsed hours in one session, excluding any logout/login needed for a true X11 session; medium confidence                                                                                                                                            |
+| Calibration basis   | Finished 15B branch at `390434b`; closed 15A preview and conversation-state contracts; warm Cargo/pnpm/browser caches; GNOME Wayland host with XWayland but no true X11 login; TypeScript preflight 1.61 seconds/about 271 MiB and Cargo preflight 1.72 seconds/about 588 MiB, both with zero swaps                               |
+| Current status      | Implemented and verified locally on `feat/milestone-15c-desktop-handoffs`; native Wayland project/file/image picker, preview, real-drop, and notification evidence plus complete XWayland/true-X11 handoff evidence close the display-session gate                                                                                |
 | Observed local work | Approximately 3.01 active and 0.18 automated-wait hours from the `2026-07-22T14:30:59-07:00` branch start through `2026-07-22T17:42:22-07:00`; approximately 3.19 counted/elapsed hours with no post-start user-blocked interval, package, release, deployment, hosting mutation, personal Codex-state access, or live model call |
-| Acceptance timings  | Latest full validation 62.29 seconds/about 1.34 GiB; 140 desktop and 3 website frontend tests; default Rust 167 tests/164 passed/3 ignored; browser 24/24 in 27.18 seconds and 8/8 in 7.02 seconds; corrected/probe/restored/final guest compiles 37.38/40.15/37.94/37.81 seconds; zero swaps          |
+| Acceptance timings  | Latest full validation 62.29 seconds/about 1.34 GiB; 140 desktop and 3 website frontend tests; default Rust 167 tests/164 passed/3 ignored; browser 24/24 in 27.18 seconds and 8/8 in 7.02 seconds; corrected/probe/restored/final guest compiles 37.38/40.15/37.94/37.81 seconds; zero swaps                                     |
 
 The design narrowed “open with” to the system default application for exactly
 one already-previewed file. The frontend receives only a five-minute one-use
@@ -1372,18 +1372,18 @@ not widen QuireForge's product permissions. This completed Milestone 15 locally.
 
 ## Milestone 17A — Read-only scheduled task catalog
 
-| Field                     | Record                                                                                                                                                    |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Forecast date             | 2026-07-22                                                                                                                                                |
-| Selected model            | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                          |
-| Start authorization       | Approved at `2026-07-22T21:01:38-07:00`                                                                                                                   |
-| Preliminary forecast      | 2.5–4.5 active hours; 15–35 minutes of local commands; about 3–5.5 total elapsed hours; medium confidence                                                 |
+| Field                     | Record                                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date             | 2026-07-22                                                                                                                                                 |
+| Selected model            | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                           |
+| Start authorization       | Approved at `2026-07-22T21:01:38-07:00`                                                                                                                    |
+| Preliminary forecast      | 2.5–4.5 active hours; 15–35 minutes of local commands; about 3–5.5 total elapsed hours; medium confidence                                                  |
 | Calibration basis         | Clean commit `e5e8dcf`, warm Rust/Node caches, installed Codex CLI `0.145.0`, reviewed stable schemas, and the existing normalized integration catalog     |
 | Supported-interface scope | Read installed, enabled plugin task templates through stable `plugin/read`; no create, edit, enable, run, pause, delete, hosted scheduler, or local runner |
-| Usage intensity           | High model activity; moderate CPU and low memory pressure expected; no GPU                                                                                |
-| Observed active execution | Approximately 30 minutes from authorized start through implementation, documentation, validation, visual review, and commit preparation                   |
-| Observed command time     | Approximately 6–8 minutes across focused checks, corrected full gates, release build, browser suite, and visual capture                                   |
-| Completion status         | Complete locally on `feat/milestone-17a-scheduled-task-catalog`; not pushed, merged, packaged, deployed, or released                                      |
+| Usage intensity           | High model activity; moderate CPU and low memory pressure expected; no GPU                                                                                 |
+| Observed active execution | Approximately 30 minutes from authorized start through implementation, documentation, validation, visual review, and commit preparation                    |
+| Observed command time     | Approximately 6–8 minutes across focused checks, corrected full gates, release build, browser suite, and visual capture                                    |
+| Completion status         | Complete locally on `feat/milestone-17a-scheduled-task-catalog`; not pushed, merged, packaged, deployed, or released                                       |
 
 The calibrated scope is narrower than the roadmap label. Stable
 `PluginReadResponse` exposes optional task templates and typed schedules, but
@@ -1416,13 +1416,58 @@ inspected directly after accessibility and overflow checks passed.
 
 ## Milestone 18 — Agent-directed model and reasoning selection
 
-Status: deferred and dependency-gated behind Milestones 13–17. This section
-preserves an early planning estimate prepared on `2026-07-21T18:43:23-07:00`
-when the feature was incorrectly placed at Milestone 13. That start gate was
-withdrawn on `2026-07-21T19:08:53-07:00`; no model change or implementation was
-authorized. Milestone 18 must receive a fresh repository/system inspection,
-model recommendation, preliminary forecast, manual model confirmation,
-calibrated forecast, and start approval when its prerequisites are complete.
+Status: complete and verified locally on 2026-07-22. The user explicitly
+approved the full local milestone, including implementation, deterministic
+verification, documentation, security review, and focused local commits. That
+approval did not authorize pushing, merging, publishing, deploying, external
+authentication, billable model calls, or other remote mutation.
+
+| Field                       | Current record                                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Forecast date               | 2026-07-22                                                                                                                                                                                              |
+| Selected model              | GPT-5.6 Sol, XHigh reasoning; manually confirmed                                                                                                                                                        |
+| Preliminary forecast        | 4–6 active hours; 25–55 minutes of local commands; about 5–7.5 total elapsed hours; medium confidence                                                                                                   |
+| Calibrated forecast         | 4–6.5 active hours; 25–60 minutes of local commands; about 5–8 total elapsed hours; medium confidence                                                                                                   |
+| Calibration basis           | Clean Milestone 17A local lineage at `c6892c2`; installed Codex CLI 0.145.0; exact semantic schema match; about 45 GiB available RAM, 690 GiB free storage, low load, and warm Rust/Node/browser caches |
+| Compatibility evidence      | Fresh `--experimental` generation confirms `model/list`, `thread/start.dynamicTools`, correlated `item/tool/call`, and per-turn model/reasoning overrides; retained Milestone 13 fixtures remain exact  |
+| Start approval              | Full local Milestone 18 explicitly approved                                                                                                                                                             |
+| Observed active execution   | Approximately 0.85 hour from branch creation through implementation, debugging, documentation, security correction, and final acceptance                                                                |
+| Observed local command time | Approximately 0.18 hour across schema checks, targeted iterations, the corrected complete gates, and the production build                                                                               |
+| User approval/waiting time  | Excluded from active execution and local command observations                                                                                                                                           |
+| Expected usage intensity    | High model usage; moderate local CPU/memory use; no GPU workload                                                                                                                                        |
+| Completion boundary         | Completed locally at `2026-07-22T22:43:34-07:00`; no remote publication or external mutation                                                                                                            |
+
+The calibrated range is slightly wider than the preliminary range because the
+complete acceptance boundary includes migration/restart compatibility,
+registration degradation, next-turn revalidation, strict cross-language
+fixtures, responsive ownership controls, and the full release/browser/native
+gate. The installed lifecycle is supported, so recommendation-only behavior is
+implemented as an explicit registration-failure degradation path rather than
+the primary mode.
+
+The final repository gate completed in 42.39 seconds at about 1.08 GiB peak RSS
+and passed 150 desktop tests, five website tests, and 174 runnable Rust tests
+with three deliberate live probes ignored. All 26 desktop and six website
+Playwright scenarios passed across desktop/mobile viewports in 31.04 seconds,
+including accessibility scans. The configured unbundled Tauri production build
+completed in 45.57 seconds at about 2.10 GiB peak RSS and embedded the current
+frontend, avoiding the raw-Cargo development-URL failure mode.
+
+The calibrated forecast overestimated the implementation path. Existing
+conversation/session contracts, the previously validated dynamic-tool
+lifecycle, deterministic fixtures, and warm caches kept the work below one
+active hour. Iterative validation still caught and corrected stale future-policy
+validation, user-pending precedence, rationale redaction, light-theme contrast,
+scroll interception, heading order, and an honest migration fallback for
+pre-selector conversations before local completion.
+
+### Withdrawn early forecast retained for history
+
+The remainder of this section preserves an early planning estimate prepared on
+`2026-07-21T18:43:23-07:00` when the feature was incorrectly placed at
+Milestone 13. That start gate was withdrawn on
+`2026-07-21T19:08:53-07:00`; it is not the authority or forecast for the
+current implementation.
 
 ### Withdrawn early reasoning assessment
 
@@ -1489,7 +1534,7 @@ browser tests are CPU/system-memory workloads.
 | Documentation, security/diff review, commit preparation |      35–60 min | Medium     | Cross-document and fixture consistency                   | Model-bound         | Warm builds/tests                      |
 | GitHub publication and main CI                          |      10–25 min | Medium     | Hosted queue and cold runner                             | Network-bound       | Local completion review                |
 
-Future critical path: complete the Milestone 13 lifecycle evidence and
+Historical projected critical path: complete the Milestone 13 lifecycle evidence and
 Milestones 14–17 prerequisites → refresh the system/model forecast → define
 native policy and persistence → implement staged next-turn application → expose
 strict typed IPC and accessible selector ownership UI → adversarial and restart

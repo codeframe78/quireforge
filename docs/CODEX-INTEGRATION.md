@@ -1,6 +1,6 @@
 # Codex Integration Findings
 
-Status: Milestone 0 discovery with implementation through Milestone 14C,
+Status: Milestone 0 discovery with implementation through Milestone 18,
 including the native read-only catalog, confirmed plugin/marketplace lifecycle,
 user-facing Integration Center, and confirmed authorization/control boundary
 validated locally
@@ -417,7 +417,7 @@ or reasoning effort exists.
 The reviewed `turn/start` contract accepts model and effort overrides for that
 turn and subsequent turns. That creates a supported next-turn application
 point, not a way for the executing model to replace itself in the middle of a
-turn. Milestone 18 will let Codex inspect only a normalized picker catalog,
+turn. Milestone 18 lets Codex inspect only a normalized picker catalog,
 current effective selection, pending selection, and app-owned policy, then
 request at most one bounded model/reasoning change per turn with a short
 rationale.
@@ -430,13 +430,16 @@ effective and pending values separately and label Codex-requested provenance.
 No account identifier, credential, raw prompt, or raw app-server payload belongs
 in the selector policy or audit record.
 
-The exact app-server request/response lifecycle used for the model to invoke
-this app-owned control is a Milestone 13 discovery obligation and a Milestone 18
-implementation gate. It must use a documented interface and strict typed
-normalization. If the installed Codex version cannot provide that lifecycle
-reliably, QuireForge will expose recommendation-only behavior and will not
-automate a website selector, call a private endpoint, or claim automatic
-control.
+The implementation registers `quireforge_model_selector` through
+`thread/start.dynamicTools`, accepts only exactly correlated `item/tool/call`
+requests, and returns bounded normalized content. One request attempt is
+allowed per turn. A successful request remains ephemeral until the turn
+completes, then becomes pending metadata; resume refreshes `model/list` and
+revalidates before constructing `turn/start`. If registration is rejected,
+QuireForge retries without the tool and exposes recommendation-only behavior.
+It does not automate a website selector, call a private endpoint, or claim
+automatic control. See
+[ADR 0026](DECISIONS/0026-policy-bounded-next-turn-selection.md).
 
 ## Sessions and conversation lifecycle
 

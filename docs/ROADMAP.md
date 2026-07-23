@@ -72,11 +72,11 @@ Milestone 12 adds a bounded native PTY registry, controlled shell environment,
 fresh project-cwd verification, tabbed xterm presentation, byte-preserving
 input/output, resize, background-job ownership, and metadata-only restart
 recovery without exposing raw paths or process identity to React.
-Agent-directed model and reasoning selection is deliberately deferred to
-Milestone 18. The current conversation runtime validates a user-selected model
-and effort, while Milestone 13A confirms the app-owned dynamic-tool
-registration, invocation, and result lifecycle needed for a future selector
-control. Milestone 13B establishes live read-only integration discovery.
+Milestone 18 implements app-owned, policy-bounded model and reasoning selection
+for the next turn. The current turn never replaces itself; Manual, Recommend,
+and explicitly bounded Automatic ownership remain under visible user control.
+Milestone 13A supplied the validated dynamic-tool lifecycle used by that
+selector. Milestone 13B establishes live read-only integration discovery.
 Milestone 14A establishes the confirmed native plugin and marketplace mutation
 boundary. Milestone 14B adds the user-facing Integration Center over that
 boundary without broadening it. Milestone 14C adds only reviewed connector/MCP
@@ -88,30 +88,30 @@ discovery; scheduling management and execution remain unsupported.
 
 ## Status
 
-| Milestone | Scope                                                             | Size         | Status                                                              |
-| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------- |
-|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                          |
-|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                          |
-|         2 | QuireForge brand and static website foundation                    | Large        | Complete; merged to `main`; deployed later through Milestone 16     |
-|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                            |
-|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                          |
-|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                          |
-|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                          |
-|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                          |
-|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                          |
-|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history   |
-|        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change |
-|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
-|        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
-|        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                 |
-|        15 | File previews and desktop integration                             | Large        | Complete through 15C; verified locally                              |
-|        16 | Complete Webuzo-hosted static website                              | Very large   | Complete through 16D; production and automatic origin TLS renewal active |
-|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Complete through 17A locally; management/execution deferred         |
-|        18 | Agent-directed model and reasoning selection                      | Large        | Planned/dependency-gated                                            |
-|        19 | Security, accessibility, and performance hardening                | Very large   | Planned                                                             |
-|        20 | Packaging and release automation                                  | Large        | Planned                                                             |
-|        21 | Beta package publication and download activation                  | Very large   | Planned/approval-gated                                              |
+| Milestone | Scope                                                             | Size         | Status                                                                   |
+| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ |
+|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                               |
+|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                               |
+|         2 | QuireForge brand and static website foundation                    | Large        | Complete; merged to `main`; deployed later through Milestone 16          |
+|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                                 |
+|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                               |
+|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                               |
+|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                               |
+|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                               |
+|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                               |
+|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history        |
+|        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change      |
+|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                                |
+|        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                                 |
+|        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                                   |
+|        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                      |
+|        15 | File previews and desktop integration                             | Large        | Complete through 15C; verified locally                                   |
+|        16 | Complete Webuzo-hosted static website                             | Very large   | Complete through 16D; production and automatic origin TLS renewal active |
+|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Complete through 17A locally; management/execution deferred              |
+|        18 | Agent-directed model and reasoning selection                      | Large        | Complete and verified locally; not published                             |
+|        19 | Security, accessibility, and performance hardening                | Very large   | Planned                                                                  |
+|        20 | Packaging and release automation                                  | Large        | Planned                                                                  |
+|        21 | Beta package publication and download activation                  | Very large   | Planned/approval-gated                                                   |
 
 ## Milestone definitions
 
@@ -622,8 +622,7 @@ supported interface and explicit approval. See
 
 ### 18 — Agent-Directed Model and Reasoning Selection
 
-After Milestone 13 validates the installed app-server control lifecycle and the
-intervening product surfaces are established, add a typed, app-owned
+Milestone 18 is implemented and verified locally. It adds a typed, app-owned
 selector-control boundary that lets Codex inspect the normalized `model/list`
 catalog, current effective choice, pending next-turn choice, and user policy.
 Codex may request at most one model/reasoning change per completed turn with a
@@ -648,6 +647,18 @@ degrade to visible recommendation-only behavior rather than fabricating
 automatic control. Deterministic mocks must cover prompt-injection attempts,
 stale/unadvertised models, unsupported efforts, manual locks, policy ceilings,
 one-change-per-turn enforcement, restart behavior, and next-turn application.
+
+The implementation registers the closed `quireforge_model_selector` dynamic
+tool, keeps exact request/thread/turn/call correlation native, stages a valid
+request only after successful turn completion, persists bounded policy and
+provenance separately from the effective choice, and revalidates immediately
+before resume. Strict schema-v3 conversation/session contracts and the
+`model_selection_update` command expose only app-owned state. The responsive UI
+shows effective versus pending selection, provenance and rationale, manual
+override, recommendation acceptance/dismissal, automatic allowlists/ceilings,
+and the user lock. Registration rejection produces an explicit
+recommendation-only state. See
+[ADR 0026](DECISIONS/0026-policy-bounded-next-turn-selection.md).
 
 ### 19 — Security, Accessibility, and Performance Hardening
 

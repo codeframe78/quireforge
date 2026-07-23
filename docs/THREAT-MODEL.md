@@ -10,6 +10,9 @@ Milestone 12 native PTY controls applied, plus Milestones 13–14C normalized
 integration discovery, mutation, authorization, and prompt-mention controls.
 Milestones 15A–15C additionally apply bounded preview, conversation-image
 staging, reviewed desktop-handoff, and privacy-safe notification controls.
+Milestone 18 applies app-owned next-turn selector policy, provenance,
+completion-time staging, fresh-catalog revalidation, and visible degradation
+controls.
 It must be revisited before packaging and release milestones or any expansion
 of the supported integration-management surface.
 
@@ -214,6 +217,12 @@ Controls:
   Codex-owned configuration as selector metadata.
 - Degrade to recommendation-only behavior when the installed app-server does
   not expose a validated control lifecycle.
+- Keep exact dynamic-tool request, thread, turn, and call identity native; React
+  receives only a schema-versioned effective/pending projection and submits only
+  an opaque app conversation ID plus closed policy fields.
+- Commit a Codex request to metadata only after successful turn completion.
+  Interrupted, blocked, or failed turns do not leave a fabricated pending
+  selection.
 
 ### Authentication and secret leakage
 

@@ -86,6 +86,14 @@ plugins through stable `plugin/read`. React receives only a normalized plugin
 reference, bounded inert prompt preview, truncation state, and typed schedule.
 Marketplace roots stay native-only, and QuireForge exposes no task creation,
 editing, enablement, execution, pause, or deletion control.
+Milestone 18 adds app-owned model and reasoning ownership for the next turn.
+Codex can inspect only a normalized catalog and may make at most one bounded
+request per turn. Manual and locked modes reject that request, Recommend mode
+requires explicit acceptance, and Automatic mode requires a user-selected
+allowlist or reasoning ceiling. Effective and pending choices, provenance, and
+rationale remain visibly distinct; every pending choice is refreshed and
+revalidated before the next `turn/start`, and registration failure degrades
+honestly without web automation or Codex configuration edits.
 Milestone 15A adds a native-selected safe file-preview surface. Rust revalidates
 the selected project attachment and file identity, keeps absolute paths native,
 and sends React only bounded normalized UTF-8 text, PNG/JPEG data, or
@@ -148,17 +156,18 @@ install yet. The repository and development activity remain private.
 - Current milestone: Milestone 15 is implemented and verified locally, the
   Webuzo-hosted static website is complete through production Milestone 16,
   and Milestone 17A's read-only scheduled task catalog is implemented and
-  verified locally.
+  verified locally. Milestone 18's policy-bounded next-turn model selector is
+  also implemented and verified locally.
   Native Wayland evidence covers project, file, and image pickers, bounded
   preview, a real Nautilus image drop, and fixed-copy notification delivery;
   complete XWayland and true-X11 handoff paths remain separately recorded.
   Scheduled-task management/execution and other unsupported advanced features
   remain deferred. Unsupported generic openers, generic file attachments, and
   integration-management paths remain unavailable.
-- Known limitations: Codex-directed model/reasoning selection is not yet
-  implemented and is deferred to Milestone 18 after its integration and
-  advanced-feature prerequisites; the current turn cannot replace its own
-  executing model. Concurrency is capped at four active worktree tasks; durable
+- Known limitations: Agent-directed selection can affect only the next turn,
+  requires the reviewed app-server lifecycle, and degrades when registration is
+  unavailable; the current turn cannot replace its own executing model.
+  Concurrency is capped at four active worktree tasks; durable
   task recovery, automatic conflict resolution, attached-worktree cleanup,
   force/prune workflows, advanced remote operations, installable packages,
   and releases do not exist yet.

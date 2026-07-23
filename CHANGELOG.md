@@ -306,6 +306,13 @@ released a usable application.
   and a responsive accessible Scheduled workspace with no create, edit, enable,
   run, pause, or delete controls. Deterministic native/component/browser tests
   use no personal plugin state and perform no task mutation or execution.
+- Milestone 18 app-owned next-turn model selection: a migrated metadata policy,
+  closed dynamic-tool registration and correlated response lifecycle, strict
+  Manual/Recommend/Automatic modes, user lock, allowlists and reasoning
+  ceilings, completion-time staging, restart-safe bounded provenance, fresh
+  resume revalidation, typed IPC, and responsive effective/pending controls.
+  Registration rejection degrades visibly without private endpoints, website
+  automation, Codex configuration edits, credentials, or billable test calls.
 
 ### Changed
 
@@ -313,11 +320,9 @@ released a usable application.
   `thread/start` registration and correlated `item/tool/call` requests, giving
   Milestone 18 a supported next-turn control dependency without web automation,
   private endpoints, or mid-turn model replacement.
-- Reserved Milestone 18 for app-owned, policy-bounded Codex selection of the
-  next turn's model and reasoning level, after integration discovery and the
-  intervening product milestones. Integration discovery remains Milestone 13;
-  this sequencing change does not modify the current runtime, Codex
-  configuration, credentials, or model selection.
+- Completed the previously reserved Milestone 18 scope after integration
+  discovery and the intervening product milestones, without modifying Codex
+  configuration or credentials.
 - Selected GLib's local filesystem backend at Linux process startup when the
   caller has not provided an override, preventing harmless GVFS activation
   warnings when the optional user service is masked.

@@ -497,8 +497,8 @@ The implemented compatibility boundary consists of:
 - `ConversationRegistrySnapshot`: strict active-only capacity/task projection
   with no event replay or native identity.
 
-Milestone 18 plans a `ModelSelectionService` inside this boundary after
-Milestone 13 validates the required app-server lifecycle. The service owns the
+Milestone 18 implements `ModelSelectionService` inside this boundary using the
+Milestone 13 validated app-server lifecycle. The service owns the
 normalized catalog, current effective selection, one pending next-turn
 selection, selector-ownership policy, and bounded provenance. A Codex request
 can only stage a change after native revalidation; the current turn continues
@@ -506,9 +506,13 @@ on its existing model, and the pending value is applied only when constructing
 the next `turn/start`. React cannot submit an unadvertised model, private model
 identifier, raw protocol payload, or direct configuration edit.
 
-Later milestones extend recovery, approvals, and presentation without bypassing
-this normalization layer. Generated schemas and sanitized fixtures drive
-contract tests.
+Registration rejection retries the thread without the dynamic tool and exposes
+recommendation-only availability. Conversation and session schema version 3
+carry a schema-versioned selector snapshot, while `model_selection_update`
+accepts only an opaque conversation ID, reviewed choice, closed policy, and
+pending action. Later milestones extend hardening without bypassing this
+normalization layer. Generated schemas and sanitized fixtures drive contract
+tests.
 
 ## Required service boundaries
 
@@ -647,12 +651,14 @@ unrelated catalog categories. QuireForge does not persist or execute task
 prompts and implements no local or hosted scheduler. See
 [ADR 0025](DECISIONS/0025-read-only-scheduled-task-catalog.md).
 
-The future app-owned dynamic-tool boundary registers a closed schema through
+The implemented app-owned dynamic-tool boundary registers a closed schema through
 `thread/start`, accepts only the correlated `item/tool/call` server request,
 and returns a bounded response. Registration, invocation, and response IDs are
-native-owned. Milestone 13A marks the lifecycle contract-only; Milestone 18 may
-use it to stage a policy-valid model choice for the next turn, never to replace
-the executing turn's model.
+native-owned. Milestone 13A established the lifecycle contract; Milestone 18
+uses it to stage a policy-valid model choice only after successful turn
+completion and to apply it after a fresh catalog check on the next turn, never
+to replace the executing turn's model. See
+[ADR 0026](DECISIONS/0026-policy-bounded-next-turn-selection.md).
 
 ## Project and directory data model
 

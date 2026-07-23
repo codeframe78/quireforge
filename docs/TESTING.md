@@ -435,7 +435,7 @@ true X11 remain accurately distinguished.
 - Make no personal plugin/account read, task mutation, task execution, hosted
   scheduler request, official-client automation, or billable model call.
 
-## Planned manual Milestone 18 checklist
+## Milestone 18 acceptance checklist
 
 - Use deterministic mock catalogs and control requests; do not make a live or
   billable model call during routine verification.
@@ -457,6 +457,16 @@ true X11 remain accurately distinguished.
 - Run against a fixture where the supported control lifecycle is unavailable.
   Confirm honest recommendation-only behavior and no web automation, private
   endpoint, or fabricated success.
+
+Automated Rust coverage exercises closed dynamic-tool parsing, exact
+correlation, Manual/Recommend/Automatic policy, lock/allowlist/ceiling
+precedence, one request per turn, completion-time staging, migration/restart
+persistence, stale-choice discard, fresh next-turn application, and
+registration rejection. TypeScript/component/browser coverage validates strict
+schema-v3 IPC, provenance, effective versus pending presentation,
+recommendation acceptance/dismissal, automatic opt-in limits, lock controls,
+desktop/mobile overflow, and axe-core accessibility. Routine verification uses
+no live turn or personal account mutation.
 
 ## Manual Milestone 12 checklist
 
