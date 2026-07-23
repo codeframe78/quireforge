@@ -107,7 +107,7 @@ export function FilePreviewWorkspace({
         <div>
           <p className="eyebrow">
             <span />
-            Safe local review and handoff · Milestone 15
+            Safe local review and handoff
           </p>
           <h2 id="file-preview-title">
             Preview a file without widening trust.
@@ -263,7 +263,7 @@ export function FilePreviewWorkspace({
                 PDF recognized; active document rendering is disabled.
               </strong>
               <p>
-                Milestone 15A shows bounded metadata only. The PDF bytes are not
+                QuireForge shows bounded metadata only. The PDF bytes are not
                 embedded in the privileged webview, so scripts, links, forms,
                 and remote resources cannot execute.
               </p>

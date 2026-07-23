@@ -6,6 +6,7 @@ import integrationControlFixture from "../fixtures/integration-control.json" wit
 import integrationMutationFixture from "../fixtures/integration-mutation.json" with { type: "json" };
 import filePreviewFixture from "../fixtures/file-preview.json" with { type: "json" };
 import conversationAttachmentFixture from "../fixtures/conversation-attachments.json" with { type: "json" };
+import usageFixture from "../fixtures/codex-usage.json" with { type: "json" };
 
 const nativeIntegrationCatalog = {
   ...integrationCatalogFixture,
@@ -183,12 +184,14 @@ const nativeResponses = {
   },
   codex_auth_status: {
     schemaVersion: 1,
-    state: "unauthenticated",
-    accountKind: null,
+    state: "authenticated",
+    accountKind: "chatgpt",
     pendingMethod: null,
     handoff: null,
     diagnosticCode: null,
   },
+  codex_usage_status: usageFixture,
+  codex_usage_refresh: usageFixture,
   file_preview_pick: {
     ...filePreviewFixture,
     projectId: "018f0000-0000-7000-8000-000000000001",
@@ -626,71 +629,54 @@ test("desktop preview renders the honest semantic shell", async ({ page }) => {
 
   expect(response?.ok()).toBe(true);
   await expect(
-    page.getByRole("heading", { name: "A quiet place for ambitious work." }),
-  ).toBeVisible();
-  await expect(page.getByText("No project attached").first()).toBeAttached();
-  await expect(
-    page.getByRole("heading", { name: "Work where your files already live." }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(/cannot open a native folder picker/u),
+    page.getByRole("heading", { name: "Welcome to QuireForge." }),
   ).toBeVisible();
   await expect(
     page.getByText(
-      "Browser preview cannot select or read local project files.",
+      "Native Codex authentication is unavailable in this browser preview.",
     ),
   ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Choose project file" }),
-  ).toBeDisabled();
-  await expect(
-    page.getByText(
-      /Browser preview cannot inspect or create local Git worktrees/u,
-    ),
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      /Browser preview cannot start or simulate a native Linux shell/u,
-    ),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: "Attach local project" }),
-  ).toBeDisabled();
-  await expect(
-    page.getByText("Browser preview", { exact: true }),
-  ).toBeAttached();
-  await expect(
-    page.getByText("Native probe unavailable").first(),
-  ).toBeAttached();
-  await expect(
-    page.getByRole("heading", { name: "Authentication stays with Codex." }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { name: "Start a focused Codex task." }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", {
-      name: "Return to work without copying its history.",
-    }),
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      "Browser preview cannot inspect or simulate native session history.",
-    ),
-  ).toBeVisible();
-  await expect(
-    page.getByText("Browser preview cannot start or simulate a Codex task."),
-  ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start task" })).toBeDisabled();
-  await expect(
-    page.getByText("Native authentication unavailable"),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
+  await expect(page.getByRole("navigation")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start task" })).toHaveCount(0);
   await expect(page.locator("main h1")).toHaveCount(1);
 
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
   expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test("authenticated home shows real usage without milestone labels", async ({
+  page,
+  isMobile,
+}) => {
+  await installNativeFixture(page);
+  await page.goto("/");
+
+  await expect(
+    page.getByRole("heading", { name: "What should we build today?" }),
+  ).toBeVisible();
+  await expect(page.getByText("Codex account connected")).toBeVisible();
+  await expect(page.getByText("73% remaining")).toBeVisible();
+  await expect(page.getByText("44% remaining")).toBeVisible();
+  await expect(page.getByText(/Milestone/u)).toHaveCount(0);
+  if (isMobile) {
+    await expect(
+      page.getByRole("button", { name: /Open terminal/u }),
+    ).toBeEnabled();
+  } else {
+    await expect(page.getByRole("link", { name: "Terminal" })).toHaveAttribute(
+      "href",
+      "#terminal",
+    );
+  }
+
+  await page
+    .getByLabel("Remaining usage")
+    .getByRole("button", { name: "Refresh", exact: true })
+    .click();
+  await expect(page.getByText("73% remaining")).toBeVisible();
 });
 
 test("native session fixture renders grouping, tabs, and bounded controls", async ({
@@ -703,7 +689,12 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
   await expect(
     page.getByText(/Fork of Review lifecycle boundaries/u),
   ).toBeVisible();
-  await page.getByText("Review lifecycle boundaries", { exact: true }).click();
+  await page
+    .locator("#sessions")
+    .getByRole("button", {
+      name: /Review lifecycle boundaries.*Completed/u,
+    })
+    .click();
   await expect(
     page.getByRole("tab", { name: "Review lifecycle boundaries" }),
   ).toHaveAttribute("aria-selected", "true");
@@ -716,7 +707,9 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
   ).toBeVisible();
   await page.getByRole("button", { name: "Dismiss" }).click();
   await expect(page.getByText("No change")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Resume" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Resume", exact: true }),
+  ).toBeDisabled();
   await expect(
     page.getByRole("heading", { name: "A real shell, rooted where you work." }),
   ).toBeVisible();
@@ -1113,6 +1106,7 @@ test("keyboard users can bypass navigation and use semantic workspace links", as
   page,
   isMobile,
 }) => {
+  await installNativeFixture(page);
   await page.goto("/");
 
   const skipLink = page.getByRole("link", { name: "Skip to workspace" });
@@ -1125,7 +1119,7 @@ test("keyboard users can bypass navigation and use semantic workspace links", as
 
   if (isMobile) return;
 
-  const terminalLink = page.getByRole("link", { name: /Terminal\s*M12/u });
+  const terminalLink = page.getByRole("link", { name: "Terminal" });
   await expect(terminalLink).toHaveAttribute("href", "#terminal");
   await terminalLink.focus();
   await page.keyboard.press("Enter");
@@ -1174,7 +1168,7 @@ test("reduced-motion preference disables animation and scripted smooth scrolling
 
   if (isMobile) return;
 
-  const newThread = page.getByRole("button", { name: "New thread" });
+  const newThread = page.getByRole("button", { name: /New task/u });
   await expect(newThread).toBeEnabled();
   await newThread.click();
   const behaviors = await page.evaluate(

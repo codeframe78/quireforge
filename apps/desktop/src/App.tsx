@@ -8,13 +8,16 @@ import {
 } from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
+import { AuthGate } from "./AuthGate";
 import { ConversationWorkspace } from "./ConversationWorkspace";
 import { FilePreviewWorkspace } from "./FilePreviewWorkspace";
 import { GitWorkspace } from "./GitWorkspace";
+import { HomeDashboard } from "./HomeDashboard";
 import { IntegrationCenter } from "./IntegrationCenter";
 import { ProjectWorkspace } from "./ProjectWorkspace";
 import { ScheduledWorkspace } from "./ScheduledWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
+import { UsagePanel } from "./UsagePanel";
 import {
   WorktreeWorkspace,
   type WorktreeExecutionView,
@@ -38,6 +41,7 @@ import {
   loadConversationStatus,
   loadConversationSessions,
   loadCodexRuntime,
+  loadCodexUsage,
   loadDesktopBootstrap,
   loadGitDiff,
   loadGitStatus,
@@ -61,6 +65,7 @@ import {
   refreshIntegrationCatalog as refreshIntegrationCatalogNative,
   pollConversation,
   refreshCodexAuth,
+  refreshCodexUsage,
   recoverGitMutation,
   restoreConversation,
   resumeConversation,
@@ -95,6 +100,7 @@ import {
   type CodexAuthSnapshot,
 } from "./lib/auth";
 import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
+import { scaffoldCodexUsage, type CodexUsageSnapshot } from "./lib/usage";
 import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
 import {
   scaffoldFilePreview,
@@ -191,6 +197,7 @@ type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
 type TerminalViewState = "checking" | "native" | "preview";
 type IntegrationViewState = "checking" | "native" | "preview";
+type UsageViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -202,6 +209,8 @@ interface AppProps {
   cancelAuth?: () => Promise<CodexAuthSnapshot>;
   logoutAuth?: () => Promise<CodexAuthSnapshot>;
   openAuthBrowser?: () => Promise<void>;
+  loadUsage?: () => Promise<CodexUsageSnapshot>;
+  refreshUsage?: () => Promise<CodexUsageSnapshot>;
   loadProjects?: () => Promise<ProjectWorkspaceSnapshot>;
   pickProject?: () => Promise<ProjectWorkspaceSnapshot>;
   pickRelink?: (projectId: string) => Promise<ProjectWorkspaceSnapshot>;
@@ -341,60 +350,54 @@ interface TrackedConversation {
 
 const navigation = [
   {
-    label: "Workspace",
-    milestone: 3,
+    label: "Home",
     icon: "grid",
-    target: "workspace-top",
-    ready: true,
+    target: "home",
   },
   {
-    label: "Files",
-    milestone: 15,
+    label: "New task",
+    icon: "plus",
+    target: "conversation",
+  },
+  {
+    label: "Projects",
     icon: "folder",
-    target: "files",
-    ready: true,
-  },
-  {
-    label: "Changes",
-    milestone: 10,
-    icon: "git",
-    target: "changes",
-    ready: true,
-  },
-  {
-    label: "Worktrees",
-    milestone: 11,
-    icon: "git",
-    target: "worktrees",
-    ready: true,
-  },
-  {
-    label: "Terminal",
-    milestone: 12,
-    icon: "terminal",
-    target: "terminal",
-    ready: true,
+    target: "projects",
   },
   {
     label: "Threads",
-    milestone: 8,
     icon: "thread",
     target: "sessions",
-    ready: true,
-  },
-  {
-    label: "Integrations",
-    milestone: 14,
-    icon: "blocks",
-    target: "integrations",
-    ready: true,
   },
   {
     label: "Scheduled",
-    milestone: 17,
     icon: "clock",
     target: "scheduled",
-    ready: true,
+  },
+  {
+    label: "Integrations",
+    icon: "blocks",
+    target: "integrations",
+  },
+  {
+    label: "Files",
+    icon: "folder",
+    target: "files",
+  },
+  {
+    label: "Changes",
+    icon: "git",
+    target: "changes",
+  },
+  {
+    label: "Worktrees",
+    icon: "git",
+    target: "worktrees",
+  },
+  {
+    label: "Terminal",
+    icon: "terminal",
+    target: "terminal",
   },
 ] as const;
 
@@ -514,6 +517,8 @@ export default function App({
   cancelAuth = cancelCodexAuth,
   logoutAuth = logoutCodexAuth,
   openAuthBrowser = openCodexAuthBrowser,
+  loadUsage = loadCodexUsage,
+  refreshUsage = refreshCodexUsage,
   loadProjects = loadProjectWorkspace,
   pickProject = pickProjectDirectory,
   pickRelink = pickProjectRelink,
@@ -580,6 +585,9 @@ export default function App({
   const [authBusy, setAuthBusy] = useState(false);
   const [authActionError, setAuthActionError] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [usage, setUsage] = useState<CodexUsageSnapshot>(scaffoldCodexUsage);
+  const [usageState, setUsageState] = useState<UsageViewState>("checking");
+  const [usageBusy, setUsageBusy] = useState(false);
   const [projects, setProjects] = useState<ProjectWorkspaceSnapshot>(
     scaffoldProjectWorkspace,
   );
@@ -679,6 +687,8 @@ export default function App({
     null,
   );
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const accessGranted =
+    authState === "authenticated" || authState === "not-required";
 
   useEffect(() => {
     let active = true;
@@ -732,6 +742,25 @@ export default function App({
   }, [loadAuth]);
 
   useEffect(() => {
+    if (!accessGranted) return;
+    let active = true;
+    void loadUsage()
+      .then((result) => {
+        if (!active) return;
+        setUsage(result);
+        setUsageState("native");
+      })
+      .catch(() => {
+        if (active) setUsageState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [accessGranted, loadUsage]);
+
+  useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadProjects()
       .then((result) => {
@@ -746,9 +775,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadProjects]);
+  }, [accessGranted, loadProjects]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadConversation()
       .then((result) => {
@@ -770,9 +800,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadConversation]);
+  }, [accessGranted, loadConversation]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadActiveConversationTasks()
       .then((registry) => {
@@ -794,9 +825,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadActiveConversationTasks]);
+  }, [accessGranted, loadActiveConversationTasks]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     if (projectState === "checking") return;
     let active = true;
     const resetReview = (state: GitViewState) => {
@@ -854,9 +886,16 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadGitStatusTask, projectState, projects, selectedProjectId]);
+  }, [
+    accessGranted,
+    loadGitStatusTask,
+    projectState,
+    projects,
+    selectedProjectId,
+  ]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     if (projectState === "checking") return;
     let active = true;
     const resetWorktrees = (state: WorktreeViewState) => {
@@ -909,9 +948,16 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadWorktreesTask, projectState, projects, selectedProjectId]);
+  }, [
+    accessGranted,
+    loadWorktreesTask,
+    projectState,
+    projects,
+    selectedProjectId,
+  ]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadSessions({ projectId: null, searchTerm: null })
       .then((result) => {
@@ -926,9 +972,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadSessions]);
+  }, [accessGranted, loadSessions]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadTerminalsTask()
       .then((result) => {
@@ -943,9 +990,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadTerminalsTask]);
+  }, [accessGranted, loadTerminalsTask]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadIntegrationCatalogTask()
       .then((result) => {
@@ -960,7 +1008,7 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadIntegrationCatalogTask]);
+  }, [accessGranted, loadIntegrationCatalogTask]);
 
   useEffect(() => {
     if (authState !== "login-pending") return;
@@ -1217,6 +1265,19 @@ export default function App({
 
   function beginLogin(method: AuthLoginMethod) {
     void applyAuthAction(() => startAuth(method), true);
+  }
+
+  async function refreshUsageStatus() {
+    setUsageBusy(true);
+    try {
+      const result = await refreshUsage();
+      setUsage(result);
+      setUsageState("native");
+    } catch {
+      setUsageState("preview");
+    } finally {
+      setUsageBusy(false);
+    }
   }
 
   function discardConversationAttachmentDraft() {
@@ -2087,6 +2148,27 @@ export default function App({
     }
   }
 
+  if (!accessGranted) {
+    return (
+      <AuthGate
+        state={authState}
+        snapshot={auth}
+        busy={authBusy}
+        actionError={authActionError}
+        cliVersion={runtime.cliVersion}
+        theme={theme}
+        onThemeChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onStart={beginLogin}
+        onOpenBrowser={() => {
+          setAuthActionError(false);
+          void openAuthBrowser().catch(() => setAuthActionError(true));
+        }}
+        onCancel={() => void applyAuthAction(cancelAuth)}
+        onRefresh={() => void applyAuthAction(refreshAuth)}
+      />
+    );
+  }
+
   const currentProject =
     projects.projects.find(
       (project) => project.id === selectedProjectId && !project.archived,
@@ -2144,23 +2226,13 @@ export default function App({
           <img src={brandMark} alt="" className="brand-mark" />
           <div>
             <strong>{bootstrap.product.name}</strong>
-            <span>Linux workspace</span>
+            <span>Codex for Linux</span>
           </div>
         </div>
 
-        <button
-          className="primary-action"
-          type="button"
-          disabled={conversationState !== "native"}
-          onClick={() => scrollToWorkspace("conversation")}
-        >
-          <Glyph name="plus" />
-          New thread
-        </button>
-
         <nav className="primary-nav" aria-label="Primary navigation">
-          <p className="nav-label">Workbench</p>
-          {navigation.map((item, index) => (
+          <p className="nav-label">Main</p>
+          {navigation.slice(0, 6).map((item, index) => (
             <a
               className={`nav-item ${index === 0 ? "nav-item--active" : ""}`}
               href={`#${item.target}`}
@@ -2168,9 +2240,13 @@ export default function App({
             >
               <Glyph name={item.icon} />
               <span>{item.label}</span>
-              {index !== 0 && (
-                <span className="nav-milestone">M{item.milestone}</span>
-              )}
+            </a>
+          ))}
+          <p className="nav-label nav-label--secondary">Workspace</p>
+          {navigation.slice(6).map((item) => (
+            <a className="nav-item" href={`#${item.target}`} key={item.label}>
+              <Glyph name={item.icon} />
+              <span>{item.label}</span>
             </a>
           ))}
         </nav>
@@ -2192,6 +2268,29 @@ export default function App({
           </div>
         </div>
 
+        <UsagePanel
+          snapshot={usage}
+          state={usageState}
+          busy={usageBusy}
+          compact
+          onRefresh={() => void refreshUsageStatus()}
+        />
+
+        <a className="account-summary" href="#account">
+          <span aria-hidden="true">Q</span>
+          <div>
+            <strong>Codex connected</strong>
+            <small>
+              {auth.accountKind === "chatgpt"
+                ? "ChatGPT account"
+                : auth.accountKind === "api-key"
+                  ? "API key"
+                  : "Managed account"}
+            </small>
+          </div>
+          <Glyph name="chevron" />
+        </a>
+
         <div className="sidebar-footer">
           <div className="bridge-status" role="status" aria-live="polite">
             <StatusDot state={bridgeState} />
@@ -2204,15 +2303,11 @@ export default function App({
       <main className="workspace" id="workspace-top" tabIndex={-1}>
         <header className="topbar">
           <div className="breadcrumb" aria-label="Current location">
-            <span>QuireForge</span>
-            <Glyph name="chevron" />
-            <strong>Workspace</strong>
+            <Glyph name="grid" />
+            <strong>Home</strong>
           </div>
           <div className="topbar-actions">
-            <span className="foundation-badge">
-              <Glyph name="shield" />
-              Native Linux beta candidate
-            </span>
+            <span className="foundation-badge">Native Linux</span>
             <button
               className="theme-toggle"
               type="button"
@@ -2227,96 +2322,20 @@ export default function App({
         </header>
 
         <div className="workspace-scroll">
-          <section className="hero" aria-labelledby="workspace-title">
-            <div className="hero-copy">
-              <p className="eyebrow">
-                <span /> Native Linux foundation
-              </p>
-              <h1 id="workspace-title">A quiet place for ambitious work.</h1>
-              <p className="hero-description">
-                Attach an original directory without copying it into QuireForge.
-                Selected and resolved paths are reviewed before app-owned
-                metadata is saved.
-              </p>
-              <div className="hero-actions">
-                <button
-                  className="secondary-action"
-                  type="button"
-                  disabled={
-                    projectState !== "native" ||
-                    projects.state === "unavailable" ||
-                    projectBusy
-                  }
-                  onClick={() => void applyProjectAction(pickProject)}
-                >
-                  <Glyph name="folder" />
-                  Attach a local project
-                  <span>Native picker</span>
-                </button>
-                <a className="text-link" href="#foundation">
-                  Inspect foundation
-                  <Glyph name="chevron" />
-                </a>
-              </div>
-            </div>
-
-            <div
-              className="hero-visual"
-              aria-label="QuireForge foundation status"
-            >
-              <div className="visual-glow" />
-              <div className="terminal-card">
-                <div className="terminal-card__bar">
-                  <div className="window-dots" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <span>quireforge / foundation</span>
-                  <Glyph name="terminal" />
-                </div>
-                <div className="terminal-card__body">
-                  <p>
-                    <span className="prompt">›</span> verify desktop boundary
-                  </p>
-                  <div className="verification-line">
-                    <Glyph name="check" />
-                    <div>
-                      <strong>Identity contract</strong>
-                      <span>io.github.codeframe78.QuireForge</span>
-                    </div>
-                    <em>verified</em>
-                  </div>
-                  <div className="verification-line">
-                    <Glyph name="check" />
-                    <div>
-                      <strong>Typed IPC fixture</strong>
-                      <span>desktop_bootstrap · schema v1</span>
-                    </div>
-                    <em>verified</em>
-                  </div>
-                  <div
-                    className={`verification-line ${runtimeState === "ready" ? "" : "verification-line--planned"}`}
-                  >
-                    {runtimeState === "ready" ? (
-                      <Glyph name="check" />
-                    ) : (
-                      <span className="planned-ring" />
-                    )}
-                    <div>
-                      <strong>Codex process adapter</strong>
-                      <span>
-                        {runtimeState === "ready"
-                          ? `${runtime.adapterVersion} · ${runtime.models.length} models`
-                          : "Supported native interfaces only"}
-                      </span>
-                    </div>
-                    <em>{runtimeLabel}</em>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          <HomeDashboard
+            projects={projects}
+            sessions={sessions}
+            usage={usage}
+            usageState={usageState}
+            usageBusy={usageBusy}
+            onRefreshUsage={() => void refreshUsageStatus()}
+            onNewTask={() => scrollToWorkspace("conversation")}
+            onAttachProject={() => void applyProjectAction(pickProject)}
+            onOpenProjects={() => scrollToWorkspace("projects")}
+            onOpenSessions={() => scrollToWorkspace("sessions")}
+            onOpenIntegrations={() => scrollToWorkspace("integrations")}
+            onOpenTerminal={() => scrollToWorkspace("terminal")}
+          />
 
           <ProjectWorkspace
             availability={projectState}
@@ -2507,7 +2526,11 @@ export default function App({
             onAttachmentCancel={removeConversationAttachment}
           />
 
-          <section className="auth-onboarding" aria-labelledby="auth-title">
+          <section
+            className="auth-onboarding"
+            id="account"
+            aria-labelledby="auth-title"
+          >
             <div className="auth-onboarding__intro">
               <p className="eyebrow">Codex account</p>
               <h2 id="auth-title">Authentication stays with Codex.</h2>
@@ -2529,20 +2552,6 @@ export default function App({
                   <span>Codex CLI {runtime.cliVersion ?? "not detected"}</span>
                 </div>
               </div>
-
-              {authState === "checking" && (
-                <p className="auth-card__copy">
-                  Reading a normalized account status from the local Codex
-                  runtime.
-                </p>
-              )}
-
-              {authState === "preview" && (
-                <p className="auth-card__copy">
-                  Browser preview cannot inspect or simulate a native Codex
-                  account.
-                </p>
-              )}
 
               {authState === "authenticated" && (
                 <>
@@ -2603,106 +2612,12 @@ export default function App({
                 </>
               )}
 
-              {authState === "unauthenticated" && (
-                <>
-                  <p className="auth-card__copy">
-                    Continue in your browser or use an official device code.
-                    Codex hosts the callback and owns the resulting session.
-                  </p>
-                  <div className="auth-actions">
-                    <button
-                      className="auth-button auth-button--primary"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => beginLogin("browser")}
-                    >
-                      <Glyph name="external" />
-                      Continue in browser
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => beginLogin("device-code")}
-                    >
-                      Use a device code
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => void applyAuthAction(refreshAuth)}
-                    >
-                      <Glyph name="refresh" />
-                      Refresh
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {authState === "login-pending" && auth.handoff && (
-                <>
-                  <p className="auth-card__copy">
-                    Complete the official Codex sign-in page. This short-lived
-                    handoff is cleared after completion or cancellation.
-                  </p>
-                  {auth.handoff.userCode && (
-                    <div className="device-code">
-                      <span>One-time device code</span>
-                      <code>{auth.handoff.userCode}</code>
-                    </div>
-                  )}
-                  <div className="auth-actions">
-                    <button
-                      className="auth-button auth-button--primary"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => {
-                        setAuthActionError(false);
-                        void openAuthBrowser().catch(() =>
-                          setAuthActionError(true),
-                        );
-                      }}
-                    >
-                      <Glyph name="external" />
-                      Open sign-in page
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => void applyAuthAction(cancelAuth)}
-                    >
-                      Cancel sign-in
-                    </button>
-                  </div>
-                </>
-              )}
-
               {authState === "not-required" && (
                 <p className="auth-card__copy">
                   The selected Codex provider does not require OpenAI account
                   authentication. QuireForge will continue to defer credential
                   ownership to Codex.
                 </p>
-              )}
-
-              {authState === "unavailable" && (
-                <>
-                  <p className="auth-card__copy">
-                    Authentication could not be verified safely. No raw Codex
-                    error or account metadata was retained.
-                  </p>
-                  <button
-                    className="auth-button auth-button--quiet"
-                    type="button"
-                    disabled={authBusy}
-                    onClick={() => void applyAuthAction(refreshAuth)}
-                  >
-                    <Glyph name="refresh" />
-                    Try again
-                  </button>
-                </>
               )}
 
               {authActionError && (
@@ -2721,12 +2636,12 @@ export default function App({
           >
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Implementation map</p>
-                <h2 id="foundation-title">Foundation, with honest edges.</h2>
+                <p className="eyebrow">System status</p>
+                <h2 id="foundation-title">Ready for local work.</h2>
               </div>
               <p>
-                Each surface reports what exists now and what remains planned.
-                Nothing here fabricates a Codex session or integration.
+                QuireForge reports only capabilities verified through its native
+                boundary. Unavailable services remain visibly disabled.
               </p>
             </div>
 
@@ -2760,7 +2675,7 @@ export default function App({
                               : "Explicit directory selection, identity verification, and in-place local work."}
                   </p>
                   <footer>
-                    <span>Milestone {capability.milestone}</span>
+                    <span>Available</span>
                     <Glyph
                       name={capability.state === "ready" ? "check" : "chevron"}
                     />

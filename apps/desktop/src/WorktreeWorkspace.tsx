@@ -146,7 +146,7 @@ export function WorktreeWorkspace({
     >
       <div className="worktree-workspace__heading">
         <div>
-          <p className="eyebrow">Isolated workspaces · Milestone 11C</p>
+          <p className="eyebrow">Isolated workspaces</p>
           <h2 id="worktrees-title">Give each line of work its own checkout.</h2>
           <p>
             Create or attach isolated projects, run up to four distinct Codex

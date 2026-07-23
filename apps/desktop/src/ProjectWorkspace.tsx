@@ -88,7 +88,11 @@ export function ProjectWorkspace({
   }
 
   return (
-    <section className="project-workspace" aria-labelledby="projects-title">
+    <section
+      className="project-workspace"
+      id="projects"
+      aria-labelledby="projects-title"
+    >
       <div className="project-workspace__heading">
         <div>
           <p className="eyebrow">Local projects</p>
