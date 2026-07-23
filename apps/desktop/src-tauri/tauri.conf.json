@@ -47,13 +47,38 @@
     }
   },
   "bundle": {
-    "active": false,
+    "active": true,
     "targets": ["appimage", "deb"],
+    "publisher": "QuireForge contributors",
+    "homepage": "https://quireforge.jamesjennison.net",
+    "copyright": "Copyright 2026 QuireForge contributors",
+    "license": "Apache-2.0",
+    "licenseFile": "../../../LICENSE",
+    "category": "DeveloperTool",
+    "shortDescription": "An unofficial native Linux workspace for Codex",
+    "longDescription": "QuireForge is an unofficial native Linux workspace for local, observable, and approval-aware Codex workflows. It is not made, endorsed, supported, or distributed by OpenAI.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
       "icons/icon.png"
-    ]
+    ],
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false,
+        "files": {
+          "/quireforge.png": "icons/icon.png",
+          "/usr/share/metainfo/io.github.codeframe78.QuireForge.metainfo.xml": "metainfo/io.github.codeframe78.QuireForge.metainfo.xml"
+        }
+      },
+      "deb": {
+        "section": "devel",
+        "priority": "optional",
+        "desktopTemplate": "desktop-template.desktop",
+        "files": {
+          "/usr/share/metainfo/io.github.codeframe78.QuireForge.metainfo.xml": "metainfo/io.github.codeframe78.QuireForge.metainfo.xml"
+        }
+      }
+    }
   }
 }

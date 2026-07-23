@@ -1,3 +1,5 @@
+import { downloadAvailability } from "./downloads";
+
 export const site = {
   name: "QuireForge",
   tagline: "Build boldly. Work locally.",
@@ -167,7 +169,7 @@ export const sitePages: SitePage[] = [
     title: "Packages will arrive after the application earns them.",
     description:
       "QuireForge has no public or supported download. AppImage and Debian packages remain planned for a later, separately approved release milestone.",
-    status: "No downloads available",
+    status: downloadAvailability.statusLabel,
     sections: [
       {
         heading: "Planned formats",

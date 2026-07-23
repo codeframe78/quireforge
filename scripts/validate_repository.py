@@ -15,6 +15,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parent.parent
+TAURI_VERSION_RE = re.compile(
+    r'(?ms)^\[package\]\s.*?^version\s*=\s*"([^"]+)"'
+)
 
 REQUIRED_PATHS = (
     ".editorconfig",
@@ -31,6 +34,7 @@ REQUIRED_PATHS = (
     ".github/PULL_REQUEST_TEMPLATE.md",
     ".github/dependabot.yml",
     ".github/workflows/repository-checks.yml",
+    ".github/workflows/linux-release.yml",
     ".npmrc",
     "Cargo.lock",
     "Cargo.toml",
@@ -41,6 +45,7 @@ REQUIRED_PATHS = (
     "apps/website/package.json",
     "apps/website/public/.htaccess",
     "apps/website/src/data/site.ts",
+    "apps/website/src/data/downloads.ts",
     "apps/website/src/pages/404.astro",
     "apps/website/src/pages/index.astro",
     "apps/desktop/fixtures/desktop-bootstrap.json",
@@ -148,6 +153,8 @@ REQUIRED_PATHS = (
     "apps/desktop/src-tauri/Cargo.toml",
     "apps/desktop/src-tauri/capabilities/main.json",
     "apps/desktop/src-tauri/tauri.conf.json",
+    "apps/desktop/src-tauri/desktop-template.desktop",
+    "apps/desktop/src-tauri/metainfo/io.github.codeframe78.QuireForge.metainfo.xml",
     "apps/desktop/src-tauri/src/codex/app_server.rs",
     "apps/desktop/src-tauri/src/codex/integration.rs",
     "apps/desktop/src-tauri/src/codex/integration_control.rs",
@@ -179,6 +186,8 @@ REQUIRED_PATHS = (
     "docs/LOCAL-BUILD-PERFORMANCE.md",
     "docs/MILESTONE-FORECASTS.md",
     "docs/MILESTONE_19_HARDENING.md",
+    "docs/MILESTONE_20_PACKAGING.md",
+    "docs/RELEASING.md",
     "docs/MILESTONE_16A_WEBSITE_RECONCILIATION.md",
     "docs/ROADMAP.md",
     "docs/TESTING.md",
@@ -200,6 +209,15 @@ REQUIRED_PATHS = (
     "docs/MILESTONE_16C_PRODUCTION_ACTIVATION.md",
     "docs/MILESTONE_16D_AUTOMATIC_SSL.md",
     "scripts/generate_codex_schema_fixtures.py",
+    "scripts/fetch_tauri_linux_tools.py",
+    "scripts/package_linux.py",
+    "scripts/release_contract.py",
+    "scripts/run_linux_package_container.sh",
+    "scripts/tests/test_package_contract.py",
+    "scripts/validate_release_artifacts.py",
+    "packaging/linux/Dockerfile",
+    "packaging/linux/tauri-tools.json",
+    "packaging/release-manifest.schema.json",
 )
 
 IDENTITY_EXPECTATIONS = {
@@ -555,8 +573,111 @@ def validate() -> list[str]:
         }
         if security.get("headers") != expected_headers:
             errors.append("desktop security response headers must match the reviewed set")
-        if tauri_config.get("bundle", {}).get("active") is not False:
-            errors.append("desktop packaging must remain disabled before release work")
+        bundle = tauri_config.get("bundle", {})
+        if bundle.get("active") is not True:
+            errors.append("desktop packaging must remain active after Milestone 20")
+        if bundle.get("targets") != ["appimage", "deb"]:
+            errors.append("desktop package targets must remain AppImage and Debian")
+        expected_bundle_metadata = {
+            "publisher": "QuireForge contributors",
+            "homepage": "https://quireforge.jamesjennison.net",
+            "license": "Apache-2.0",
+            "licenseFile": "../../../LICENSE",
+            "category": "DeveloperTool",
+            "shortDescription": "An unofficial native Linux workspace for Codex",
+        }
+        for field, expected in expected_bundle_metadata.items():
+            if bundle.get(field) != expected:
+                errors.append(f"desktop bundle {field} must match the release contract")
+        linux_bundle = bundle.get("linux", {})
+        if linux_bundle.get("deb", {}).get("desktopTemplate") != (
+            "desktop-template.desktop"
+        ):
+            errors.append("Debian bundles must use the reviewed desktop template")
+        if linux_bundle.get("appimage", {}).get("files", {}).get(
+            "/quireforge.png"
+        ) != "icons/icon.png":
+            errors.append("AppImage bundles must retain the canonical root icon")
+
+    version_paths = (
+        ROOT / "package.json",
+        ROOT / "apps/desktop/package.json",
+        ROOT / "apps/website/package.json",
+    )
+    if all(path.is_file() for path in version_paths) and TAURI_VERSION_RE.search(
+        (ROOT / "apps/desktop/src-tauri/Cargo.toml").read_text(encoding="utf-8")
+    ):
+        versions = {
+            json.loads(path.read_text(encoding="utf-8")).get("version")
+            for path in version_paths
+        }
+        cargo_version = TAURI_VERSION_RE.search(
+            (ROOT / "apps/desktop/src-tauri/Cargo.toml").read_text(
+                encoding="utf-8"
+            )
+        ).group(1)
+        versions.add(cargo_version)
+        if len(versions) != 1:
+            errors.append("root, desktop, website, and Cargo versions must match")
+
+    dockerfile_path = ROOT / "packaging/linux/Dockerfile"
+    if dockerfile_path.is_file():
+        dockerfile = dockerfile_path.read_text(encoding="utf-8")
+        from_lines = re.findall(r"(?m)^FROM\s+(.+)$", dockerfile)
+        if len(from_lines) != 3 or any(
+            not re.search(r"@sha256:[0-9a-f]{64}(?:\s+AS\s+\w+)?$", line)
+            for line in from_lines
+        ):
+            errors.append("packaging container images must use immutable digests")
+
+    tool_manifest_path = ROOT / "packaging/linux/tauri-tools.json"
+    if tool_manifest_path.is_file():
+        tool_manifest = json.loads(tool_manifest_path.read_text(encoding="utf-8"))
+        tools = tool_manifest.get("tools", [])
+        if tool_manifest.get("schemaVersion") != 1 or len(tools) != 6:
+            errors.append("Tauri Linux tool manifest must contain the reviewed set")
+        for tool in tools:
+            url = tool.get("url", "")
+            digest = tool.get("sha256", "")
+            if (
+                not isinstance(url, str)
+                or not url.startswith("https://")
+                or re.search(r"https://[^/]*@", url)
+                or not re.fullmatch(r"[0-9a-f]{64}", str(digest))
+            ):
+                errors.append("Tauri Linux tool source or checksum is invalid")
+
+    release_workflow_path = ROOT / ".github/workflows/linux-release.yml"
+    if release_workflow_path.is_file():
+        release_workflow = release_workflow_path.read_text(encoding="utf-8")
+        required_release_controls = (
+            "workflow_dispatch:",
+            "permissions:\n  contents: read",
+            "inputs.operation == 'publish-approved-beta'",
+            "inputs.publication-confirmation == 'PUBLISH-QUIREFORGE-BETA'",
+            "startsWith(github.ref, 'refs/tags/v')",
+            "environment: quireforge-release",
+            "attestations: write",
+            "--require-publishable",
+            "--verify-tag",
+        )
+        for control in required_release_controls:
+            if control not in release_workflow:
+                errors.append(f"Linux release workflow is missing guard: {control}")
+        if "pull_request_target:" in release_workflow:
+            errors.append("Linux release workflow must never use pull_request_target")
+
+    downloads_path = ROOT / "apps/website/src/data/downloads.ts"
+    if downloads_path.is_file():
+        downloads = downloads_path.read_text(encoding="utf-8")
+        required_inactive_downloads = (
+            'state: "unavailable"',
+            "release: null",
+            'plannedFormats: ["appimage", "deb"]',
+        )
+        for marker in required_inactive_downloads:
+            if marker not in downloads:
+                errors.append(f"website download data must remain inactive: {marker}")
 
     schema_root = ROOT / "apps/desktop/fixtures/codex-schema/0.144.6"
     manifest_path = schema_root / "manifest.json"

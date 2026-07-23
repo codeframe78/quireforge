@@ -1,0 +1,10 @@
+[Desktop Entry]
+Categories=Development;IDE;
+Comment={{comment}}
+Exec={{exec}}
+StartupWMClass=quireforge
+Icon={{icon}}
+Name={{name}}
+StartupNotify=true
+Terminal=false
+Type=Application

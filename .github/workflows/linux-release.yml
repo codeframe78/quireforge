@@ -1,0 +1,94 @@
+name: Linux release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Build only, or publish a separately approved tagged beta
+        required: true
+        default: verify-only
+        type: choice
+        options:
+          - verify-only
+          - publish-approved-beta
+      publication-confirmation:
+        description: Enter PUBLISH-QUIREFORGE-BETA only after publication approval
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: linux-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build and validate Ubuntu 22.04 packages
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Build in the pinned Ubuntu 22.04 container
+        run: bash scripts/run_linux_package_container.sh
+
+      - name: Upload review artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: quireforge-linux-${{ github.sha }}
+          path: target/ubuntu-22.04/release/packages/
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish approved tagged beta
+    if: >-
+      inputs.operation == 'publish-approved-beta' &&
+      inputs.publication-confirmation == 'PUBLISH-QUIREFORGE-BETA' &&
+      startsWith(github.ref, 'refs/tags/v')
+    needs: package
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    environment: quireforge-release
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Download reviewed artifacts
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        with:
+          name: quireforge-linux-${{ github.sha }}
+          path: target/ubuntu-22.04/release/packages/
+
+      - name: Restore AppImage execution mode
+        run: chmod 0755 target/ubuntu-22.04/release/packages/*.AppImage
+
+      - name: Revalidate publication boundary
+        run: >-
+          python3 scripts/validate_release_artifacts.py
+          --artifact-dir target/ubuntu-22.04/release/packages
+          --require-publishable
+          --expected-tag "${GITHUB_REF_NAME}"
+
+      - name: Attest checksummed release subjects
+        uses: actions/attest@a1948c3f048ba23858d222213b7c278aabede763 # v4.1.1
+        with:
+          subject-checksums: target/ubuntu-22.04/release/packages/SHA256SUMS
+
+      - name: Publish the approved prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "${GITHUB_REF_NAME}"
+          target/ubuntu-22.04/release/packages/*
+          --generate-notes
+          --prerelease
+          --title "QuireForge ${GITHUB_REF_NAME}"
+          --verify-tag

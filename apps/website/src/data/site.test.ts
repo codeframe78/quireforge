@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { downloadAvailability } from "./downloads";
 import { footerNavigation, requiredPageSlugs, site, sitePages } from "./site";
 
 describe("site information architecture", () => {
@@ -58,5 +59,17 @@ describe("site information architecture", () => {
     expect(site.name).toBe("QuireForge");
     expect(site.tagline).toBe("Build boldly. Work locally.");
     expect(site.origin).toBe("https://quireforge.jamesjennison.net");
+  });
+
+  it("keeps package download data inactive before publication approval", () => {
+    expect(downloadAvailability).toEqual({
+      schemaVersion: 1,
+      state: "unavailable",
+      statusLabel: "No downloads available",
+      release: null,
+      plannedFormats: ["appimage", "deb"],
+    });
+    expect(JSON.stringify(downloadAvailability)).not.toContain("https://");
+    expect(JSON.stringify(downloadAvailability)).not.toMatch(/[0-9a-f]{64}/);
   });
 });

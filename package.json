@@ -1,6 +1,6 @@
 {
   "name": "quireforge",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "description": "QuireForge — an unofficial native Linux workspace for Codex.",
   "license": "Apache-2.0",
@@ -21,6 +21,9 @@
     "format": "pnpm -r --if-present format && cargo fmt --all",
     "format:check": "pnpm -r --if-present format:check && cargo fmt --all --check",
     "lint": "pnpm -r --if-present lint",
+    "package:linux": "python3 scripts/fetch_tauri_linux_tools.py && pnpm --filter @quireforge/desktop tauri build --bundles deb,appimage && python3 scripts/package_linux.py",
+    "package:test": "python3 -m unittest discover -s scripts/tests -p 'test_package_*.py'",
+    "package:validate": "python3 scripts/validate_release_artifacts.py",
     "preview": "pnpm --filter @quireforge/website preview",
     "rust:check": "cargo check --locked --workspace",
     "rust:clippy": "cargo clippy --locked --workspace --all-targets -- -D warnings",
@@ -30,7 +33,7 @@
     "security:audit:rust": "cargo audit --deny warnings",
     "test": "pnpm -r --if-present test",
     "test:e2e": "pnpm -r --if-present test:e2e",
-    "validate": "python3 scripts/validate_repository.py && pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm validate:dist && pnpm rust:check && pnpm rust:clippy && pnpm rust:test",
+    "validate": "python3 scripts/validate_repository.py && pnpm package:test && pnpm check && pnpm lint && pnpm format:check && pnpm test && pnpm build && pnpm validate:dist && pnpm rust:check && pnpm rust:clippy && pnpm rust:test",
     "validate:dist": "pnpm --filter @quireforge/website validate:dist && pnpm --filter @quireforge/desktop validate:dist"
   }
 }

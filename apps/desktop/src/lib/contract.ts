@@ -16,7 +16,7 @@ export const desktopBootstrapSchema = z.object({
     description: z.literal("An unofficial native Linux workspace for Codex"),
     identifier: z.literal("io.github.codeframe78.QuireForge"),
     executable: z.literal("quireforge"),
-    version: z.string().regex(/^\d+\.\d+\.\d+$/u),
+    version: z.string().regex(/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/u),
   }),
   capabilities: z.array(capabilitySchema).min(1),
 });

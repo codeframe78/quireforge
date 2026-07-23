@@ -2211,7 +2211,7 @@ export default function App({
           <div className="topbar-actions">
             <span className="foundation-badge">
               <Glyph name="shield" />
-              Milestone 12 integrated terminal
+              Native Linux beta candidate
             </span>
             <button
               className="theme-toggle"
