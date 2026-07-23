@@ -7,6 +7,17 @@ released a usable application.
 
 ### Added
 
+- Milestone 20 local Linux packaging for `0.1.0-beta.1`: normalized x86_64
+  AppImage and Debian candidates, canonical desktop/AppStream metadata,
+  checksums, a strict release manifest, and an Ubuntu 22.04 baseline container
+  with digest-pinned Node, Rust, and operating-system inputs.
+- Checksum-pinned Tauri Linux tool acquisition, deterministic package
+  normalization, GLIBC-baseline and metadata inspection, disposable
+  install/upgrade/uninstall preservation tests, isolated visible X11 launch
+  probes, and inactive typed website download data.
+- A manual-only, immutable-revision GitHub release workflow with verify-only
+  artifact review and separately gated tag, confirmation, protected
+  environment, clean-source, attestation, and prerelease publication controls.
 - Dedicated repository and an explicit unofficial-project disclaimer.
 - Milestone 0 Codex integration, compatibility, feature-parity, architecture,
   threat-model, GitHub Pages, roadmap, and architecture-decision documentation.

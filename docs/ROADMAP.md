@@ -109,8 +109,8 @@ discovery; scheduling management and execution remain unsupported.
 |        16 | Complete Webuzo-hosted static website                             | Very large   | Complete through 16D; production and automatic origin TLS renewal active |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Complete through 17A locally; management/execution deferred              |
 |        18 | Agent-directed model and reasoning selection                      | Large        | Complete and verified locally; not published                             |
-|        19 | Security, accessibility, and performance hardening                | Very large   | Planned                                                                  |
-|        20 | Packaging and release automation                                  | Large        | Planned                                                                  |
+|        19 | Security, accessibility, and performance hardening                | Very large   | Complete and verified locally                                            |
+|        20 | Packaging and release automation                                  | Large        | Complete and verified locally; not published                             |
 |        21 | Beta package publication and download activation                  | Very large   | Planned/approval-gated                                                   |
 
 ## Milestone definitions
@@ -685,6 +685,20 @@ overlay and enforced generated-asset budgets. See the
 Produce AppImage and Debian packages on an appropriate baseline, checksums,
 release workflows, install/upgrade/uninstall tests, and website download data.
 Do not publish a release without approval.
+
+Complete locally. The `0.1.0-beta.1` x86_64 AppImage and Debian candidates are
+built inside a digest-pinned Ubuntu 22.04 container with Rust 1.95 and Node
+22.22.1 inputs. Tauri's Linux helper downloads are checksum-pinned and verified
+before use; normalized packages have canonical identities, deterministic
+timestamps, an exact release manifest, and `SHA256SUMS`. Structural,
+AppStream, GLIBC 2.35, visible X11 launch, install, upgrade, uninstall, data
+preservation, and repeated-normalization checks pass. The release workflow is
+manual-only, uses immutable Action revisions, uploads review artifacts, and
+requires an exact tag, confirmation phrase, protected environment, clean source
+manifest, attestation, and separately approved publish operation before it can
+create a prerelease. Website download data remains explicitly unavailable.
+See the [Milestone 20 packaging report](MILESTONE_20_PACKAGING.md) and
+[release procedure](RELEASING.md).
 
 ### 21 — Beta Package Publication and Download Activation
 

@@ -27,6 +27,11 @@ Milestone 19 adds Node/Rust dependency audits, immutable-action and
 active-content repository checks, Tauri policy assertions, desktop asset
 budgets, crash-boundary privacy tests, and keyboard/reduced-motion/forced-color
 coverage for desktop and website.
+Milestone 20 adds package-contract unit tests, canonical Debian/AppImage
+inspection, checksum and release-manifest validation, a GLIBC 2.35 ceiling,
+disposable install/upgrade/uninstall preservation checks, isolated visible X11
+launch probes, inactive website-download assertions, and a guarded manual
+release-workflow policy.
 
 ## Repository, website, and desktop checks
 
@@ -71,6 +76,38 @@ pnpm security:audit:rust
 CI installs the pinned RustSec auditor before running both audits. Local
 `cargo-audit` installation is a developer-tool prerequisite, not a project
 runtime dependency.
+
+## Linux package checks
+
+The authoritative candidate gate is:
+
+```bash
+./scripts/run_linux_package_container.sh
+```
+
+It builds in the pinned Ubuntu 22.04 container and runs structural, checksum,
+AppStream, GLIBC, lifecycle, and visible X11 checks for both package formats.
+It uses isolated ignored caches, no personal Codex home or credentials, no live
+model call, no host package installation, and no local Vite server.
+
+The dependency-free source-contract subset is also part of `pnpm validate`:
+
+```bash
+pnpm package:test
+```
+
+For an already produced artifact directory:
+
+```bash
+python3 scripts/validate_release_artifacts.py \
+  --artifact-dir target/ubuntu-22.04/release/packages
+```
+
+`--lifecycle` adds the disposable Debian sequence and `--smoke` adds isolated
+window launches. `--require-publishable` is reserved for the exact clean,
+tagged, pinned-builder publication boundary and also requires
+`--expected-tag`. Routine local dirty builds are intentionally
+`local-candidate` manifests.
 Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
 Git repositories and linked worktrees, duplicate roots, confirmation-time

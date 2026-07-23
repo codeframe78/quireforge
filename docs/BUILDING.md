@@ -1,20 +1,20 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and desktop code through Milestone 15C can be
+Status: the website and desktop code through Milestone 20 can be
 developed and built locally, including Codex/authentication, project and
 conversation lifecycle, reviewed Git/worktree workflows, the native terminal,
 normalized/confirmed integration workflows, bounded project-file previews, and
 private conversation-image attachments, reviewed default-application handoffs,
-and privacy-safe background notifications. Full display-session acceptance is
-tracked separately.
-An installable application package does not yet exist.
+privacy-safe background notifications, policy-bounded next-turn selection,
+hardening, and local Linux packaging. Local installable candidates exist; no
+public release or activated website download exists.
 
 ## Supported development baseline
 
 - Linux development host
 - Node.js `22.12.0` or newer in the Node 22 line
 - pnpm `11.15.0`, as pinned by the root `packageManager` field
-- Rust `1.88` or newer with Cargo, rustfmt, and Clippy
+- Rust `1.95` or newer with Cargo, rustfmt, and Clippy
 - Tauri 2 Linux development packages listed below
 - Python 3 for the dependency-free repository validator
 - Git
@@ -111,6 +111,36 @@ documented default of `false`: the current Vite/React production bundle assigns
 an own `toString` property during startup and otherwise fails before mounting.
 The explicit production CSP, restricted Tauri capability, and narrow typed IPC
 remain the primary webview/native controls.
+
+## Build local Linux package candidates
+
+The authoritative package build uses Docker, not the newer discovery host:
+
+```bash
+./scripts/run_linux_package_container.sh
+```
+
+The script builds the digest-pinned Ubuntu 22.04 image, uses isolated ignored
+caches, fetches only checksum-reviewed Tauri Linux tools, builds both Tauri
+bundles, normalizes their identity and timestamps, and validates metadata,
+checksums, GLIBC 2.35 compatibility, disposable package lifecycle, and visible
+X11 launches. It does not install either package on the host.
+
+Successful candidates are written to:
+
+```text
+target/ubuntu-22.04/release/packages/
+├── QuireForge-0.1.0-beta.1-x86_64.AppImage
+├── quireforge_0.1.0~beta.1_amd64.deb
+├── release-manifest.json
+└── SHA256SUMS
+```
+
+The directory is ignored by Git. A dirty source tree deliberately produces a
+`local-candidate` manifest; only a clean exact-tag build can pass the separate
+publication validator. Building candidates does not authorize a GitHub
+release, website edit, deployment, package installation, or signing action.
+See [Releasing](RELEASING.md) for the guarded handoff.
 
 ### Native-only notification probe
 

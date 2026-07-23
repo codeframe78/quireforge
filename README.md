@@ -122,16 +122,23 @@ one-use default-application handoff for a revalidated preview plus fixed-copy
 background approval/completion/failure notifications. React receives no
 absolute path or notification content input, and generic opener IPC remains
 unavailable. Full Wayland/X11-session acceptance is recorded separately.
+Milestone 20 adds local `0.1.0-beta.1` x86_64 AppImage and Debian release
+candidates built and launched on a pinned Ubuntu 22.04 baseline. Their package
+identity, checksums, GLIBC baseline, install/upgrade/uninstall behavior, and
+data-preserving removal are verified. The manual release workflow remains
+publication-gated, and website download data remains inactive.
 Webuzo is the selected static origin host, with Cloudflare retained as the DNS,
 TLS, and cache edge. The reviewed static site is publicly deployed at
 `https://quireforge.jamesjennison.net` through the approved proxied Cloudflare
-record, with trusted edge and origin TLS. There is no application package to
-install yet. The repository and development activity remain private.
+record, with trusted edge and origin TLS. There is no public application
+download yet. The repository and development activity remain private.
 
 ## Project status
 
-- Supported distributions: none yet; Ubuntu support is being evaluated.
-- Installation: not available before the packaging milestone.
+- Supported distributions: no public support promise yet; the x86_64 package
+  baseline and GLIBC contract are validated on Ubuntu 22.04.
+- Installation: local AppImage and Debian candidates are validated; public
+  download and installation guidance remain Milestone 21 approval gates.
 - Website: the Astro site builds, passes local responsive/accessibility checks,
   and is publicly deployed at `https://quireforge.jamesjennison.net` through
   Webuzo and Cloudflare. Live desktop/mobile accessibility and Lighthouse
@@ -165,6 +172,8 @@ install yet. The repository and development activity remain private.
   checkpoint, plus the Milestone 17A read-only scheduled-template workspace.
   Milestone 18's policy-bounded next-turn selector and Milestone 19's security,
   accessibility, performance, and recovery hardening are complete locally.
+  Milestone 20's package candidates and guarded release automation are also
+  complete and verified locally.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
 - Current milestone: Milestone 15 is implemented and verified locally, the
@@ -172,8 +181,10 @@ install yet. The repository and development activity remain private.
   and Milestone 17A's read-only scheduled task catalog is implemented and
   verified locally. Milestone 18's policy-bounded next-turn model selector is
   also implemented and verified locally. Milestone 19's pre-packaging
-  hardening pass is implemented and verified locally; Milestone 20 packaging
-  and release automation is next and remains separately approval-gated.
+  hardening pass and Milestone 20 packaging/release automation are implemented
+  and verified locally. Milestone 21 beta publication, supported-platform QA,
+  and website download activation are next and remain separately
+  approval-gated.
   Native Wayland evidence covers project, file, and image pickers, bounded
   preview, a real Nautilus image drop, and fixed-copy notification delivery;
   complete XWayland and true-X11 handoff paths remain separately recorded.
@@ -185,7 +196,7 @@ install yet. The repository and development activity remain private.
   unavailable; the current turn cannot replace its own executing model.
   Concurrency is capped at four active worktree tasks; durable
   task recovery, automatic conflict resolution, attached-worktree cleanup,
-  force/prune workflows, advanced remote operations, installable packages,
+  force/prune workflows, advanced remote operations, public package downloads,
   and releases do not exist yet. The Tauri Linux dependency graph retains
   explicitly reviewed GTK3 maintenance and GLib iterator advisories, and
   `freezePrototype` remains disabled because enabling it prevents the current
@@ -273,7 +284,7 @@ the pinned pnpm release.
 
 ## Desktop development
 
-With Rust 1.88 or newer and the documented Tauri Linux development packages:
+With Rust 1.95 or newer and the documented Tauri Linux development packages:
 
 ```bash
 pnpm desktop:dev
@@ -286,6 +297,16 @@ unbundled local executable for verification; it does not create or publish an
 installable package. The third refreshes the reviewed Codex app-server schema
 subset and requires explicit diff review. See [Building](docs/BUILDING.md) for
 prerequisites.
+
+To build and fully validate ignored local AppImage and Debian candidates in the
+pinned Ubuntu 22.04 baseline:
+
+```bash
+./scripts/run_linux_package_container.sh
+```
+
+This performs no host installation or publication. See
+[Releasing](docs/RELEASING.md) for the separate approval boundary.
 
 Application-owned files will use the XDG locations `~/.config/quireforge`,
 `~/.local/share/quireforge`, `~/.cache/quireforge`, and, where needed,

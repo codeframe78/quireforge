@@ -1,6 +1,6 @@
 # Compatibility
 
-Status: desktop work through Milestone 18 is implemented and verified locally,
+Status: desktop work through Milestone 20 is implemented and verified locally,
 and the static website is complete through production Milestone 16.
 Milestone 15C has production native Wayland picker, preview, real-drop, and
 fixed-copy notification evidence plus separately recorded complete XWayland and
@@ -12,7 +12,9 @@ contracts.
 Milestone 17A adds read-only installed-plugin scheduled-template compatibility;
 task management and execution remain unsupported. Milestone 18 adds the
 policy-bounded dynamic-tool request lifecycle and fresh next-turn
-revalidation.
+revalidation. Milestone 20 adds a validated x86_64 Ubuntu 22.04 packaging
+baseline and local AppImage/Debian candidates; publication and a broader
+supported-distribution matrix remain Milestone 21 work.
 
 ## Identity compatibility contract
 
@@ -22,9 +24,9 @@ the real toolchain rather than inferred from documentation alone:
 | Surface                        | Target identity                            | Current validation state                                                                   |
 | ------------------------------ | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
 | Product/window/desktop display | `QuireForge`                               | Verified in Tauri configuration and local Wayland launch                                   |
-| Executable and Debian package  | `quireforge`                               | Unbundled executable verified; Debian package pending Milestone 20                         |
-| Desktop entry filename         | `io.github.codeframe78.QuireForge.desktop` | Reverse-DNS contract retained; installed package output not yet validated                  |
-| AppImage release basename      | `QuireForge`                               | Project release policy; verify the final workflow-renamed artifact                         |
+| Executable and Debian package  | `quireforge`                               | Exact Debian control, payload, lifecycle, and local launch verified                        |
+| Desktop entry filename         | `io.github.codeframe78.QuireForge.desktop` | Exact Debian and AppImage payload names and fields verified                                |
+| AppImage release basename      | `QuireForge`                               | `QuireForge-0.1.0-beta.1-x86_64.AppImage` convention verified locally                     |
 | Application identifier         | `io.github.codeframe78.QuireForge`         | Verified as the running GTK/D-Bus application identity on Wayland                          |
 | XDG directory leaf             | `quireforge`                               | Verified with isolated temporary XDG data; no personal persistent application data created |
 | GitHub repository              | `James-Jennison/quireforge`                | Private source location; not a public website link                                         |
@@ -32,8 +34,9 @@ the real toolchain rather than inferred from documentation alone:
 | Website host                   | Webuzo-managed Apache behind Cloudflare    | Production active; private provider identifiers remain outside source control              |
 
 Tauri, Cargo, React, TypeScript, Vite, and Astro configuration now consume the
-applicable identity contracts. Package installation, desktop-entry output,
-AppImage naming, and XDG persistence remain future validation obligations.
+applicable identity contracts. Package installation, upgrade, removal,
+desktop-entry output, AppImage naming, isolated XDG persistence, and
+unavailable-Codex launch behavior are verified locally.
 
 Validation sources:
 
@@ -73,7 +76,7 @@ identity.
 | Node.js / npm                   | 22.22.1 / 9.2.0                        | Available                                  |
 | Git / GitHub CLI                | 2.53.0 / 2.46.0                        | Available                                  |
 | pnpm                            | 11.15.0                                | Available and pinned by the workspace      |
-| Rust / Cargo                    | 1.97.1 / 1.97.1                        | Available; project minimum is Rust 1.88    |
+| Rust / Cargo                    | 1.97.1 / 1.97.1                        | Available; project minimum is Rust 1.95    |
 | Tauri / CLI                     | Rust 2.11.5 / JavaScript 2.11.4        | Locked and locally built                   |
 | WebKitGTK development package   | 2.52.3, API 4.1                        | Available and locally built against        |
 | GTK / GLib development packages | GTK 3.24.52 / GLib 2.88.0              | Available and locally built against        |
@@ -211,17 +214,19 @@ safety, and MCP transport support.
 
 ## Linux desktop compatibility policy
 
-Initial target, subject to packaging validation:
+Initial beta target:
 
 - Primary development/QA: current Ubuntu LTS on GNOME Wayland and X11.
-- Packaging baseline: the oldest Ubuntu release selected after WebKitGTK and
-  Tauri validation, likely Ubuntu 22.04 or 24.04 rather than the discovery host.
+- Packaging baseline: digest-pinned Ubuntu 22.04 with WebKitGTK 4.1 and a
+  maximum verified GLIBC requirement of 2.35.
 - Initial architectures: x86_64; arm64 only after native package runners and
   desktop tests are available.
-- Package formats: AppImage and Debian package in the release milestone.
+- Package formats: AppImage and Debian package.
 
-No distribution is currently supported because the unbundled scaffold has been
-verified on only one development host and no installation package exists.
+The packages are local beta candidates, not a published support promise.
+Milestone 21 must complete final supported-platform QA, publication approval,
+download activation, installation guidance, and rollback verification before
+the project advertises a downloadable supported distribution.
 
 ## Native directory picker
 
