@@ -7,7 +7,39 @@ released a usable application.
 
 ### Added
 
-- Dedicated public repository and an explicit unofficial-project disclaimer.
+- Milestone 21B local beta-readiness preflight: a fresh clean Ubuntu 22.04
+  package/lifecycle pass, repeated byte-identical normalization, current-host
+  AppImage and extracted-Debian launches, signed-out package pixel review, and
+  reviewed initial installation, limitation, distribution, and rollback copy.
+- Dormant website release validation for exactly one version-coherent AppImage
+  and Debian package with positive sizes, lowercase SHA-256 values, UTC
+  publication time, and credential-free same-origin HTTPS package, checksum,
+  and manifest URLs. Public download state remains unavailable.
+- Milestone 21A product readiness: an authenticated startup gate, original
+  responsive QuireForge home and three-region workspace hierarchy, internal
+  milestone-label removal, account summary, recent threads, project and quick
+  actions, and compact/full remaining-usage presentation.
+- A fixed read-only `account/rateLimits/read` native service and strict
+  TypeScript contract that expose only bounded usage percentages, reset times,
+  window durations, labels, and reached state. Plan, balance, account,
+  reset-credit, and raw protocol metadata are discarded; unavailable and
+  unmetered states are never estimated.
+- Pre-authentication loader gating and deterministic desktop/mobile coverage
+  proving that workspace, project, conversation, session, terminal,
+  integration, and usage reads do not start before normalized Codex access is
+  granted.
+- Milestone 20 local Linux packaging for `0.1.0-beta.1`: normalized x86_64
+  AppImage and Debian candidates, canonical desktop/AppStream metadata,
+  checksums, a strict release manifest, and an Ubuntu 22.04 baseline container
+  with digest-pinned Node, Rust, and operating-system inputs.
+- Checksum-pinned Tauri Linux tool acquisition, deterministic package
+  normalization, GLIBC-baseline and metadata inspection, disposable
+  install/upgrade/uninstall preservation tests, isolated visible X11 launch
+  probes, and inactive typed website download data.
+- A manual-only, immutable-revision GitHub release workflow with verify-only
+  artifact review and separately gated tag, confirmation, protected
+  environment, clean-source, attestation, and prerelease publication controls.
+- Dedicated repository and an explicit unofficial-project disclaimer.
 - Milestone 0 Codex integration, compatibility, feature-parity, architecture,
   threat-model, GitHub Pages, roadmap, and architecture-decision documentation.
 - Permanent QuireForge identity contract covering application, package,
@@ -15,6 +47,22 @@ released a usable application.
 - Original path-based QuireForge mark, wordmark, light/dark lockups, favicon,
   application-icon source, social card, palette, and brand usage guidance.
 - Cloudflare Pages capability findings and a deployment plan.
+- Webuzo static-hosting architecture, isolated deployment/rollback planning,
+  and an Apache-compatible artifact policy that supersede the unimplemented
+  Cloudflare Pages deployment plan.
+- Origin-only Webuzo staging for the private-safe static artifact, including an
+  isolated provider-managed destination, route/header/redirect validation,
+  trusted origin TLS, and a verified restoration rehearsal. No public DNS or
+  Cloudflare setting changed during staging.
+- Approved production activation at
+  `https://quireforge.jamesjennison.net` using one proxied Cloudflare record,
+  Full (Strict) origin validation, domain-scoped HSTS, immutable hashed-asset
+  caching, verified backup/restore, and public desktop/mobile quality checks.
+  No `www`, mail, wildcard, analytics, public source, or unrelated DNS record
+  was added.
+- Enrolled only the canonical QuireForge hostname in Webuzo-managed automatic
+  origin TLS. Trusted certificate coverage, provider-managed renewal state, and
+  pre/post recovery checks passed without retaining operational identifiers.
 - Sanitized owner-mediated Cloudflare account audit covering the Free plan,
   Workers & Pages availability, DNS, managed TLS, and security settings.
 - ADR 0006 selecting Cloudflare Pages as the production website host and
@@ -36,8 +84,11 @@ released a usable application.
 - Deterministic website type, lint, format, unit, artifact, route, responsive,
   theme, and axe-core accessibility checks in local scripts and minimum-
   permission GitHub Actions.
-- Cloudflare Pages security headers with a strict static-site content policy;
-  HSTS remains intentionally deferred until live HTTPS is verified.
+- Strict Apache/Cloudflare security headers with a static-site content policy
+  and domain-scoped HSTS enabled only after live origin and edge HTTPS passed.
+- A private-safe public content model that removes source, issues, releases,
+  contribution workflows, detailed milestones, and development activity from
+  the generated website while preserving all established routes.
 - Website build and testing documentation with an explicit no-deployment
   boundary.
 - A pinned Tauri 2, React 19, TypeScript, Vite, and Rust desktop package under
@@ -243,18 +294,84 @@ released a usable application.
   Generic connector installation/configuration, plugin enablement, MCP
   management, arbitrary repair, package, release, and deployment remain
   unavailable.
+- The Milestone 15A safe project-file preview foundation: one native-picker
+  command with opaque project identity, fresh attachment and opened-file
+  revalidation, strict shared Rust/TypeScript snapshots, bounded normalized
+  UTF-8 text and PNG/JPEG rendering, metadata-only PDF recognition, stable
+  failure diagnostics, honest browser degradation, responsive UI, and
+  deterministic temporary-file/unit/Playwright accessibility coverage. Absolute
+  paths, active HTML/SVG/APNG rendering, unknown binary content, PDF bytes,
+  persistence, drag/drop, conversation attachments, generic filesystem reads,
+  packages, releases, and deployments remain excluded. UTF-8 markup can appear
+  only as inert normalized text.
+- The Milestone 15B bounded conversation-image attachment flow: explicit native
+  picker, bounded browser-byte drop, and native-only Linux file-manager drop
+  sources; strict PNG/JPEG byte, dimension, name, count, and total limits;
+  private mode-`0700`/`0600` staging; opaque one-use UUIDv7 draft IDs;
+  cancellation, expiry, startup, failure, and terminal-turn cleanup; and
+  documented `localImage` inputs on start, resume, and fork. Tauri's
+  path-bearing events remain disabled; a short-lived GTK URI capture fixes
+  WebKitGTK's empty HTML `FileList` without sending source/staging paths through
+  IPC or persisting them in QuireForge metadata. Generic files, browser path
+  events, arbitrary filesystem reads, live model calls in routine tests,
+  packages, releases, and deployments remain excluded.
+- The Milestone 15C reviewed desktop-integration checkpoint: five-minute,
+  one-use UUIDv7 preview handoffs; confirmation that names the relative file and
+  fixed system-default-application destination; fresh attachment, containment,
+  symlink, descriptor, and device/inode revalidation; plus native-focused,
+  deduplicated approval/completion/block/failure notifications using fixed copy
+  without project names, prompts, paths, output, or raw diagnostics. React can
+  provide neither a path nor an application/command, the webview receives no
+  direct opener/notification plugin permission, and full display-session
+  acceptance remains separately evidenced. The configured production artifact
+  now has verified native Wayland project/file/image picker, bounded-preview,
+  real Nautilus-drop, and notification evidence plus complete XWayland and
+  true-X11 picker, preview, confirmation, default-application, attachment, and
+  consumed-action paths. A
+  disabled-by-default native-only probe verifies real desktop notification
+  delivery with fixed production copy and no webview command or arbitrary
+  content; the normal artifact is rebuilt without that feature after the probe.
+- The Milestone 17A read-only scheduled task catalog: a schema-v2 shared
+  Rust/TypeScript contract, installed-and-enabled plugin lookup through stable
+  `plugin/read`, native-only marketplace roots, bounded and sanitized inert
+  prompt previews, strict typed schedules, independent degraded diagnostics,
+  and a responsive accessible Scheduled workspace with no create, edit, enable,
+  run, pause, or delete controls. Deterministic native/component/browser tests
+  use no personal plugin state and perform no task mutation or execution.
+- Milestone 18 app-owned next-turn model selection: a migrated metadata policy,
+  closed dynamic-tool registration and correlated response lifecycle, strict
+  Manual/Recommend/Automatic modes, user lock, allowlists and reasoning
+  ceilings, completion-time staging, restart-safe bounded provenance, fresh
+  resume revalidation, typed IPC, and responsive effective/pending controls.
+  Registration rejection degrades visibly without private endpoints, website
+  automation, Codex configuration edits, credentials, or billable test calls.
+- Milestone 19 pre-packaging hardening: warning-denying Node/Rust dependency
+  audits, Cargo Dependabot, exact reviewed RustSec exceptions, immutable-action
+  and frontend active-content validation, explicit Tauri asset/global-API
+  disablement, command pruning, narrow CSP/response headers, production asset
+  budgets, raw-error-free render recovery, keyboard skip targets, reduced
+  motion, forced colors, and terminal confirmation focus ownership.
 
 ### Changed
 
+- Split the desktop startup entry, application shell, and stable xterm terminal
+  renderer into separate production chunks. The 193,549-byte entry is about
+  76% smaller than the former 805,736-byte monolith, while the 459,684-byte
+  pre-terminal path remains about 43% smaller and all three asset classes have
+  enforced ceilings.
+- Kept a bounded native startup overlay visible through the first committed
+  application paints so cold WebKit compilation never presents an unexplained
+  black window.
+- Replaced invalid terminal tablist/close-button nesting with an accessible
+  selector list, and replaced desktop navigation buttons with semantic
+  workspace anchors.
 - Validated the documented app-owned dynamic-tool lifecycle through
   `thread/start` registration and correlated `item/tool/call` requests, giving
   Milestone 18 a supported next-turn control dependency without web automation,
   private endpoints, or mid-turn model replacement.
-- Reserved Milestone 18 for app-owned, policy-bounded Codex selection of the
-  next turn's model and reasoning level, after integration discovery and the
-  intervening product milestones. Integration discovery remains Milestone 13;
-  this sequencing change does not modify the current runtime, Codex
-  configuration, credentials, or model selection.
+- Completed the previously reserved Milestone 18 scope after integration
+  discovery and the intervening product milestones, without modifying Codex
+  configuration or credentials.
 - Selected GLib's local filesystem backend at Linux process startup when the
   caller has not provided an override, preventing harmless GVFS activation
   warnings when the optional user service is masked.
@@ -271,10 +388,10 @@ released a usable application.
   and Debian package remain `quireforge`.
 - Defined app-server initialization as `clientInfo.name = "quireforge"`,
   `clientInfo.title = "QuireForge"`, and the real application version.
-- Selected `https://quireforge.jamesjennison.net` as the production website;
-  GitHub remains the source, CI, issue, and release host.
-- Selected Cloudflare Pages as the production host. Codex changed no provider,
-  DNS, project, or production setting as part of that decision.
+- Selected `https://quireforge.jamesjennison.net` as the production website.
+- Recorded the former Cloudflare Pages hosting choice without creating a
+  provider project, DNS record, or deployment; ADR 0024 later supersedes that
+  choice with a Webuzo static origin and private-source boundary.
 - Recorded the owner's separately completed move of authoritative DNS to
   Cloudflare and the temporary absence of the QuireForge hostname in the new
   zone; no DNS record was created by Codex.
@@ -365,6 +482,9 @@ released a usable application.
 - The GitHub repository was renamed in place to `codeframe78/quireforge`, and
   the intact working copy moved to `/mnt/faststorage/quireforge`, through
   separate approval-gated operations.
+- The repository was later transferred to the private
+  `James-Jennison/quireforge` organization location without changing the
+  installed application identifier or publishing source links.
 - No released or development application data was detected under the temporary
   identity, so there is currently no user configuration to move. Future
   releases must preserve old data and never modify Codex-owned authentication

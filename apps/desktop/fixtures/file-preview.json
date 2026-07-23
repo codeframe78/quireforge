@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "state": "ready",
+  "projectId": "018f6f24-8b71-7c72-9b41-4e0b8ce4c61a",
+  "displayPath": "docs/preview.md",
+  "kind": "text",
+  "rendering": "normalized-text",
+  "mimeType": "text/plain; charset=utf-8",
+  "byteSize": 48,
+  "truncated": false,
+  "textContent": "# Safe preview\n\nPaths remain native-only.\n",
+  "imageDataUrl": null,
+  "imageWidth": null,
+  "imageHeight": null,
+  "openActionId": "018f6f24-8b71-7c72-9b41-4e0b8ce4c61c",
+  "diagnosticCode": null
+}

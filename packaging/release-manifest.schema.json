@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://quireforge.jamesjennison.net/schemas/release-manifest-v1.json",
+  "title": "QuireForge release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "state",
+    "version",
+    "source",
+    "builder",
+    "artifacts"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "state": {
+      "enum": [
+        "local-candidate",
+        "release-candidate"
+      ]
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "commit",
+        "treeState"
+      ],
+      "properties": {
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "treeState": {
+          "enum": [
+            "clean",
+            "dirty"
+          ]
+        },
+        "diffSha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "builder": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "distribution",
+        "version",
+        "architecture",
+        "image"
+      ],
+      "properties": {
+        "distribution": {
+          "const": "ubuntu"
+        },
+        "version": {
+          "type": "string"
+        },
+        "architecture": {
+          "const": "x86_64"
+        },
+        "image": {
+          "type": "string"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "format",
+          "filename",
+          "architecture",
+          "packageVersion",
+          "sha256",
+          "size"
+        ],
+        "properties": {
+          "format": {
+            "enum": [
+              "appimage",
+              "deb"
+            ]
+          },
+          "filename": {
+            "type": "string"
+          },
+          "architecture": {
+            "const": "x86_64"
+          },
+          "packageVersion": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

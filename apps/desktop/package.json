@@ -1,6 +1,6 @@
 {
   "name": "@quireforge/desktop",
-  "version": "0.0.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "type": "module",
   "description": "The native QuireForge Linux desktop workspace.",
@@ -18,7 +18,8 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "validate:dist": "node scripts/validate-dist.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "2.11.1",

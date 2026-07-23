@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 1,
-  "adapterVersion": "codex-integration-v1",
+  "schemaVersion": 2,
+  "adapterVersion": "codex-integration-v2",
   "cliVersion": "0.145.0",
   "catalogState": "degraded",
   "capabilities": [
@@ -164,6 +164,18 @@
       "id": "permission.profiles",
       "domain": "policy",
       "operation": "inspect",
+      "route": "app-server",
+      "stability": "stable-method-experimental-server",
+      "availability": "ready",
+      "implementation": "contract-only",
+      "mutating": false,
+      "requiresConfirmation": false,
+      "diagnosticCode": null
+    },
+    {
+      "id": "scheduled-task.catalog",
+      "domain": "scheduled-task",
+      "operation": "discover",
       "route": "app-server",
       "stability": "stable-method-experimental-server",
       "availability": "ready",
@@ -383,6 +395,20 @@
       "health": {
         "state": "degraded",
         "diagnosticCodes": ["authorization-required"]
+      }
+    }
+  ],
+  "scheduledTasks": [
+    {
+      "id": "scheduled-task:fixture-review-weekly-review",
+      "sourcePluginId": "plugin:fixture-review",
+      "name": "Weekly review",
+      "promptPreview": "Summarize the attached project changes and identify items that still need review.",
+      "promptTruncated": false,
+      "schedule": {
+        "type": "weekly",
+        "days": ["MO", "TH"],
+        "time": "09:30"
       }
     }
   ],

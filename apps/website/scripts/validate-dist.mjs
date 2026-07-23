@@ -9,7 +9,7 @@ const origin = "https://quireforge.jamesjennison.net";
 const requiredFiles = [
   "index.html",
   "404.html",
-  "_headers",
+  ".htaccess",
   "robots.txt",
   "site.webmanifest",
   "sitemap-index.xml",
@@ -29,6 +29,13 @@ const requiredFiles = [
 ];
 
 const errors = [];
+const privateSourceMarkers = [
+  "github.com/codeframe78/quireforge",
+  "github.com/James-Jennison/quireforge",
+  "View source on GitHub",
+  "Built in the open",
+  "Open development",
+];
 
 async function exists(path) {
   try {
@@ -79,14 +86,19 @@ for (const htmlFile of htmlFiles) {
   const name = relative(distRoot, htmlFile);
   const html = await readFile(htmlFile, "utf8");
 
-  if (!html.includes('<main id="main-content">')) {
-    errors.push(`missing main landmark: ${name}`);
+  if (!html.includes('<main id="main-content" tabindex="-1">')) {
+    errors.push(`missing focusable main landmark: ${name}`);
   }
   if (!html.includes("QuireForge is an unofficial community project")) {
     errors.push(`missing unofficial-project disclaimer: ${name}`);
   }
   if (!html.includes(`<link rel="canonical" href="${origin}`)) {
     errors.push(`missing production canonical URL: ${name}`);
+  }
+  for (const marker of privateSourceMarkers) {
+    if (html.toLowerCase().includes(marker.toLowerCase())) {
+      errors.push(`private-source marker in ${name}: ${marker}`);
+    }
   }
   if (/<style(?:\s|>)/i.test(html) || /\sstyle=/i.test(html)) {
     errors.push(`inline style conflicts with the production CSP: ${name}`);
@@ -105,20 +117,41 @@ for (const htmlFile of htmlFiles) {
   }
 }
 
-const headers = await readFile(join(distRoot, "_headers"), "utf8");
+const headers = await readFile(join(distRoot, ".htaccess"), "utf8");
 for (const directive of [
-  "Content-Security-Policy:",
-  "Permissions-Policy:",
-  "Referrer-Policy:",
-  "X-Content-Type-Options:",
+  "Content-Security-Policy",
+  'Strict-Transport-Security "max-age=31536000"',
+  "Permissions-Policy",
+  "Referrer-Policy",
+  "X-Content-Type-Options",
+  "ErrorDocument 404 /404.html",
+  "Options -Indexes -MultiViews",
+  "no-transform",
 ]) {
   if (!headers.includes(directive))
-    errors.push(`missing security header: ${directive}`);
+    errors.push(`missing Apache deployment directive: ${directive}`);
 }
-if (headers.includes("Strict-Transport-Security")) {
-  errors.push(
-    "HSTS must remain disabled until the production hostname is verified",
-  );
+if (
+  headers.includes("includeSubDomains") ||
+  /\bpreload\b/i.test(
+    headers
+      .split("\n")
+      .find((line) => line.includes("Strict-Transport-Security")) ?? "",
+  )
+) {
+  errors.push("HSTS must remain scoped to the approved QuireForge hostname");
+}
+
+for (const file of allFiles) {
+  const name = relative(distRoot, file);
+  if (
+    name === ".env" ||
+    name.startsWith(".env.") ||
+    name.startsWith(".git/") ||
+    /\.(?:key|pem|map)$/i.test(name)
+  ) {
+    errors.push(`sensitive or unnecessary deployment artifact: ${name}`);
+  }
 }
 
 if (errors.length > 0) {

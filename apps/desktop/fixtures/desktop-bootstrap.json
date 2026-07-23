@@ -6,7 +6,7 @@
     "description": "An unofficial native Linux workspace for Codex",
     "identifier": "io.github.codeframe78.QuireForge",
     "executable": "quireforge",
-    "version": "0.0.0"
+    "version": "0.1.0-beta.1"
   },
   "capabilities": [
     {
@@ -50,6 +50,36 @@
       "label": "Integration Center",
       "state": "ready",
       "milestone": 14
+    },
+    {
+      "id": "safe-file-previews",
+      "label": "Safe file previews",
+      "state": "ready",
+      "milestone": 15
+    },
+    {
+      "id": "conversation-attachments",
+      "label": "Conversation image attachments",
+      "state": "ready",
+      "milestone": 15
+    },
+    {
+      "id": "desktop-integration",
+      "label": "Reviewed desktop integration",
+      "state": "ready",
+      "milestone": 15
+    },
+    {
+      "id": "scheduled-task-catalog",
+      "label": "Read-only scheduled task catalog",
+      "state": "ready",
+      "milestone": 17
+    },
+    {
+      "id": "agent-model-selection",
+      "label": "Policy-bounded next-turn selection",
+      "state": "ready",
+      "milestone": 18
     }
   ]
 }

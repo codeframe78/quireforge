@@ -1,0 +1,47 @@
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+RewriteEngine On
+
+# Webuzo owns ACME validation paths. Never redirect or block them here.
+RewriteRule ^\.well-known(?:/|$) - [END]
+
+# Webuzo may generate dormant service aliases for a subdomain. QuireForge has
+# one approved public hostname and must not render duplicate content elsewhere.
+RewriteCond %{HTTP_HOST} !^quireforge\.jamesjennison\.net(?::[0-9]+)?$ [NC]
+RewriteRule ^ - [F]
+
+# Cloudflare enforces edge HTTPS. This also protects approved direct-origin
+# validation without changing any other Webuzo hostname.
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP_HOST} ^quireforge\.jamesjennison\.net(?::[0-9]+)?$ [NC]
+RewriteRule ^ https://quireforge.jamesjennison.net%{REQUEST_URI} [R=308,END,NE]
+
+<IfModule mod_headers.c>
+  Header always set Content-Security-Policy "default-src 'none'; base-uri 'none'; connect-src 'self'; font-src 'self'; form-action 'none'; frame-ancestors 'none'; img-src 'self' data:; manifest-src 'self'; media-src 'none'; object-src 'none'; script-src 'self'; style-src 'self'; worker-src 'none'; upgrade-insecure-requests"
+  Header always set Strict-Transport-Security "max-age=31536000"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set X-Permitted-Cross-Domain-Policies "none"
+  Header always set Permissions-Policy "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Cross-Origin-Resource-Policy "same-origin"
+
+  <FilesMatch "\.(?:css|woff2)$">
+    Header set Cache-Control "public, max-age=31536000, immutable"
+  </FilesMatch>
+
+  # Keep Cloudflare's security layers active without allowing edge products to
+  # inject scripts into the reviewed static HTML artifact.
+  <FilesMatch "\.html$">
+    Header set Cache-Control "public, max-age=0, must-revalidate, no-transform"
+  </FilesMatch>
+
+  <FilesMatch "\.(?:js|png|svg|txt|webmanifest|xml)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+</IfModule>
+
+AddDefaultCharset UTF-8

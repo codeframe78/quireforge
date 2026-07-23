@@ -1,6 +1,6 @@
 # ADR 0006: Host the Production Website on Cloudflare Pages
 
-- Status: Accepted
+- Status: Superseded by [ADR 0024](0024-webuzo-static-website-hosting.md)
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -40,4 +40,6 @@ changes, custom-domain activation, or deployment.
 - DNS cutover requires a separately approved rollback plan and verification of
   TLS, canonical redirects, headers, assets, and the unaffected main site.
 
-This ADR is the authoritative production-hosting decision for QuireForge.
+This ADR records the former plan. No Cloudflare Pages project or production
+deployment was created. [ADR 0024](0024-webuzo-static-website-hosting.md) is the
+authoritative production-hosting decision for QuireForge.

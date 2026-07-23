@@ -1,12 +1,23 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  lazy,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 
 import brandMark from "../../../assets/brand/quireforge-app-icon.svg";
+import { AuthGate } from "./AuthGate";
 import { ConversationWorkspace } from "./ConversationWorkspace";
+import { FilePreviewWorkspace } from "./FilePreviewWorkspace";
 import { GitWorkspace } from "./GitWorkspace";
+import { HomeDashboard } from "./HomeDashboard";
 import { IntegrationCenter } from "./IntegrationCenter";
 import { ProjectWorkspace } from "./ProjectWorkspace";
+import { ScheduledWorkspace } from "./ScheduledWorkspace";
 import { SessionWorkspace } from "./SessionWorkspace";
-import { TerminalWorkspace } from "./TerminalWorkspace";
+import { UsagePanel } from "./UsagePanel";
 import {
   WorktreeWorkspace,
   type WorktreeExecutionView,
@@ -14,6 +25,8 @@ import {
 import {
   archiveConversation,
   archiveProject,
+  cancelFilePreview,
+  cancelConversationAttachments,
   cancelCodexAuth,
   cancelProjectAttachment,
   confirmProjectAttachment,
@@ -28,14 +41,19 @@ import {
   loadConversationStatus,
   loadConversationSessions,
   loadCodexRuntime,
+  loadCodexUsage,
   loadDesktopBootstrap,
   loadGitDiff,
   loadGitStatus,
   loadIntegrationCatalog,
+  notifyConversation,
+  openFilePreview,
   openIntegrationControlBrowser,
   loadProjectWorkspace,
   logoutCodexAuth,
   openGitFile,
+  pickConversationAttachments,
+  pickFilePreview,
   openCodexAuthBrowser,
   pickProjectDirectory,
   pickProjectRelink,
@@ -47,12 +65,15 @@ import {
   refreshIntegrationCatalog as refreshIntegrationCatalogNative,
   pollConversation,
   refreshCodexAuth,
+  refreshCodexUsage,
   recoverGitMutation,
   restoreConversation,
   resumeConversation,
   forkConversation,
   startConversation,
   startCodexAuth,
+  stageDroppedConversationAttachments,
+  updateModelSelection,
   cancelWorktree,
   closeTerminal,
   confirmWorktree,
@@ -68,12 +89,25 @@ import {
   writeTerminal,
 } from "./lib/bridge";
 import {
+  scaffoldConversationAttachments,
+  type ConversationAttachmentCancelRequest,
+  type ConversationAttachmentDropRequest,
+  type ConversationAttachmentSnapshot,
+} from "./lib/attachment";
+import {
   scaffoldCodexAuth,
   type AuthLoginMethod,
   type CodexAuthSnapshot,
 } from "./lib/auth";
 import { scaffoldCodexRuntime, type CodexRuntimeSnapshot } from "./lib/codex";
+import { scaffoldCodexUsage, type CodexUsageSnapshot } from "./lib/usage";
 import { scaffoldBootstrap, type DesktopBootstrap } from "./lib/contract";
+import {
+  scaffoldFilePreview,
+  type FilePreviewHandoffRequest,
+  type FilePreviewSnapshot,
+} from "./lib/filePreview";
+import type { DesktopNotificationResult } from "./lib/desktopIntegration";
 import {
   scaffoldConversation,
   type ConversationApprovalDecisionRequest,
@@ -113,6 +147,10 @@ import {
   type IntegrationMutationPreviewSnapshot,
   type IntegrationMutationResultSnapshot,
 } from "./lib/integration";
+import type {
+  ModelSelectionSnapshot,
+  ModelSelectionUpdateRequest,
+} from "./lib/modelSelection";
 import {
   scaffoldSessionLifecycle,
   type ConversationContinueRequest,
@@ -142,6 +180,12 @@ import {
 
 import "./styles.css";
 
+const TerminalWorkspace = lazy(() =>
+  import("./TerminalWorkspace").then(({ TerminalWorkspace: workspace }) => ({
+    default: workspace,
+  })),
+);
+
 type BridgeState = "connecting" | "native" | "preview";
 type RuntimeState =
   "checking" | "ready" | "degraded" | "unavailable" | "preview";
@@ -153,6 +197,7 @@ type ConversationViewState = "checking" | "native" | "preview";
 type SessionViewState = "checking" | "native" | "preview";
 type TerminalViewState = "checking" | "native" | "preview";
 type IntegrationViewState = "checking" | "native" | "preview";
+type UsageViewState = "checking" | "native" | "preview";
 type Theme = "light" | "dark";
 
 interface AppProps {
@@ -164,6 +209,8 @@ interface AppProps {
   cancelAuth?: () => Promise<CodexAuthSnapshot>;
   logoutAuth?: () => Promise<CodexAuthSnapshot>;
   openAuthBrowser?: () => Promise<void>;
+  loadUsage?: () => Promise<CodexUsageSnapshot>;
+  refreshUsage?: () => Promise<CodexUsageSnapshot>;
   loadProjects?: () => Promise<ProjectWorkspaceSnapshot>;
   pickProject?: () => Promise<ProjectWorkspaceSnapshot>;
   pickRelink?: (projectId: string) => Promise<ProjectWorkspaceSnapshot>;
@@ -178,6 +225,20 @@ interface AppProps {
   preflightProjectDirectory?: (
     projectId: string,
   ) => Promise<ProjectPreflightSnapshot>;
+  pickFilePreviewTask?: (projectId: string) => Promise<FilePreviewSnapshot>;
+  openFilePreviewTask?: (request: FilePreviewHandoffRequest) => Promise<void>;
+  cancelFilePreviewTask?: (
+    request: FilePreviewHandoffRequest,
+  ) => Promise<boolean>;
+  pickConversationAttachmentsTask?: (
+    projectId: string,
+  ) => Promise<ConversationAttachmentSnapshot>;
+  stageDroppedConversationAttachmentsTask?: (
+    request: ConversationAttachmentDropRequest,
+  ) => Promise<ConversationAttachmentSnapshot>;
+  cancelConversationAttachmentsTask?: (
+    request: ConversationAttachmentCancelRequest,
+  ) => Promise<ConversationAttachmentSnapshot>;
   loadWorktreesTask?: (projectId: string) => Promise<WorktreeWorkspaceSnapshot>;
   previewWorktreeCreateTask?: (
     request: WorktreeCreatePreviewRequest,
@@ -217,12 +278,18 @@ interface AppProps {
   pollConversationTask?: (
     conversationId: string,
   ) => Promise<ConversationSnapshot>;
+  notifyConversationTask?: (
+    conversationId: string,
+  ) => Promise<DesktopNotificationResult>;
   interruptConversationTask?: (
     conversationId: string,
   ) => Promise<ConversationSnapshot>;
   decideConversationApprovalTask?: (
     request: ConversationApprovalDecisionRequest,
   ) => Promise<ConversationSnapshot>;
+  updateModelSelectionTask?: (
+    request: ModelSelectionUpdateRequest,
+  ) => Promise<ModelSelectionSnapshot>;
   loadSessions?: (
     request?: SessionListRequest,
   ) => Promise<SessionLifecycleSnapshot>;
@@ -283,46 +350,54 @@ interface TrackedConversation {
 
 const navigation = [
   {
-    label: "Workspace",
-    milestone: 3,
+    label: "Home",
     icon: "grid",
-    target: "workspace-top",
-    ready: true,
+    target: "home",
   },
   {
-    label: "Changes",
-    milestone: 10,
-    icon: "git",
-    target: "changes",
-    ready: true,
+    label: "New task",
+    icon: "plus",
+    target: "conversation",
   },
   {
-    label: "Worktrees",
-    milestone: 11,
-    icon: "git",
-    target: "worktrees",
-    ready: true,
-  },
-  {
-    label: "Terminal",
-    milestone: 12,
-    icon: "terminal",
-    target: "terminal",
-    ready: true,
+    label: "Projects",
+    icon: "folder",
+    target: "projects",
   },
   {
     label: "Threads",
-    milestone: 8,
     icon: "thread",
     target: "sessions",
-    ready: true,
+  },
+  {
+    label: "Scheduled",
+    icon: "clock",
+    target: "scheduled",
   },
   {
     label: "Integrations",
-    milestone: 14,
     icon: "blocks",
     target: "integrations",
-    ready: true,
+  },
+  {
+    label: "Files",
+    icon: "folder",
+    target: "files",
+  },
+  {
+    label: "Changes",
+    icon: "git",
+    target: "changes",
+  },
+  {
+    label: "Worktrees",
+    icon: "git",
+    target: "worktrees",
+  },
+  {
+    label: "Terminal",
+    icon: "terminal",
+    target: "terminal",
   },
 ] as const;
 
@@ -332,6 +407,14 @@ function initialTheme(): Theme {
   return window.matchMedia?.("(prefers-color-scheme: light)").matches
     ? "light"
     : "dark";
+}
+
+function scrollToWorkspace(target: string): void {
+  document.getElementById(target)?.scrollIntoView({
+    behavior: window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+      ? "auto"
+      : "smooth",
+  });
 }
 
 function Glyph({ name }: { name: string }) {
@@ -354,6 +437,12 @@ function Glyph({ name }: { name: string }) {
       <>
         <path d="m8 3 4 2.3v4.6L8 12.2 4 9.9V5.3L8 3ZM16 11.8l4 2.3v4.6L16 21l-4-2.3v-4.6l4-2.3Z" />
         <path d="m16 3 4 2.3v4.6l-4 2.3-4-2.3V5.3L16 3ZM8 11.8l4 2.3v4.6L8 21l-4-2.3v-4.6l4-2.3Z" />
+      </>
+    ),
+    clock: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3.5 2" />
       </>
     ),
     git: (
@@ -428,6 +517,8 @@ export default function App({
   cancelAuth = cancelCodexAuth,
   logoutAuth = logoutCodexAuth,
   openAuthBrowser = openCodexAuthBrowser,
+  loadUsage = loadCodexUsage,
+  refreshUsage = refreshCodexUsage,
   loadProjects = loadProjectWorkspace,
   pickProject = pickProjectDirectory,
   pickRelink = pickProjectRelink,
@@ -436,6 +527,12 @@ export default function App({
   detachProjectDirectory = detachProject,
   archiveProjectMetadata = archiveProject,
   preflightProjectDirectory = preflightProject,
+  pickFilePreviewTask = pickFilePreview,
+  openFilePreviewTask = openFilePreview,
+  cancelFilePreviewTask = cancelFilePreview,
+  pickConversationAttachmentsTask = pickConversationAttachments,
+  stageDroppedConversationAttachmentsTask = stageDroppedConversationAttachments,
+  cancelConversationAttachmentsTask = cancelConversationAttachments,
   loadWorktreesTask = loadWorktreeStatus,
   previewWorktreeCreateTask = previewWorktreeCreate,
   previewWorktreeRecoverTask = previewWorktreeRecover,
@@ -453,8 +550,10 @@ export default function App({
   loadActiveConversationTasks = loadActiveConversations,
   startConversationTask = startConversation,
   pollConversationTask = pollConversation,
+  notifyConversationTask = notifyConversation,
   interruptConversationTask = interruptConversation,
   decideConversationApprovalTask = decideConversationApproval,
+  updateModelSelectionTask = updateModelSelection,
   loadSessions = loadConversationSessions,
   resumeConversationTask = resumeConversation,
   forkConversationTask = forkConversation,
@@ -486,6 +585,9 @@ export default function App({
   const [authBusy, setAuthBusy] = useState(false);
   const [authActionError, setAuthActionError] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
+  const [usage, setUsage] = useState<CodexUsageSnapshot>(scaffoldCodexUsage);
+  const [usageState, setUsageState] = useState<UsageViewState>("checking");
+  const [usageBusy, setUsageBusy] = useState(false);
   const [projects, setProjects] = useState<ProjectWorkspaceSnapshot>(
     scaffoldProjectWorkspace,
   );
@@ -496,6 +598,18 @@ export default function App({
   const [projectPreflights, setProjectPreflights] = useState<
     Record<string, ProjectPreflightSnapshot>
   >({});
+  const [filePreview, setFilePreview] =
+    useState<FilePreviewSnapshot>(scaffoldFilePreview);
+  const [filePreviewBusy, setFilePreviewBusy] = useState(false);
+  const [filePreviewActionError, setFilePreviewActionError] = useState(false);
+  const [conversationAttachments, setConversationAttachments] =
+    useState<ConversationAttachmentSnapshot>(scaffoldConversationAttachments);
+  const [conversationAttachmentBusy, setConversationAttachmentBusy] =
+    useState(false);
+  const [
+    conversationAttachmentActionError,
+    setConversationAttachmentActionError,
+  ] = useState(false);
   const [worktrees, setWorktrees] = useState<WorktreeWorkspaceSnapshot>(
     scaffoldWorktreeWorkspace,
   );
@@ -535,6 +649,9 @@ export default function App({
   const [conversationBusy, setConversationBusy] = useState(false);
   const [conversationActionError, setConversationActionError] = useState(false);
   const conversationActionGenerations = useRef<Record<string, number>>({});
+  const observedConversationStates = useRef<
+    Record<string, ConversationSnapshot["state"]>
+  >({});
   const [sessions, setSessions] = useState<SessionLifecycleSnapshot>(
     scaffoldSessionLifecycle,
   );
@@ -570,6 +687,8 @@ export default function App({
     null,
   );
   const [theme, setTheme] = useState<Theme>(initialTheme);
+  const accessGranted =
+    authState === "authenticated" || authState === "not-required";
 
   useEffect(() => {
     let active = true;
@@ -623,6 +742,25 @@ export default function App({
   }, [loadAuth]);
 
   useEffect(() => {
+    if (!accessGranted) return;
+    let active = true;
+    void loadUsage()
+      .then((result) => {
+        if (!active) return;
+        setUsage(result);
+        setUsageState("native");
+      })
+      .catch(() => {
+        if (active) setUsageState("preview");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [accessGranted, loadUsage]);
+
+  useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadProjects()
       .then((result) => {
@@ -637,9 +775,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadProjects]);
+  }, [accessGranted, loadProjects]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadConversation()
       .then((result) => {
@@ -661,9 +800,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadConversation]);
+  }, [accessGranted, loadConversation]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadActiveConversationTasks()
       .then((registry) => {
@@ -685,9 +825,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadActiveConversationTasks]);
+  }, [accessGranted, loadActiveConversationTasks]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     if (projectState === "checking") return;
     let active = true;
     const resetReview = (state: GitViewState) => {
@@ -745,9 +886,16 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadGitStatusTask, projectState, projects, selectedProjectId]);
+  }, [
+    accessGranted,
+    loadGitStatusTask,
+    projectState,
+    projects,
+    selectedProjectId,
+  ]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     if (projectState === "checking") return;
     let active = true;
     const resetWorktrees = (state: WorktreeViewState) => {
@@ -800,9 +948,16 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadWorktreesTask, projectState, projects, selectedProjectId]);
+  }, [
+    accessGranted,
+    loadWorktreesTask,
+    projectState,
+    projects,
+    selectedProjectId,
+  ]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadSessions({ projectId: null, searchTerm: null })
       .then((result) => {
@@ -817,9 +972,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadSessions]);
+  }, [accessGranted, loadSessions]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadTerminalsTask()
       .then((result) => {
@@ -834,9 +990,10 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadTerminalsTask]);
+  }, [accessGranted, loadTerminalsTask]);
 
   useEffect(() => {
+    if (!accessGranted) return;
     let active = true;
     void loadIntegrationCatalogTask()
       .then((result) => {
@@ -851,7 +1008,7 @@ export default function App({
     return () => {
       active = false;
     };
-  }, [loadIntegrationCatalogTask]);
+  }, [accessGranted, loadIntegrationCatalogTask]);
 
   useEffect(() => {
     if (authState !== "login-pending") return;
@@ -899,6 +1056,14 @@ export default function App({
     let active = true;
     let timer: number | undefined;
     const ids = activeConversationKey.split(",");
+    const observed = observedConversationStates.current;
+    observedConversationStates.current = Object.fromEntries(
+      ids.flatMap((conversationId) =>
+        observed[conversationId]
+          ? [[conversationId, observed[conversationId]]]
+          : [],
+      ),
+    );
 
     async function poll() {
       const pollGenerations = Object.fromEntries(
@@ -920,6 +1085,24 @@ export default function App({
       );
       if (settled.some((result) => result.status === "rejected"))
         setConversationActionError(true);
+
+      for (const result of results) {
+        if (!result.conversationId) continue;
+        const previous =
+          observedConversationStates.current[result.conversationId];
+        observedConversationStates.current[result.conversationId] =
+          result.state;
+        if (
+          previous !== result.state &&
+          ["waiting-for-approval", "completed", "blocked", "failed"].includes(
+            result.state,
+          )
+        ) {
+          void notifyConversationTask(result.conversationId).catch(() => {
+            // Notification delivery is best-effort and never changes task state.
+          });
+        }
+      }
 
       setTrackedConversations((current) => {
         const next = { ...current };
@@ -995,6 +1178,7 @@ export default function App({
     conversation.conversationId,
     loadGitStatusTask,
     loadSessions,
+    notifyConversationTask,
     pollConversationTask,
     sessionSearchTerm,
   ]);
@@ -1083,6 +1267,49 @@ export default function App({
     void applyAuthAction(() => startAuth(method), true);
   }
 
+  async function refreshUsageStatus() {
+    setUsageBusy(true);
+    try {
+      const result = await refreshUsage();
+      setUsage(result);
+      setUsageState("native");
+    } catch {
+      setUsageState("preview");
+    } finally {
+      setUsageBusy(false);
+    }
+  }
+
+  function discardConversationAttachmentDraft() {
+    if (
+      conversationAttachments.state === "ready" &&
+      conversationAttachments.projectId
+    ) {
+      void cancelConversationAttachmentsTask({
+        projectId: conversationAttachments.projectId,
+        attachmentIds: conversationAttachments.attachments.map(
+          (attachment) => attachment.attachmentId,
+        ),
+      }).catch(() => {
+        // Native expiry/startup cleanup remains the fail-closed fallback.
+      });
+    }
+    setConversationAttachments(scaffoldConversationAttachments);
+    setConversationAttachmentActionError(false);
+  }
+
+  function discardFilePreview() {
+    if (filePreview.state === "ready" && filePreview.openActionId) {
+      void cancelFilePreviewTask({
+        openActionId: filePreview.openActionId,
+      }).catch(() => {
+        // Native expiry and bounded eviction remain the fail-closed fallback.
+      });
+    }
+    setFilePreview(scaffoldFilePreview);
+    setFilePreviewActionError(false);
+  }
+
   async function applyProjectAction(
     action: () => Promise<ProjectWorkspaceSnapshot>,
   ) {
@@ -1092,6 +1319,31 @@ export default function App({
       const result = await action();
       setProjects(result);
       setProjectPreflights({});
+      if (
+        conversationAttachments.state === "ready" &&
+        !result.projects.some(
+          (project) =>
+            project.id === conversationAttachments.projectId &&
+            !project.archived &&
+            project.directory?.state === "connected-accessible",
+        )
+      ) {
+        discardConversationAttachmentDraft();
+      }
+      if (
+        filePreview.state === "ready" &&
+        filePreview.projectId &&
+        !result.projects.some(
+          (project) =>
+            project.id === filePreview.projectId &&
+            !project.archived &&
+            ["connected-accessible", "connected-read-only"].includes(
+              project.directory?.state ?? "",
+            ),
+        )
+      ) {
+        discardFilePreview();
+      }
     } catch {
       setProjectActionError(true);
     } finally {
@@ -1359,11 +1611,125 @@ export default function App({
   }
 
   function selectProject(projectId: string) {
+    if (
+      conversationAttachments.state === "ready" &&
+      conversationAttachments.projectId &&
+      conversationAttachments.projectId !== projectId
+    ) {
+      discardConversationAttachmentDraft();
+    }
     setSelectedProjectId(projectId);
+    discardFilePreview();
     const tracked = trackedConversations[projectId];
     setConversation(tracked?.snapshot ?? scaffoldConversation);
     setConversationEvents(tracked?.events ?? []);
     setConversationActionError(false);
+  }
+
+  async function chooseFilePreview(projectId: string) {
+    setFilePreviewBusy(true);
+    setFilePreviewActionError(false);
+    try {
+      setFilePreview(await pickFilePreviewTask(projectId));
+    } catch {
+      setFilePreview(scaffoldFilePreview);
+      setFilePreviewActionError(true);
+    } finally {
+      setFilePreviewBusy(false);
+    }
+  }
+
+  async function openSelectedFilePreview(request: FilePreviewHandoffRequest) {
+    setFilePreviewBusy(true);
+    setFilePreviewActionError(false);
+    try {
+      await openFilePreviewTask(request);
+    } catch (error) {
+      try {
+        await cancelFilePreviewTask(request);
+      } catch {
+        // Native expiry and bounded eviction remain the fail-closed fallback.
+      }
+      setFilePreview(scaffoldFilePreview);
+      setFilePreviewActionError(true);
+      throw error;
+    } finally {
+      setFilePreviewBusy(false);
+    }
+  }
+
+  async function chooseConversationAttachments(projectId: string) {
+    setConversationAttachmentBusy(true);
+    setConversationAttachmentActionError(false);
+    try {
+      const result = await pickConversationAttachmentsTask(projectId);
+      if (
+        result.state === "unavailable" &&
+        conversationAttachments.state === "ready" &&
+        conversationAttachments.projectId === projectId
+      ) {
+        setConversationAttachmentActionError(true);
+      } else {
+        setConversationAttachments(result);
+      }
+    } catch (error) {
+      setConversationAttachmentActionError(true);
+      throw error;
+    } finally {
+      setConversationAttachmentBusy(false);
+    }
+  }
+
+  async function stageConversationAttachmentDrop(
+    request: ConversationAttachmentDropRequest,
+  ) {
+    setConversationAttachmentBusy(true);
+    setConversationAttachmentActionError(false);
+    try {
+      const result = await stageDroppedConversationAttachmentsTask(request);
+      if (
+        result.state === "unavailable" &&
+        conversationAttachments.state === "ready" &&
+        conversationAttachments.projectId === request.projectId
+      ) {
+        setConversationAttachmentActionError(true);
+      } else {
+        setConversationAttachments(result);
+      }
+    } catch (error) {
+      setConversationAttachmentActionError(true);
+      throw error;
+    } finally {
+      setConversationAttachmentBusy(false);
+    }
+  }
+
+  async function removeConversationAttachment(
+    projectId: string,
+    attachmentId: string,
+  ) {
+    setConversationAttachmentBusy(true);
+    setConversationAttachmentActionError(false);
+    try {
+      const result = await cancelConversationAttachmentsTask({
+        projectId,
+        attachmentIds: [attachmentId],
+      });
+      if (
+        result.state === "unavailable" &&
+        conversationAttachments.state === "ready" &&
+        conversationAttachments.projectId === projectId
+      ) {
+        setConversationAttachmentActionError(true);
+      } else {
+        setConversationAttachments(result);
+      }
+    } catch (error) {
+      setConversationAttachmentActionError(true);
+      throw error;
+    } finally {
+      setConversationAttachmentBusy(false);
+    }
   }
 
   async function beginConversation(
@@ -1373,6 +1739,8 @@ export default function App({
     setConversationActionError(false);
     try {
       const result = await startConversationTask(request);
+      setConversationAttachments(scaffoldConversationAttachments);
+      setConversationAttachmentActionError(false);
       setConversation(result);
       setConversationEvents(result.events);
       trackConversation(result, true);
@@ -1431,6 +1799,49 @@ export default function App({
     }
   }
 
+  async function applyModelSelection(
+    request: ModelSelectionUpdateRequest,
+  ): Promise<ModelSelectionSnapshot> {
+    setConversationBusy(true);
+    setSessionBusy(true);
+    setConversationActionError(false);
+    setSessionActionError(false);
+    try {
+      const result = await updateModelSelectionTask(request);
+      setConversation((current) =>
+        current.conversationId === request.conversationId
+          ? {
+              ...current,
+              modelId: result.effective.modelId,
+              reasoningEffort: result.effective.reasoningEffort,
+              modelSelection: result,
+            }
+          : current,
+      );
+      setSessions((current) => ({
+        ...current,
+        sessions: current.sessions.map((session) =>
+          session.conversationId === request.conversationId
+            ? {
+                ...session,
+                modelId: result.effective.modelId,
+                reasoningEffort: result.effective.reasoningEffort,
+                modelSelection: result,
+              }
+            : session,
+        ),
+      }));
+      return result;
+    } catch (error) {
+      setConversationActionError(true);
+      setSessionActionError(true);
+      throw error;
+    } finally {
+      setConversationBusy(false);
+      setSessionBusy(false);
+    }
+  }
+
   async function refreshSessions(
     request: SessionListRequest = {
       projectId: null,
@@ -1468,6 +1879,8 @@ export default function App({
       );
       if (source) selectProject(source.projectId);
       const result = await action(request);
+      setConversationAttachments(scaffoldConversationAttachments);
+      setConversationAttachmentActionError(false);
       setConversation(result);
       setConversationEvents(result.events);
       trackConversation(result, true);
@@ -1735,6 +2148,27 @@ export default function App({
     }
   }
 
+  if (!accessGranted) {
+    return (
+      <AuthGate
+        state={authState}
+        snapshot={auth}
+        busy={authBusy}
+        actionError={authActionError}
+        cliVersion={runtime.cliVersion}
+        theme={theme}
+        onThemeChange={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onStart={beginLogin}
+        onOpenBrowser={() => {
+          setAuthActionError(false);
+          void openAuthBrowser().catch(() => setAuthActionError(true));
+        }}
+        onCancel={() => void applyAuthAction(cancelAuth)}
+        onRefresh={() => void applyAuthAction(refreshAuth)}
+      />
+    );
+  }
+
   const currentProject =
     projects.projects.find(
       (project) => project.id === selectedProjectId && !project.archived,
@@ -1784,50 +2218,36 @@ export default function App({
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#workspace-top">
+        Skip to workspace
+      </a>
       <aside className="sidebar">
         <div className="brand-lockup">
           <img src={brandMark} alt="" className="brand-mark" />
           <div>
             <strong>{bootstrap.product.name}</strong>
-            <span>Linux workspace</span>
+            <span>Codex for Linux</span>
           </div>
         </div>
 
-        <button
-          className="primary-action"
-          type="button"
-          disabled={conversationState !== "native"}
-          onClick={() =>
-            document.getElementById("conversation")?.scrollIntoView({
-              behavior: "smooth",
-            })
-          }
-        >
-          <Glyph name="plus" />
-          New thread
-        </button>
-
         <nav className="primary-nav" aria-label="Primary navigation">
-          <p className="nav-label">Workbench</p>
-          {navigation.map((item, index) => (
-            <button
+          <p className="nav-label">Main</p>
+          {navigation.slice(0, 6).map((item, index) => (
+            <a
               className={`nav-item ${index === 0 ? "nav-item--active" : ""}`}
-              type="button"
-              aria-current={index === 0 ? "page" : undefined}
-              disabled={!item.ready}
-              onClick={() =>
-                document.getElementById(item.target)?.scrollIntoView({
-                  behavior: "smooth",
-                })
-              }
+              href={`#${item.target}`}
               key={item.label}
             >
               <Glyph name={item.icon} />
               <span>{item.label}</span>
-              {index !== 0 && (
-                <span className="nav-milestone">M{item.milestone}</span>
-              )}
-            </button>
+            </a>
+          ))}
+          <p className="nav-label nav-label--secondary">Workspace</p>
+          {navigation.slice(6).map((item) => (
+            <a className="nav-item" href={`#${item.target}`} key={item.label}>
+              <Glyph name={item.icon} />
+              <span>{item.label}</span>
+            </a>
           ))}
         </nav>
 
@@ -1848,6 +2268,29 @@ export default function App({
           </div>
         </div>
 
+        <UsagePanel
+          snapshot={usage}
+          state={usageState}
+          busy={usageBusy}
+          compact
+          onRefresh={() => void refreshUsageStatus()}
+        />
+
+        <a className="account-summary" href="#account">
+          <span aria-hidden="true">Q</span>
+          <div>
+            <strong>Codex connected</strong>
+            <small>
+              {auth.accountKind === "chatgpt"
+                ? "ChatGPT account"
+                : auth.accountKind === "api-key"
+                  ? "API key"
+                  : "Managed account"}
+            </small>
+          </div>
+          <Glyph name="chevron" />
+        </a>
+
         <div className="sidebar-footer">
           <div className="bridge-status" role="status" aria-live="polite">
             <StatusDot state={bridgeState} />
@@ -1857,18 +2300,14 @@ export default function App({
         </div>
       </aside>
 
-      <main className="workspace" id="workspace-top">
+      <main className="workspace" id="workspace-top" tabIndex={-1}>
         <header className="topbar">
           <div className="breadcrumb" aria-label="Current location">
-            <span>QuireForge</span>
-            <Glyph name="chevron" />
-            <strong>Workspace</strong>
+            <Glyph name="grid" />
+            <strong>Home</strong>
           </div>
           <div className="topbar-actions">
-            <span className="foundation-badge">
-              <Glyph name="shield" />
-              Milestone 12 integrated terminal
-            </span>
+            <span className="foundation-badge">Native Linux</span>
             <button
               className="theme-toggle"
               type="button"
@@ -1883,96 +2322,20 @@ export default function App({
         </header>
 
         <div className="workspace-scroll">
-          <section className="hero" aria-labelledby="workspace-title">
-            <div className="hero-copy">
-              <p className="eyebrow">
-                <span /> Native Linux foundation
-              </p>
-              <h1 id="workspace-title">A quiet place for ambitious work.</h1>
-              <p className="hero-description">
-                Attach an original directory without copying it into QuireForge.
-                Selected and resolved paths are reviewed before app-owned
-                metadata is saved.
-              </p>
-              <div className="hero-actions">
-                <button
-                  className="secondary-action"
-                  type="button"
-                  disabled={
-                    projectState !== "native" ||
-                    projects.state === "unavailable" ||
-                    projectBusy
-                  }
-                  onClick={() => void applyProjectAction(pickProject)}
-                >
-                  <Glyph name="folder" />
-                  Attach a local project
-                  <span>Native picker</span>
-                </button>
-                <a className="text-link" href="#foundation">
-                  Inspect foundation
-                  <Glyph name="chevron" />
-                </a>
-              </div>
-            </div>
-
-            <div
-              className="hero-visual"
-              aria-label="QuireForge foundation status"
-            >
-              <div className="visual-glow" />
-              <div className="terminal-card">
-                <div className="terminal-card__bar">
-                  <div className="window-dots" aria-hidden="true">
-                    <span />
-                    <span />
-                    <span />
-                  </div>
-                  <span>quireforge / foundation</span>
-                  <Glyph name="terminal" />
-                </div>
-                <div className="terminal-card__body">
-                  <p>
-                    <span className="prompt">›</span> verify desktop boundary
-                  </p>
-                  <div className="verification-line">
-                    <Glyph name="check" />
-                    <div>
-                      <strong>Identity contract</strong>
-                      <span>io.github.codeframe78.QuireForge</span>
-                    </div>
-                    <em>verified</em>
-                  </div>
-                  <div className="verification-line">
-                    <Glyph name="check" />
-                    <div>
-                      <strong>Typed IPC fixture</strong>
-                      <span>desktop_bootstrap · schema v1</span>
-                    </div>
-                    <em>verified</em>
-                  </div>
-                  <div
-                    className={`verification-line ${runtimeState === "ready" ? "" : "verification-line--planned"}`}
-                  >
-                    {runtimeState === "ready" ? (
-                      <Glyph name="check" />
-                    ) : (
-                      <span className="planned-ring" />
-                    )}
-                    <div>
-                      <strong>Codex process adapter</strong>
-                      <span>
-                        {runtimeState === "ready"
-                          ? `${runtime.adapterVersion} · ${runtime.models.length} models`
-                          : "Supported native interfaces only"}
-                      </span>
-                    </div>
-                    <em>{runtimeLabel}</em>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+          <HomeDashboard
+            projects={projects}
+            sessions={sessions}
+            usage={usage}
+            usageState={usageState}
+            usageBusy={usageBusy}
+            onRefreshUsage={() => void refreshUsageStatus()}
+            onNewTask={() => scrollToWorkspace("conversation")}
+            onAttachProject={() => void applyProjectAction(pickProject)}
+            onOpenProjects={() => scrollToWorkspace("projects")}
+            onOpenSessions={() => scrollToWorkspace("sessions")}
+            onOpenIntegrations={() => scrollToWorkspace("integrations")}
+            onOpenTerminal={() => scrollToWorkspace("terminal")}
+          />
 
           <ProjectWorkspace
             availability={projectState}
@@ -1995,6 +2358,17 @@ export default function App({
             onPreflight={verifyProject}
           />
 
+          <FilePreviewWorkspace
+            availability={projectState}
+            project={currentProject}
+            snapshot={filePreview}
+            busy={filePreviewBusy}
+            actionError={filePreviewActionError}
+            onPick={chooseFilePreview}
+            onOpen={openSelectedFilePreview}
+            onClear={discardFilePreview}
+          />
+
           <WorktreeWorkspace
             availability={worktreeState}
             projectName={currentProject?.displayName ?? null}
@@ -2015,29 +2389,42 @@ export default function App({
             onSelectProject={selectProject}
             onOpenExecution={(projectId) => {
               selectProject(projectId);
-              window.setTimeout(
-                () =>
-                  document.getElementById("conversation")?.scrollIntoView({
-                    behavior: "smooth",
-                  }),
-                0,
-              );
+              window.setTimeout(() => scrollToWorkspace("conversation"), 0);
             }}
           />
 
-          <TerminalWorkspace
-            availability={terminalState}
-            registry={terminals}
-            projects={projects}
-            busy={terminalBusy}
-            actionError={terminalActionError}
-            onStart={beginTerminal}
-            onPoll={pollActiveTerminal}
-            onWrite={writeActiveTerminal}
-            onResize={resizeActiveTerminal}
-            onClose={endTerminal}
-            onSnapshot={trackTerminal}
-          />
+          <Suspense
+            fallback={
+              <section
+                className="workspace-loading"
+                id="terminal"
+                aria-labelledby="terminal-loading-title"
+                aria-busy="true"
+              >
+                <p className="eyebrow">Integrated terminal</p>
+                <h2 id="terminal-loading-title">
+                  Preparing the terminal view.
+                </h2>
+                <p role="status" aria-live="polite">
+                  Loading the local terminal renderer.
+                </p>
+              </section>
+            }
+          >
+            <TerminalWorkspace
+              availability={terminalState}
+              registry={terminals}
+              projects={projects}
+              busy={terminalBusy}
+              actionError={terminalActionError}
+              onStart={beginTerminal}
+              onPoll={pollActiveTerminal}
+              onWrite={writeActiveTerminal}
+              onResize={resizeActiveTerminal}
+              onClose={endTerminal}
+              onSnapshot={trackTerminal}
+            />
+          </Suspense>
 
           <GitWorkspace
             availability={gitState}
@@ -2061,10 +2448,14 @@ export default function App({
           <SessionWorkspace
             availability={sessionState}
             snapshot={sessions}
+            runtime={runtime}
             projects={projects.projects}
             activeConversationId={conversation.conversationId}
+            attachments={conversationAttachments}
             busy={sessionBusy || conversationBusy || conversationActive}
+            attachmentBusy={conversationAttachmentBusy}
             actionError={sessionActionError}
+            attachmentActionError={conversationAttachmentActionError}
             searchTerm={sessionSearchTerm}
             onSearch={refreshSessions}
             onRefresh={() => refreshSessions()}
@@ -2081,6 +2472,10 @@ export default function App({
             onRestore={(conversationId) =>
               mutateSession(() => restoreConversationTask(conversationId))
             }
+            onUpdateModelSelection={applyModelSelection}
+            onAttachmentPick={chooseConversationAttachments}
+            onAttachmentDrop={stageConversationAttachmentDrop}
+            onAttachmentCancel={removeConversationAttachment}
           />
 
           <IntegrationCenter
@@ -2105,6 +2500,11 @@ export default function App({
             }}
           />
 
+          <ScheduledWorkspace
+            availability={integrationState}
+            snapshot={integrationCatalog}
+          />
+
           <ConversationWorkspace
             availability={conversationState}
             snapshot={conversation}
@@ -2112,14 +2512,25 @@ export default function App({
             runtime={runtime}
             project={currentProject}
             integrations={integrationCatalog}
+            attachments={conversationAttachments}
             busy={conversationBusy}
+            attachmentBusy={conversationAttachmentBusy}
             actionError={conversationActionError}
+            attachmentActionError={conversationAttachmentActionError}
             onStart={beginConversation}
             onInterrupt={stopConversation}
             onDecideApproval={applyConversationApproval}
+            onUpdateModelSelection={applyModelSelection}
+            onAttachmentPick={chooseConversationAttachments}
+            onAttachmentDrop={stageConversationAttachmentDrop}
+            onAttachmentCancel={removeConversationAttachment}
           />
 
-          <section className="auth-onboarding" aria-labelledby="auth-title">
+          <section
+            className="auth-onboarding"
+            id="account"
+            aria-labelledby="auth-title"
+          >
             <div className="auth-onboarding__intro">
               <p className="eyebrow">Codex account</p>
               <h2 id="auth-title">Authentication stays with Codex.</h2>
@@ -2141,20 +2552,6 @@ export default function App({
                   <span>Codex CLI {runtime.cliVersion ?? "not detected"}</span>
                 </div>
               </div>
-
-              {authState === "checking" && (
-                <p className="auth-card__copy">
-                  Reading a normalized account status from the local Codex
-                  runtime.
-                </p>
-              )}
-
-              {authState === "preview" && (
-                <p className="auth-card__copy">
-                  Browser preview cannot inspect or simulate a native Codex
-                  account.
-                </p>
-              )}
 
               {authState === "authenticated" && (
                 <>
@@ -2215,106 +2612,12 @@ export default function App({
                 </>
               )}
 
-              {authState === "unauthenticated" && (
-                <>
-                  <p className="auth-card__copy">
-                    Continue in your browser or use an official device code.
-                    Codex hosts the callback and owns the resulting session.
-                  </p>
-                  <div className="auth-actions">
-                    <button
-                      className="auth-button auth-button--primary"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => beginLogin("browser")}
-                    >
-                      <Glyph name="external" />
-                      Continue in browser
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => beginLogin("device-code")}
-                    >
-                      Use a device code
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => void applyAuthAction(refreshAuth)}
-                    >
-                      <Glyph name="refresh" />
-                      Refresh
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {authState === "login-pending" && auth.handoff && (
-                <>
-                  <p className="auth-card__copy">
-                    Complete the official Codex sign-in page. This short-lived
-                    handoff is cleared after completion or cancellation.
-                  </p>
-                  {auth.handoff.userCode && (
-                    <div className="device-code">
-                      <span>One-time device code</span>
-                      <code>{auth.handoff.userCode}</code>
-                    </div>
-                  )}
-                  <div className="auth-actions">
-                    <button
-                      className="auth-button auth-button--primary"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => {
-                        setAuthActionError(false);
-                        void openAuthBrowser().catch(() =>
-                          setAuthActionError(true),
-                        );
-                      }}
-                    >
-                      <Glyph name="external" />
-                      Open sign-in page
-                    </button>
-                    <button
-                      className="auth-button auth-button--quiet"
-                      type="button"
-                      disabled={authBusy}
-                      onClick={() => void applyAuthAction(cancelAuth)}
-                    >
-                      Cancel sign-in
-                    </button>
-                  </div>
-                </>
-              )}
-
               {authState === "not-required" && (
                 <p className="auth-card__copy">
                   The selected Codex provider does not require OpenAI account
                   authentication. QuireForge will continue to defer credential
                   ownership to Codex.
                 </p>
-              )}
-
-              {authState === "unavailable" && (
-                <>
-                  <p className="auth-card__copy">
-                    Authentication could not be verified safely. No raw Codex
-                    error or account metadata was retained.
-                  </p>
-                  <button
-                    className="auth-button auth-button--quiet"
-                    type="button"
-                    disabled={authBusy}
-                    onClick={() => void applyAuthAction(refreshAuth)}
-                  >
-                    <Glyph name="refresh" />
-                    Try again
-                  </button>
-                </>
               )}
 
               {authActionError && (
@@ -2333,12 +2636,12 @@ export default function App({
           >
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Implementation map</p>
-                <h2 id="foundation-title">Foundation, with honest edges.</h2>
+                <p className="eyebrow">System status</p>
+                <h2 id="foundation-title">Ready for local work.</h2>
               </div>
               <p>
-                Each surface reports what exists now and what remains planned.
-                Nothing here fabricates a Codex session or integration.
+                QuireForge reports only capabilities verified through its native
+                boundary. Unavailable services remain visibly disabled.
               </p>
             </div>
 
@@ -2372,7 +2675,7 @@ export default function App({
                               : "Explicit directory selection, identity verification, and in-place local work."}
                   </p>
                   <footer>
-                    <span>Milestone {capability.milestone}</span>
+                    <span>Available</span>
                     <Glyph
                       name={capability.state === "ready" ? "check" : "chevron"}
                     />

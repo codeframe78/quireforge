@@ -89,6 +89,36 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 14,
                 },
+                CapabilitySummary {
+                    id: "safe-file-previews",
+                    label: "Safe file previews",
+                    state: CapabilityState::Ready,
+                    milestone: 15,
+                },
+                CapabilitySummary {
+                    id: "conversation-attachments",
+                    label: "Conversation image attachments",
+                    state: CapabilityState::Ready,
+                    milestone: 15,
+                },
+                CapabilitySummary {
+                    id: "desktop-integration",
+                    label: "Reviewed desktop integration",
+                    state: CapabilityState::Ready,
+                    milestone: 15,
+                },
+                CapabilitySummary {
+                    id: "scheduled-task-catalog",
+                    label: "Read-only scheduled task catalog",
+                    state: CapabilityState::Ready,
+                    milestone: 17,
+                },
+                CapabilitySummary {
+                    id: "agent-model-selection",
+                    label: "Policy-bounded next-turn selection",
+                    state: CapabilityState::Ready,
+                    milestone: 18,
+                },
             ],
         }
     }

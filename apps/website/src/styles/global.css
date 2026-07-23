@@ -1322,6 +1322,24 @@
     *::after {
       scroll-behavior: auto !important;
       transition-duration: 0.01ms !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+  }
+
+  @media (prefers-contrast: more) {
+    :root {
+      --line: color-mix(in srgb, var(--ink) 45%, transparent);
+      --line-strong: color-mix(in srgb, var(--ink) 70%, transparent);
+      --muted: var(--ink);
+    }
+  }
+
+  @media (forced-colors: active) {
+    .button,
+    .theme-toggle,
+    .mobile-nav {
+      border: 2px solid ButtonText;
     }
   }
 

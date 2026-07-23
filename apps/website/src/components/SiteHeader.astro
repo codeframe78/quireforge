@@ -11,7 +11,7 @@ const isCurrent = (href: string) =>
 
 <header class="site-header">
   <div class="shell header-inner">
-    <a class="brand-link" href="/" aria-label="QuireForge home">
+    <a class="brand-link" href="/">
       <BrandMark size={38} />
       <span>
         <strong>{site.name}</strong>
@@ -47,7 +47,7 @@ const isCurrent = (href: string) =>
         </svg>
         <span>Theme</span>
       </button>
-      <a class="button button-small" href={site.repository}>GitHub</a>
+      <a class="button button-small" href={site.masterOrigin}>Project hub</a>
     </div>
 
     <details class="mobile-nav">
@@ -64,7 +64,7 @@ const isCurrent = (href: string) =>
           ))
         }
         <a href="/downloads/">Downloads</a>
-        <a href={site.repository}>GitHub</a>
+        <a href={site.masterOrigin}>JamesJennison.net</a>
       </nav>
     </details>
   </div>

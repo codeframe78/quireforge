@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { scaffoldCodexAuth } from "./auth";
+import { scaffoldCodexUsage } from "./usage";
+import { sharedConversationAttachmentFixture } from "./attachment";
 import { scaffoldCodexRuntime } from "./codex";
 import { scaffoldConversation } from "./conversation";
 import {
@@ -13,6 +15,8 @@ import { scaffoldSessionLifecycle } from "./session";
 import {
   archiveConversation,
   archiveProject,
+  cancelFilePreview,
+  cancelConversationAttachments,
   cancelProjectAttachment,
   cancelWorktree,
   cancelCodexAuth,
@@ -28,8 +32,14 @@ import {
   confirmIntegrationMutation,
   decideConversationApproval,
   CONVERSATION_APPROVAL_DECIDE_COMMAND,
+  CONVERSATION_ATTACHMENT_CANCEL_COMMAND,
+  CONVERSATION_ATTACHMENT_PICK_COMMAND,
+  CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND,
+  CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND,
+  CONVERSATION_ATTACHMENT_STATUS_COMMAND,
   CONVERSATION_ACTIVE_COMMAND,
   CONVERSATION_INTERRUPT_COMMAND,
+  CONVERSATION_NOTIFY_COMMAND,
   CONVERSATION_ARCHIVE_COMMAND,
   CONVERSATION_FORK_COMMAND,
   CONVERSATION_POLL_COMMAND,
@@ -41,19 +51,29 @@ import {
   DESKTOP_BOOTSTRAP_COMMAND,
   detachProject,
   forkConversation,
+  FILE_PREVIEW_CANCEL_COMMAND,
+  FILE_PREVIEW_OPEN_COMMAND,
+  FILE_PREVIEW_PICK_COMMAND,
   loadCodexAuth,
+  loadCodexUsage,
   loadCodexRuntime,
   loadConversationStatus,
   loadActiveConversations,
   loadConversationSessions,
+  loadConversationAttachments,
   loadDesktopBootstrap,
   loadGitDiff,
   loadGitStatus,
   loadProjectWorkspace,
   loadWorktreeStatus,
+  notifyConversation,
   openCodexAuthBrowser,
+  refreshCodexUsage,
+  openFilePreview,
   openGitFile,
   pickProjectDirectory,
+  pickConversationAttachments,
+  pickFilePreview,
   pickProjectRelink,
   pickWorktreeAttach,
   preflightProject,
@@ -88,6 +108,7 @@ import {
   recoverGitMutation,
   startCodexAuth,
   startConversation,
+  stageDroppedConversationAttachments,
   interruptConversation,
   INTEGRATION_CATALOG_READ_COMMAND,
   INTEGRATION_CATALOG_REFRESH_COMMAND,
@@ -97,14 +118,17 @@ import {
   INTEGRATION_CONTROL_STATUS_COMMAND,
   INTEGRATION_MUTATION_CONFIRM_COMMAND,
   INTEGRATION_MUTATION_PREVIEW_COMMAND,
+  MODEL_SELECTION_UPDATE_COMMAND,
   loadIntegrationCatalog,
   openIntegrationControlBrowser,
   pollIntegrationControl,
   previewIntegrationControl,
   previewIntegrationMutation,
   refreshIntegrationCatalog,
+  updateModelSelection,
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
+import { sharedFilePreviewFixture } from "./filePreview";
 import { scaffoldProjectWorkspace } from "./project";
 import {
   scaffoldIntegrationCatalog,
@@ -281,6 +305,17 @@ describe("desktop bridge", () => {
     expect(invoke).toHaveBeenNthCalledWith(4, CODEX_AUTH_OPEN_BROWSER_COMMAND);
   });
 
+  it("uses fixed read-only usage commands", async () => {
+    const invoke = vi.fn().mockResolvedValue(scaffoldCodexUsage);
+
+    await expect(loadCodexUsage(invoke)).resolves.toEqual(scaffoldCodexUsage);
+    await expect(refreshCodexUsage(invoke)).resolves.toEqual(
+      scaffoldCodexUsage,
+    );
+    expect(invoke).toHaveBeenNthCalledWith(1, "codex_usage_status");
+    expect(invoke).toHaveBeenNthCalledWith(2, "codex_usage_refresh");
+  });
+
   it("rejects raw authentication payloads", async () => {
     const invoke = vi.fn().mockResolvedValue({
       ...scaffoldCodexAuth,
@@ -341,6 +376,107 @@ describe("desktop bridge", () => {
     });
 
     await expect(loadProjectWorkspace(invoke)).rejects.toThrow();
+  });
+
+  it("uses one fixed file picker command with only an opaque project ID", async () => {
+    const projectId = "018f6f24-8b71-7c72-9b41-4e0b8ce4c61a";
+    const invoke = vi.fn().mockResolvedValue(sharedFilePreviewFixture);
+
+    await expect(pickFilePreview(projectId, invoke)).resolves.toEqual(
+      sharedFilePreviewFixture,
+    );
+    expect(invoke).toHaveBeenCalledWith(FILE_PREVIEW_PICK_COMMAND, {
+      projectId,
+    });
+
+    await expect(pickFilePreview("/private/path", invoke)).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens and cancels previews through one opaque handoff action", async () => {
+    const openActionId = sharedFilePreviewFixture.openActionId!;
+    const invoke = vi.fn().mockResolvedValue(true);
+
+    await expect(
+      openFilePreview({ openActionId }, invoke),
+    ).resolves.toBeUndefined();
+    expect(invoke).toHaveBeenNthCalledWith(1, FILE_PREVIEW_OPEN_COMMAND, {
+      request: { openActionId },
+    });
+    await expect(cancelFilePreview({ openActionId }, invoke)).resolves.toBe(
+      true,
+    );
+    expect(invoke).toHaveBeenNthCalledWith(2, FILE_PREVIEW_CANCEL_COMMAND, {
+      request: { openActionId },
+    });
+
+    await expect(
+      openFilePreview({ openActionId: "/private/file" }, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(2);
+  });
+
+  it("requests only a privacy-safe native notification by conversation ID", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const invoke = vi.fn().mockResolvedValue({
+      schemaVersion: 1,
+      status: "sent",
+    });
+
+    await expect(notifyConversation(conversationId, invoke)).resolves.toEqual({
+      schemaVersion: 1,
+      status: "sent",
+    });
+    expect(invoke).toHaveBeenCalledWith(CONVERSATION_NOTIFY_COMMAND, {
+      request: { conversationId },
+    });
+    await expect(notifyConversation("raw-thread-id", invoke)).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
+  it("stages and cancels conversation images through fixed opaque commands", async () => {
+    const projectId = "018f6f24-8b71-7c72-9b41-4e0b8ce4c61a";
+    const attachmentId =
+      sharedConversationAttachmentFixture.attachments[0]!.attachmentId;
+    const dropRequest = {
+      projectId,
+      files: [
+        {
+          displayName: "pixel.png",
+          declaredMimeType: "image/png" as const,
+          base64Data: "iVBORw==",
+        },
+      ],
+    };
+    const cancelRequest = { projectId, attachmentIds: [attachmentId] };
+    const invoke = vi
+      .fn()
+      .mockResolvedValue(sharedConversationAttachmentFixture);
+
+    await expect(
+      loadConversationAttachments(projectId, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+    await expect(
+      pickConversationAttachments(projectId, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+    await expect(
+      stageDroppedConversationAttachments(dropRequest, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+    await expect(
+      stageDroppedConversationAttachments({ projectId, files: [] }, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+    await expect(
+      cancelConversationAttachments(cancelRequest, invoke),
+    ).resolves.toEqual(sharedConversationAttachmentFixture);
+
+    expect(invoke.mock.calls).toEqual([
+      [CONVERSATION_ATTACHMENT_STATUS_COMMAND, { projectId }],
+      [CONVERSATION_ATTACHMENT_PICK_COMMAND, { projectId }],
+      [CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND, { request: dropRequest }],
+      [CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND, { projectId }],
+      [CONVERSATION_ATTACHMENT_CANCEL_COMMAND, { request: cancelRequest }],
+    ]);
+    expect(JSON.stringify(invoke.mock.calls)).not.toContain("/private/");
   });
 
   it("uses fixed worktree commands without frontend cwd, refs, or argv", async () => {
@@ -501,8 +637,15 @@ describe("desktop bridge", () => {
     const request = {
       projectId: "018f0000-0000-7000-8000-000000000001",
       prompt: "Review the attached project.",
+      attachmentIds: [],
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      selectionPolicy: {
+        ownership: "manual" as const,
+        userLocked: false,
+        allowedModelIds: [],
+        reasoningCeiling: null,
+      },
       sandboxMode: "read-only" as const,
       approvalPolicy: "untrusted" as const,
       integrationEntryIds: [],
@@ -550,6 +693,43 @@ describe("desktop bridge", () => {
     ]);
   });
 
+  it("updates only the closed app-owned next-turn selector contract", async () => {
+    const request = {
+      conversationId: "018f0000-0000-7000-8000-000000000010",
+      choice: {
+        modelId: "gpt-5.6-sol",
+        reasoningEffort: "high",
+      },
+      policy: {
+        ownership: "manual" as const,
+        userLocked: true,
+        allowedModelIds: [],
+        reasoningCeiling: null,
+      },
+      pendingAction: "dismiss" as const,
+    };
+    const snapshot = {
+      schemaVersion: 1 as const,
+      availability: "ready" as const,
+      effective: request.choice,
+      pending: null,
+      policy: request.policy,
+      diagnosticCode: null,
+    };
+    const invoke = vi.fn().mockResolvedValue(snapshot);
+
+    await expect(updateModelSelection(request, invoke)).resolves.toEqual(
+      snapshot,
+    );
+    expect(invoke).toHaveBeenCalledWith(MODEL_SELECTION_UPDATE_COMMAND, {
+      request,
+    });
+    await expect(
+      updateModelSelection({ ...request, prompt: "private" } as never, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects path-bearing conversation input before native invocation", async () => {
     const invoke = vi.fn().mockResolvedValue(scaffoldConversation);
 
@@ -558,6 +738,7 @@ describe("desktop bridge", () => {
         {
           projectId: "018f0000-0000-7000-8000-000000000001",
           prompt: "Review.",
+          attachmentIds: [],
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
           sandboxMode: "read-only",
@@ -573,7 +754,11 @@ describe("desktop bridge", () => {
   it("uses fixed session lifecycle commands with app-owned IDs only", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const projectId = "018f0000-0000-7000-8000-000000000001";
-    const request = { conversationId, prompt: "Continue safely." };
+    const request = {
+      conversationId,
+      prompt: "Continue safely.",
+      attachmentIds: [],
+    };
     const invoke = vi
       .fn()
       .mockResolvedValueOnce(scaffoldSessionLifecycle)
@@ -611,6 +796,7 @@ describe("desktop bridge", () => {
         {
           conversationId: "018f0000-0000-7000-8000-000000000010",
           prompt: "Continue.",
+          attachmentIds: [],
           cwd: "/private/raw/path",
         } as never,
         invoke,

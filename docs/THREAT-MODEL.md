@@ -8,8 +8,15 @@ Milestone 9 approval/activity controls, Milestone 10 reviewed Git controls,
 Milestone 11A–11C managed-worktree/parallel-execution/cleanup controls, and
 Milestone 12 native PTY controls applied, plus Milestones 13–14C normalized
 integration discovery, mutation, authorization, and prompt-mention controls.
-It must be revisited before packaging and release milestones or any expansion
-of the supported integration-management surface.
+Milestones 15A–15C additionally apply bounded preview, conversation-image
+staging, reviewed desktop-handoff, and privacy-safe notification controls.
+Milestone 18 applies app-owned next-turn selector policy, provenance,
+completion-time staging, fresh-catalog revalidation, and visible degradation
+controls.
+Milestone 19 applies the pre-packaging Tauri, active-content, dependency,
+workflow, accessibility, performance-budget, and crash-recovery review. It
+must be revisited during packaging and release milestones or before any
+expansion of the supported integration-management surface.
 
 ## Assets
 
@@ -212,6 +219,12 @@ Controls:
   Codex-owned configuration as selector metadata.
 - Degrade to recommendation-only behavior when the installed app-server does
   not expose a validated control lifecycle.
+- Keep exact dynamic-tool request, thread, turn, and call identity native; React
+  receives only a schema-versioned effective/pending projection and submits only
+  an opaque app conversation ID plus closed policy fields.
+- Commit a Codex request to metadata only after successful turn completion.
+  Interrupted, blocked, or failed turns do not leave a fabricated pending
+  selection.
 
 ### Authentication and secret leakage
 
@@ -268,6 +281,15 @@ Controls:
 - Treat invalidation notifications only as closed category-refresh reasons;
   discard app rows, MCP names/failures, config paths/details, and every other raw
   notification field before caching or IPC.
+- Query scheduled templates only for installed, enabled plugins resolved from
+  the supported CLI catalog and keep their marketplace roots and lookup values
+  native-only. Cap lookup targets and task counts.
+- Treat scheduled task names and prompts as malicious publisher content:
+  normalize controls and whitespace, bound and label prompt previews as inert,
+  bind every task to an existing normalized plugin, and never submit, persist,
+  interpolate, or execute the prompt.
+- Expose no scheduled-task mutation or runner. A template is not proof of
+  eligibility, enablement, execution, hosting, or official-client state.
 - Treat dynamic tool arguments as native-only untrusted input. Correlate the
   exact thread, turn, request, namespace, and tool; validate one closed
   app-owned schema; and return only bounded result content.
@@ -471,13 +493,78 @@ URLs, huge/decompression-bomb files, and webview-to-native command abuse.
 Controls:
 
 - Strict Tauri capabilities and content security policy.
+- Keep the only capability Linux/main-window scoped with an empty permission
+  set. Explicitly disable the global Tauri JavaScript API and asset protocol,
+  preserve Tauri's compile-time CSP injection, and remove unused plugin
+  commands from production builds.
+- Set production `default-src` to `none`; admit only local scripts/fonts/styles,
+  local/data images, and Tauri IPC. Deny objects, forms, frames, workers, media,
+  manifests, base changes, external origins, and production code evaluation.
+- Add same-origin opener/resource response policy, deny unused camera,
+  display-capture, location, microphone, payment, and USB features, and disable
+  MIME sniffing.
 - Keep Tauri `freezePrototype` disabled for the current verified Vite/React
   bundle: enabling it prevents the application from mounting. Compensate with
   the explicit CSP, no privileged remote content, dependency locking, strict
   capability allowlisting, and narrow validated IPC instead of claiming a
   hardening control the shipped frontend cannot execute under.
+- Retain `style-src 'unsafe-inline'` only for the stable xterm renderer; do not
+  widen any other directive to compensate.
+- Reject direct production-frontend HTML injection, string evaluation, fetch,
+  XHR, and WebSocket primitives in the dependency-free repository gate.
 - Treat previews as untrusted data; no arbitrary active HTML execution.
-- MIME/extension/size limits and safe text/image/PDF renderers.
+- File selection remains native; React supplies only a canonical app-owned
+  UUIDv7 project ID and never a path, URL, claimed MIME type, or renderer.
+- Reload and revalidate attachment identity/readability, canonical containment,
+  symlink and regular-file status, then retain an identity-checked root
+  directory descriptor. Open the relative target through that descriptor with
+  `O_NOFOLLOW` and recheck the resolved `/proc/self/fd` path/device/inode.
+- Cap source files at 8 MiB; normalize UTF-8 text to at most 128 KiB/2,000
+  lines while replacing controls and bidi overrides.
+- Admit only bounded PNG/JPEG data URLs after pre/post-read type, dimension,
+  byte, pixel, and APNG checks. Permit `data:` under `img-src` only.
+- Recognize PDF as metadata only. Do not send PDF bytes, unknown binary
+  content, absolute paths, or active-document URLs to the webview. HTML/SVG
+  source may cross only as normalized inert text, never active markup.
+- Keep preview state transient; browser preview cannot select/read local files.
+- Bind external opening to one native-held five-minute UUIDv7 action created by
+  a successful preview. Require a second UI confirmation naming the relative
+  file and fixed system-default-application destination; accept no frontend
+  path, URL, application, executable, argument, MIME, or cwd.
+- Before handoff, reload the attachment and revalidate canonical containment,
+  regular non-symlink state, descriptor path, and the previewed device/inode.
+  Consume the action once and cap/expire all pending handoffs.
+- Disable Tauri's default path-bearing file-drop events. Treat browser drops as
+  explicit bounded byte inputs. If WebKitGTK supplies an empty HTML `FileList`,
+  retain at most five Linux file URIs (four allowed plus one overflow sentinel)
+  in a 30-second native-only one-use slot and let the visible drop zone claim it
+  through a path-free fixed command. Picker/captured paths remain native and
+  are never returned to React.
+- Accept only structurally validated PNG/JPEG conversation images: four files,
+  4 MiB each/16 MiB aggregate, safe display names, and bounded dimensions.
+  Refuse text, PDF, SVG, generic binary, mismatched declared type, symlinks, and
+  malformed content.
+- Stage app-owned UUIDv7 copies beneath a mode-`0700` root with mode-`0600`
+  files. Return only opaque project-bound IDs and normalized metadata; persist
+  no draft, source path, staged path, or bytes in SQLite.
+- Expire unconsumed drafts after 15 minutes and consume IDs once. Reopen and
+  revalidate device, inode, size, type, and dimensions immediately before
+  constructing native-only documented `localImage` inputs.
+- Retain claimed copies until the normalized turn becomes terminal because the
+  app-server start response does not document completed image consumption.
+  Clean on terminal poll, cancel, failed send, expiry, and next startup without
+  deleting source files.
+- Accept only an app-owned conversation UUIDv7 for background notifications.
+  Re-resolve native approval/terminal state, suppress foreground delivery,
+  deduplicate by approval/terminal identity, and use only fixed closed-enum
+  copy. Never interpolate project names, prompts, paths, account/model data,
+  output, diagnostics, or raw protocol into a notification.
+- Keep the webview capability list empty for opener/notification plugins; Rust
+  alone may invoke the fixed desktop operations.
+- Keep manual notification delivery behind a disabled-by-default Cargo feature
+  and exact native process flag. It may reuse only fixed production copy, accept
+  no caller content, and add no Tauri command or webview permission. Replace the
+  feature artifact with a normal build after the probe.
 - Allowlisted external URL opening with visible destination.
 - No remote content receives privileged Tauri access.
 
@@ -490,19 +577,30 @@ Controls:
 
 - Lock dependency graphs and use dependency review/update automation.
 - Pin actions to reviewed immutable SHAs and use minimum workflow permissions.
+- Run the high-severity Node audit and warning-denying RustSec audit in CI.
+  Keep every RustSec exception as an exact reviewed advisory ID, fail on every
+  new warning, and revisit Tauri/GTK3 maintenance exceptions on upstream
+  updates and before release.
+- Apply Dependabot to npm, Cargo, and GitHub Actions. Validate that every
+  non-local workflow action uses a full commit SHA.
 - Build PRs without deploy permissions or secrets.
 - Make deployment secrets available only after a protected production-
   environment approval and only to an approved default-branch artifact.
 - Use a dedicated SSH key, strict host verification, an exact destination, and
   explicit generated-file manifests; never use plain FTP or wildcard-copy the
   repository into public storage.
-- For Cloudflare Pages, constrain GitHub/app or API-token permissions, prevent
-  fork previews from receiving secrets, verify the custom domain before DNS
-  cutover, and avoid dangling CNAME takeover risk.
-- Keep the prior production state recoverable until Pages TLS, headers,
-  redirects, assets, and rollback have been verified.
-- Require two-factor authentication on the Cloudflare owner account before
-  Pages project creation, GitHub integration, token issuance, or DNS cutover.
+- Keep Webuzo authoritative for the exact domain, document root, origin SSL,
+  ownership, and generated VirtualHost; do not hand-edit generated or global
+  server configuration.
+- Build outside public storage, deploy only a reviewed manifest-bound static
+  artifact, and reject source, Git metadata, credentials, private documents,
+  dependency trees, logs, and source maps.
+- Keep the prior QuireForge document root and a verified Restic snapshot
+  recoverable until origin and Cloudflare TLS, headers, routes, assets, and
+  rollback have been verified.
+- Use a least-privilege Cloudflare token only for an approved exact-host DNS
+  operation; never expose the origin through a new public port or alter apex,
+  mail, status, or unrelated project records.
 - Prefer versioned releases and atomic switching; preserve the previous release
   until post-deployment checks pass.
 - Produce checksums and provenance/signatures in release milestones.
@@ -560,6 +658,20 @@ Controls:
   frontend response protection, normalized registry privacy, and complete
   multi-child reaping.
 - Tauri capability/CSP review and preview fuzzing.
+- Production-frontend active-content scans, generated desktop origin and bundle
+  budgets, Node/Rust dependency audits, and exact advisory-exception checks.
+- Keyboard skip/focus, reduced-motion CSS and scripted scrolling, forced-color
+  controls, modal focus trap/restore, responsive overflow, and desktop/website
+  axe-core tests.
+- Render-crash tests must prove that raw error text is absent and the recovery
+  action reconciles state without implying source or Codex-history deletion.
+- Conversation-attachment fixture tests for strict IDs, source ownership,
+  content/type/size limits, tamper and expiry refusal, path non-disclosure,
+  one-use claim, terminal cleanup, browser honesty, and default-drop disabling.
+- Desktop handoff/notification tests for one-use opaque actions, replacement
+  races, attachment/file identity drift, explicit destination review, closed
+  notification eligibility/copy/status, deduplication, and bridge path/command
+  refusal; label Wayland, XWayland, and true X11 manual evidence separately.
 - Git fixture tests protecting dirty worktrees, attached-subdirectory scope,
   read-only repositories, path containment, deceptive input, output bounds, and
   the no-mutation boundary.

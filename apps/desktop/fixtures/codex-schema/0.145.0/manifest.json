@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "codexCliVersion": "0.145.0",
   "generator": "codex app-server generate-json-schema --experimental",
-  "selection": "initialize, model/list, stable account lifecycle, the Milestone 7 conversation runtime, Milestone 8A thread lifecycle, Milestone 9A approval/activity, and Milestone 13 integration discovery and dynamic-tool contract evidence",
+  "selection": "initialize, model/list, stable account lifecycle, the Milestone 7 conversation runtime, Milestone 8A thread lifecycle, Milestone 9A approval/activity, and Milestone 13 integration discovery/dynamic-tool plus Milestone 17A read-only plugin scheduled-task evidence and Milestone 21A read-only account rate-limit evidence",
   "files": [
     {
       "path": "RequestId.json",
@@ -115,6 +115,10 @@
     {
       "path": "v2/GetAccountResponse.json",
       "sha256": "d00effa2867e46b50eea2cc767fcf8f5f6aa972defc0a30bc47c2f89e6c2a99c"
+    },
+    {
+      "path": "v2/GetAccountRateLimitsResponse.json",
+      "sha256": "74f1e4ebd8cf243fe53f82861f9e09446d42400079d2cf8ff08f5b7362ca10fe"
     },
     {
       "path": "v2/ListMcpServerStatusParams.json",

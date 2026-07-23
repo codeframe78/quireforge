@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "state": "ready",
+  "meters": [
+    {
+      "label": "Codex",
+      "limitId": "codex",
+      "windows": [
+        {
+          "kind": "primary",
+          "usedPercent": 27,
+          "remainingPercent": 73,
+          "windowDurationMinutes": 300,
+          "resetsAt": 1784808000
+        },
+        {
+          "kind": "secondary",
+          "usedPercent": 56,
+          "remainingPercent": 44,
+          "windowDurationMinutes": 10080,
+          "resetsAt": 1785412800
+        }
+      ],
+      "limited": false
+    }
+  ],
+  "diagnosticCode": null
+}

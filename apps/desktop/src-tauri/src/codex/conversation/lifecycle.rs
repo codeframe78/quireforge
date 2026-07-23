@@ -10,23 +10,31 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::project::{
-    ConversationReference, ProjectExecutionError, ProjectService, StoredConversationReference,
+    ConversationReference, ConversationSelectionMetadata, ProjectExecutionError, ProjectService,
+    StoredConversationReference,
 };
 
 use super::{
-    map_adapter_error, map_project_error, parse_turn_start, sandbox_policy,
-    validate_protocol_choice, validate_user_text, ActiveConversation, ConversationService,
-    ConversationState,
+    availability_storage_value, map_adapter_error, map_project_error,
+    model_selection_from_reference, parse_turn_start, persist_model_selection, sandbox_policy,
+    validate_attachment_ids, validate_protocol_choice, validate_user_text, ActiveConversation,
+    ConversationService, ConversationState,
 };
+use crate::attachment::ResolvedConversationAttachment;
 use crate::codex::{
     app_server::{validate_uuid_v7, AppServerProcess},
     conversation::types::{
         ConversationApprovalPolicy, ConversationDiagnosticCode, ConversationEvent,
         ConversationLifecyclePhase, ConversationSandboxMode, ConversationSnapshot,
     },
+    model_selection::{
+        ModelSelectionApplication, ModelSelectionDiagnosticCode, ModelSelectionService,
+        ModelSelectionSnapshot,
+    },
+    types::CodexModel,
 };
 
-pub const SESSION_LIFECYCLE_SCHEMA_VERSION: u16 = 2;
+pub const SESSION_LIFECYCLE_SCHEMA_VERSION: u16 = 3;
 const MAX_SESSION_REFERENCES: usize = 256;
 const MAX_LIST_PAGES: usize = 8;
 const LIST_PAGE_SIZE: u32 = 256;
@@ -37,6 +45,7 @@ const MAX_SESSION_TITLE_CHARS: usize = 256;
 pub struct ConversationContinueRequest {
     pub conversation_id: String,
     pub prompt: String,
+    pub attachment_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -75,6 +84,7 @@ pub struct SessionReferenceSummary {
     pub title: Option<String>,
     pub model_id: String,
     pub reasoning_effort: String,
+    pub model_selection: ModelSelectionSnapshot,
     pub sandbox_mode: ConversationSandboxMode,
     pub approval_policy: ConversationApprovalPolicy,
     pub state: SessionReferenceState,
@@ -114,6 +124,12 @@ impl SessionLifecycleSnapshot {
 enum ContinueMode {
     Resume,
     Fork,
+}
+
+#[derive(Clone, Copy)]
+struct ContinueTurnInputs<'a> {
+    mode: ContinueMode,
+    attachments: &'a [ResolvedConversationAttachment],
 }
 
 impl ConversationService {
@@ -168,21 +184,43 @@ impl ConversationService {
         )
     }
 
+    #[cfg(test)]
     pub async fn resume(
         &self,
         request: ConversationContinueRequest,
         projects: &ProjectService,
     ) -> ConversationSnapshot {
-        self.continue_conversation(request, projects, ContinueMode::Resume)
+        self.resume_with_attachments(request, projects, Vec::new())
             .await
     }
 
+    pub(crate) async fn resume_with_attachments(
+        &self,
+        request: ConversationContinueRequest,
+        projects: &ProjectService,
+        attachments: Vec<ResolvedConversationAttachment>,
+    ) -> ConversationSnapshot {
+        self.continue_conversation(request, projects, ContinueMode::Resume, attachments)
+            .await
+    }
+
+    #[cfg(test)]
     pub async fn fork(
         &self,
         request: ConversationContinueRequest,
         projects: &ProjectService,
     ) -> ConversationSnapshot {
-        self.continue_conversation(request, projects, ContinueMode::Fork)
+        self.fork_with_attachments(request, projects, Vec::new())
+            .await
+    }
+
+    pub(crate) async fn fork_with_attachments(
+        &self,
+        request: ConversationContinueRequest,
+        projects: &ProjectService,
+        attachments: Vec<ResolvedConversationAttachment>,
+    ) -> ConversationSnapshot {
+        self.continue_conversation(request, projects, ContinueMode::Fork, attachments)
             .await
     }
 
@@ -207,9 +245,15 @@ impl ConversationService {
         request: ConversationContinueRequest,
         projects: &ProjectService,
         mode: ContinueMode,
+        attachments: Vec<ResolvedConversationAttachment>,
     ) -> ConversationSnapshot {
         if validate_continue_request(&request).is_err() {
             return ConversationSnapshot::unavailable(ConversationDiagnosticCode::InvalidRequest);
+        }
+        if attachments.len() != request.attachment_ids.len() {
+            return ConversationSnapshot::unavailable(
+                ConversationDiagnosticCode::AttachmentUnavailable,
+            );
         }
 
         let reference = match projects.conversation_reference(&request.conversation_id) {
@@ -252,7 +296,17 @@ impl ConversationService {
         };
 
         let active = self
-            .continue_reserved(&request, &reference, &controls, &cwd, projects, mode)
+            .continue_reserved(
+                &request,
+                &reference,
+                &controls,
+                &cwd,
+                projects,
+                ContinueTurnInputs {
+                    mode,
+                    attachments: &attachments,
+                },
+            )
             .await;
         match active {
             Ok(active) => {
@@ -294,7 +348,7 @@ impl ConversationService {
         controls: &StoredControls,
         cwd: &Path,
         projects: &ProjectService,
-        mode: ContinueMode,
+        inputs: ContinueTurnInputs<'_>,
     ) -> Result<ActiveConversation, ConversationDiagnosticCode> {
         let mut process = AppServerProcess::spawn(self.command.clone())
             .map_err(|error| map_adapter_error(&error))?;
@@ -305,15 +359,15 @@ impl ConversationService {
             controls,
             cwd,
             projects,
-            mode,
+            inputs,
         )
         .await;
         match result {
             Ok(started) => Ok(ActiveConversation {
                 conversation_id: started.conversation_id,
                 project_id: reference.project_id.clone(),
-                model_id: reference.model_id.clone(),
-                reasoning_effort: reference.reasoning_effort.clone(),
+                model_id: started.model_selection.effective.model_id.clone(),
+                reasoning_effort: started.model_selection.effective.reasoning_effort.clone(),
                 sandbox_mode: controls.sandbox_mode,
                 approval_policy: controls.approval_policy,
                 cwd: cwd.to_path_buf(),
@@ -323,6 +377,10 @@ impl ConversationService {
                 next_sequence: 3,
                 activities: HashMap::new(),
                 pending_approval: None,
+                model_catalog: started.model_catalog,
+                model_selection: started.model_selection,
+                agent_selection_request: None,
+                agent_selection_request_seen: false,
                 process,
                 finished: false,
             }),
@@ -566,6 +624,8 @@ struct ContinuedConversation {
     conversation_id: String,
     thread_id: String,
     turn_id: String,
+    model_catalog: Vec<CodexModel>,
+    model_selection: ModelSelectionSnapshot,
 }
 
 #[derive(Clone, Copy)]
@@ -610,23 +670,58 @@ async fn continue_on_process(
     controls: &StoredControls,
     cwd: &Path,
     projects: &ProjectService,
-    mode: ContinueMode,
+    inputs: ContinueTurnInputs<'_>,
 ) -> Result<ContinuedConversation, ConversationDiagnosticCode> {
-    process
-        .initialize()
+    let (model_catalog, _) = process
+        .discover_models()
         .await
         .map_err(|error| map_adapter_error(&error))?;
+    let mut model_selection = model_selection_from_reference(reference)?;
+    ModelSelectionService::validate_choice(&model_selection.effective, &model_catalog)
+        .map_err(map_selection_error)?;
+    ModelSelectionService::validate_policy(
+        &model_selection.policy,
+        &model_catalog,
+        &model_selection.effective,
+    )
+    .map_err(map_selection_error)?;
+    let mut next_choice = model_selection.effective.clone();
+    let mut consume_pending = false;
+    if let Some(pending) = model_selection.pending.as_ref() {
+        match pending.application {
+            ModelSelectionApplication::Recommendation => {}
+            ModelSelectionApplication::Manual => {
+                ModelSelectionService::validate_choice(&pending.choice, &model_catalog)
+                    .map_err(map_selection_error)?;
+                next_choice = pending.choice.clone();
+                consume_pending = true;
+            }
+            ModelSelectionApplication::Automatic => {
+                if ModelSelectionService::pending_still_applicable(
+                    pending,
+                    &model_selection.policy,
+                    &model_catalog,
+                ) {
+                    next_choice = pending.choice.clone();
+                    consume_pending = true;
+                } else {
+                    model_selection.pending = None;
+                    persist_model_selection(projects, &reference.id, &model_selection, None)?;
+                }
+            }
+        }
+    }
     read_exact_thread(process, reference, cwd).await?;
 
-    let method = match mode {
+    let method = match inputs.mode {
         ContinueMode::Resume => "thread/resume",
         ContinueMode::Fork => "thread/fork",
     };
-    let params = match mode {
+    let params = match inputs.mode {
         ContinueMode::Resume => json!({
             "threadId": reference.codex_thread_id,
             "cwd": cwd,
-            "model": reference.model_id,
+            "model": next_choice.model_id,
             "approvalPolicy": controls.approval_policy.as_protocol_value(),
             "sandbox": controls.sandbox_mode.as_protocol_value(),
             "excludeTurns": true,
@@ -634,7 +729,7 @@ async fn continue_on_process(
         ContinueMode::Fork => json!({
             "threadId": reference.codex_thread_id,
             "cwd": cwd,
-            "model": reference.model_id,
+            "model": next_choice.model_id,
             "approvalPolicy": controls.approval_policy.as_protocol_value(),
             "sandbox": controls.sandbox_mode.as_protocol_value(),
             "excludeTurns": true,
@@ -645,27 +740,44 @@ async fn continue_on_process(
         .request(method, params)
         .await
         .map_err(|error| map_adapter_error(&error))?;
-    let expected_thread_id = match mode {
+    let expected_thread_id = match inputs.mode {
         ContinueMode::Resume => Some(reference.codex_thread_id.as_str()),
         ContinueMode::Fork => None,
     };
-    let continued =
-        parse_continue_response(response, expected_thread_id, reference, controls, cwd)?;
+    let continued = parse_continue_response(
+        response,
+        expected_thread_id,
+        reference,
+        &next_choice.model_id,
+        controls,
+        cwd,
+    )?;
 
-    let conversation_id = match mode {
+    let conversation_id = match inputs.mode {
         ContinueMode::Resume => reference.id.clone(),
         ContinueMode::Fork => {
             let conversation_id = Uuid::now_v7().to_string();
+            let allowed_model_ids_json =
+                serde_json::to_string(&model_selection.policy.allowed_model_ids)
+                    .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
             if projects
                 .record_conversation_reference(ConversationReference {
                     conversation_id: &conversation_id,
                     project_id: &reference.project_id,
                     codex_thread_id: &continued.thread.id,
-                    model_id: &reference.model_id,
-                    reasoning_effort: &reference.reasoning_effort,
+                    model_id: &next_choice.model_id,
+                    reasoning_effort: &next_choice.reasoning_effort,
                     sandbox_mode: controls.sandbox_mode.as_protocol_value(),
                     approval_policy: controls.approval_policy.as_protocol_value(),
                     parent_conversation_id: Some(&reference.id),
+                    selection: ConversationSelectionMetadata {
+                        availability: availability_storage_value(model_selection.availability),
+                        ownership: model_selection.policy.ownership.as_storage_value(),
+                        user_locked: model_selection.policy.user_locked,
+                        allowed_model_ids_json: &allowed_model_ids_json,
+                        reasoning_ceiling: model_selection.policy.reasoning_ceiling.as_deref(),
+                        pending: None,
+                    },
                 })
                 .is_err()
             {
@@ -678,15 +790,22 @@ async fn continue_on_process(
         }
     };
 
+    let mut input = vec![json!({"type": "text", "text": request.prompt})];
+    input.extend(
+        inputs
+            .attachments
+            .iter()
+            .map(ResolvedConversationAttachment::protocol_input),
+    );
     let turn_result = process
         .request(
             "turn/start",
             json!({
                 "threadId": continued.thread.id,
-                "input": [{"type": "text", "text": request.prompt}],
+                "input": input,
                 "cwd": cwd,
-                "model": reference.model_id,
-                "effort": reference.reasoning_effort,
+                "model": next_choice.model_id,
+                "effort": next_choice.reasoning_effort,
                 "approvalPolicy": controls.approval_policy.as_protocol_value(),
                 "sandboxPolicy": sandbox_policy(controls.sandbox_mode, cwd),
             }),
@@ -699,6 +818,21 @@ async fn continue_on_process(
     let turn = parse_turn_start(turn_result).inspect_err(|_| {
         let _ = projects.record_conversation_status(&conversation_id, "failed");
     })?;
+    model_selection.effective = next_choice;
+    if consume_pending || matches!(inputs.mode, ContinueMode::Fork) {
+        model_selection.pending = None;
+    }
+    if matches!(inputs.mode, ContinueMode::Resume) {
+        persist_model_selection(
+            projects,
+            &conversation_id,
+            &model_selection,
+            Some((
+                &model_selection.effective.model_id,
+                &model_selection.effective.reasoning_effort,
+            )),
+        )?;
+    }
     projects
         .record_conversation_turn(&conversation_id, &turn.turn.id)
         .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
@@ -707,6 +841,8 @@ async fn continue_on_process(
         conversation_id,
         thread_id: continued.thread.id,
         turn_id: turn.turn.id,
+        model_catalog,
+        model_selection,
     })
 }
 
@@ -728,10 +864,26 @@ struct ThreadReference {
     name: Option<String>,
 }
 
+fn map_selection_error(code: ModelSelectionDiagnosticCode) -> ConversationDiagnosticCode {
+    match code {
+        ModelSelectionDiagnosticCode::ModelUnavailable => {
+            ConversationDiagnosticCode::ModelUnavailable
+        }
+        ModelSelectionDiagnosticCode::ReasoningUnavailable => {
+            ConversationDiagnosticCode::ReasoningUnavailable
+        }
+        ModelSelectionDiagnosticCode::MetadataUnavailable => {
+            ConversationDiagnosticCode::MetadataUnavailable
+        }
+        _ => ConversationDiagnosticCode::InvalidRequest,
+    }
+}
+
 fn parse_continue_response(
     value: Value,
     expected_thread_id: Option<&str>,
     source: &StoredConversationReference,
+    expected_model: &str,
     controls: &StoredControls,
     cwd: &Path,
 ) -> Result<ContinueResponse, ConversationDiagnosticCode> {
@@ -740,7 +892,7 @@ fn parse_continue_response(
     validate_uuid_v7(&result.thread.id).map_err(|_| ConversationDiagnosticCode::ProtocolInvalid)?;
     if Path::new(&result.cwd) != cwd
         || Path::new(&result.thread.cwd) != cwd
-        || result.model != source.model_id
+        || result.model != expected_model
         || result.approval_policy != controls.approval_policy.as_protocol_value()
     {
         return Err(ConversationDiagnosticCode::ProtocolInvalid);
@@ -908,7 +1060,8 @@ fn validate_continue_request(
 ) -> Result<(), ConversationDiagnosticCode> {
     validate_uuid_v7(&request.conversation_id)
         .map_err(|_| ConversationDiagnosticCode::InvalidRequest)?;
-    validate_user_text(&request.prompt)
+    validate_user_text(&request.prompt)?;
+    validate_attachment_ids(&request.attachment_ids)
 }
 
 fn validate_stored_reference(
@@ -929,6 +1082,8 @@ fn validate_stored_reference(
     validate_protocol_choice(&reference.model_id, 128)
         .map_err(|_| ConversationDiagnosticCode::ProtocolInvalid)?;
     validate_protocol_choice(&reference.reasoning_effort, 32)
+        .map_err(|_| ConversationDiagnosticCode::ProtocolInvalid)?;
+    model_selection_from_reference(reference)
         .map_err(|_| ConversationDiagnosticCode::ProtocolInvalid)?;
     if reference.created_at_ms < 0 || reference.updated_at_ms < reference.created_at_ms {
         return Err(ConversationDiagnosticCode::ProtocolInvalid);
@@ -981,6 +1136,7 @@ fn summary_from_reference(
     authoritative: Option<&HashMap<String, AuthoritativeSession>>,
 ) -> Result<SessionReferenceSummary, ConversationDiagnosticCode> {
     let controls = StoredControls::try_from(&reference)?;
+    let model_selection = model_selection_from_reference(&reference)?;
     let authoritative_session =
         authoritative.and_then(|threads| threads.get(&reference.codex_thread_id));
     let state = match authoritative_session {
@@ -1003,6 +1159,7 @@ fn summary_from_reference(
         title: authoritative_session.and_then(|session| session.title.clone()),
         model_id: reference.model_id,
         reasoning_effort: reference.reasoning_effort,
+        model_selection,
         sandbox_mode: controls.sandbox_mode,
         approval_policy: controls.approval_policy,
         state,
@@ -1059,12 +1216,17 @@ mod tests {
                 ConversationContinueRequest {
                     conversation_id: conversation_id.clone(),
                     prompt: "Continue safely.".to_owned(),
+                    attachment_ids: Vec::new(),
                 },
                 &projects,
             )
             .await;
 
-        assert_eq!(started.state, ConversationState::Running);
+        assert_eq!(
+            started.state,
+            ConversationState::Running,
+            "unexpected resume result: {started:?}"
+        );
         assert_eq!(
             started.conversation_id.as_deref(),
             Some(conversation_id.as_str())
@@ -1075,6 +1237,186 @@ mod tests {
 
         let completed = service.poll(conversation_id, &projects).await;
         assert_eq!(completed.state, ConversationState::Completed);
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
+    async fn revalidates_and_applies_an_automatic_choice_only_to_the_next_turn() {
+        let (projects, directory, project_id) = attached_project();
+        let conversation_id = stored_reference(&projects, &project_id, None);
+        projects
+            .record_model_selection(
+                &conversation_id,
+                None,
+                ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "automatic",
+                    user_locked: false,
+                    allowed_model_ids_json: r#"["fixture-model","fixture-terra"]"#,
+                    reasoning_ceiling: Some("medium"),
+                    pending: Some(crate::project::ConversationPendingSelection {
+                        model_id: "fixture-terra",
+                        reasoning_effort: "medium",
+                        rationale: "Use the allowed model on the next turn.",
+                        provenance: "codex",
+                        application: "automatic",
+                        requested_at_ms: 1,
+                    }),
+                },
+            )
+            .expect("pending choice must store");
+        let stored_before = projects
+            .conversation_reference(&conversation_id)
+            .expect("selector reference must remain readable");
+        assert!(
+            model_selection_from_reference(&stored_before).is_ok(),
+            "stored selector state must parse: {stored_before:?}"
+        );
+        let cwd_json = json_string(&directory);
+        let script = lifecycle_start_script(&cwd_json, THREAD_ID, "thread/resume", "", THREAD_ID)
+            .replace(
+                r#"{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]}"#,
+                r#"{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]},{"model":"fixture-terra","displayName":"Fixture Terra","isDefault":false,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]}"#,
+            )
+            .replace(
+                r#""model":"fixture-model","approvalPolicy":"untrusted""#,
+                r#""model":"fixture-terra","approvalPolicy":"untrusted""#,
+            )
+            .replace(
+                "read -r _turn\nprintf",
+                "read -r _turn\ncase \"$_turn\" in *'\"model\":\"fixture-terra\"'*) ;; *) exit 88 ;; esac\ncase \"$_turn\" in *'\"effort\":\"medium\"'*) ;; *) exit 89 ;; esac\nprintf",
+            );
+        assert!(
+            script.contains(r#""model":"fixture-terra","approvalPolicy":"untrusted""#),
+            "continue response must use the pending model: {script}"
+        );
+        assert!(
+            script.contains(r#""model":"fixture-terra","displayName":"Fixture Terra""#),
+            "fresh catalog must advertise the pending model: {script}"
+        );
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+
+        let started = service
+            .resume(
+                ConversationContinueRequest {
+                    conversation_id: conversation_id.clone(),
+                    prompt: "Continue on the revalidated next-turn choice.".to_owned(),
+                    attachment_ids: Vec::new(),
+                },
+                &projects,
+            )
+            .await;
+        assert_eq!(
+            started.state,
+            ConversationState::Running,
+            "unexpected selector resume result: {started:?}"
+        );
+        assert_eq!(started.model_id.as_deref(), Some("fixture-terra"));
+        assert!(started
+            .model_selection
+            .as_ref()
+            .is_some_and(|selection| selection.pending.is_none()));
+        let stored = projects
+            .conversation_reference(&conversation_id)
+            .expect("effective choice must update");
+        assert_eq!(stored.model_id, "fixture-terra");
+        assert!(stored.selector_pending_model_id.is_none());
+
+        let completed = service.poll(conversation_id, &projects).await;
+        assert_eq!(completed.state, ConversationState::Completed);
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
+    async fn discards_a_stale_automatic_request_without_changing_effective_selection() {
+        let (projects, directory, project_id) = attached_project();
+        let conversation_id = stored_reference(&projects, &project_id, None);
+        projects
+            .record_model_selection(
+                &conversation_id,
+                None,
+                ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "automatic",
+                    user_locked: false,
+                    allowed_model_ids_json: r#"["fixture-model"]"#,
+                    reasoning_ceiling: Some("medium"),
+                    pending: Some(crate::project::ConversationPendingSelection {
+                        model_id: "stale-model",
+                        reasoning_effort: "medium",
+                        rationale: "This catalog row disappeared.",
+                        provenance: "codex",
+                        application: "automatic",
+                        requested_at_ms: 1,
+                    }),
+                },
+            )
+            .expect("stale pending choice must store");
+        let cwd_json = json_string(&directory);
+        let script = lifecycle_start_script(&cwd_json, THREAD_ID, "thread/resume", "", THREAD_ID);
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+
+        let started = service
+            .resume(
+                ConversationContinueRequest {
+                    conversation_id: conversation_id.clone(),
+                    prompt: "Continue without the stale selector request.".to_owned(),
+                    attachment_ids: Vec::new(),
+                },
+                &projects,
+            )
+            .await;
+        assert_eq!(started.state, ConversationState::Running);
+        assert_eq!(started.model_id.as_deref(), Some("fixture-model"));
+        let stored = projects
+            .conversation_reference(&conversation_id)
+            .expect("stale request must clear");
+        assert_eq!(stored.model_id, "fixture-model");
+        assert!(stored.selector_pending_model_id.is_none());
+
+        let completed = service.poll(conversation_id, &projects).await;
+        assert_eq!(completed.state, ConversationState::Completed);
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
+    async fn resume_sends_only_native_resolved_local_image_inputs() {
+        let (projects, directory, project_id) = attached_project();
+        let conversation_id = stored_reference(&projects, &project_id, None);
+        let attachment_id = "018f0000-0000-7000-8000-000000000099";
+        let cwd_json = json_string(&directory);
+        let script = lifecycle_start_script(&cwd_json, THREAD_ID, "thread/resume", "", THREAD_ID)
+            .replacen(
+                "read -r _turn",
+                &format!(
+                    r#"read -r _turn
+case "$_turn" in *'"path":'*'"type":"localImage"'*) ;; *) exit 86 ;; esac
+case "$_turn" in *'{attachment_id}'*) exit 87 ;; *) ;; esac"#
+                ),
+                1,
+            );
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+
+        let started = service
+            .resume_with_attachments(
+                ConversationContinueRequest {
+                    conversation_id: conversation_id.clone(),
+                    prompt: "Review the image safely.".to_owned(),
+                    attachment_ids: vec![attachment_id.to_owned()],
+                },
+                &projects,
+                vec![ResolvedConversationAttachment::for_test(
+                    directory.join("private-staged-image.png"),
+                )],
+            )
+            .await;
+        assert_eq!(started.state, ConversationState::Running);
+        let completed = service.poll(conversation_id, &projects).await;
+        assert_eq!(completed.state, ConversationState::Completed);
+
         fs::remove_dir_all(directory).expect("temporary project must be removed");
     }
 
@@ -1099,6 +1441,7 @@ mod tests {
                 ConversationContinueRequest {
                     conversation_id: parent_id.clone(),
                     prompt: "Try a separate approach.".to_owned(),
+                    attachment_ids: Vec::new(),
                 },
                 &projects,
             )
@@ -1293,6 +1636,7 @@ printf '%s\n' '{{"id":2,"result":{{"thread":{{"id":"{THREAD_ID}","cwd":{wrong_cw
                 ConversationContinueRequest {
                     conversation_id,
                     prompt: "Continue safely.".to_owned(),
+                    attachment_ids: Vec::new(),
                 },
                 &projects,
             )
@@ -1344,6 +1688,14 @@ printf '%s\n' '{{"id":2,"result":{{"thread":{{"id":"{THREAD_ID}","cwd":{wrong_cw
                 sandbox_mode: "read-only",
                 approval_policy: "untrusted",
                 parent_conversation_id,
+                selection: ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "manual",
+                    user_locked: false,
+                    allowed_model_ids_json: "[]",
+                    reasoning_ceiling: None,
+                    pending: None,
+                },
             })
             .expect("conversation reference must store");
         conversation_id
@@ -1364,15 +1716,18 @@ printf '%s\n' '{{"id":2,"result":{{"thread":{{"id":"{THREAD_ID}","cwd":{wrong_cw
             r#"
 read -r _initialize
 printf '%s\n' '{{"id":1,"result":{{}}}}'
+read -r _models
+case "$_models" in *'"method":"model/list"'*) ;; *) exit 80 ;; esac
+printf '%s\n' '{{"id":2,"result":{{"data":[{{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{{"reasoningEffort":"medium"}}]}}]}}}}'
 read -r _read
 case "$_read" in *'"includeTurns":false'*'"threadId":"{expected_thread_id}"'*) ;; *) exit 81 ;; esac
-printf '%s\n' '{{"id":2,"result":{{"thread":{{"id":"{expected_thread_id}","cwd":{cwd_json}}}}}}}'
+printf '%s\n' '{{"id":3,"result":{{"thread":{{"id":"{expected_thread_id}","cwd":{cwd_json}}}}}}}'
 read -r _continue
 case "$_continue" in *'"method":"{method}"'*'"excludeTurns":true'*) ;; *) exit 82 ;; esac
 case "$_continue" in *'"path"'*|*'"history"'*|*'"runtimeWorkspaceRoots"'*) exit 83 ;; esac
-printf '%s\n' '{{"id":3,"result":{{"cwd":{cwd_json},"model":"fixture-model","approvalPolicy":"untrusted","thread":{{"id":"{response_thread_id}","cwd":{cwd_json}{fork_fields}}}}}}}'
+printf '%s\n' '{{"id":4,"result":{{"cwd":{cwd_json},"model":"fixture-model","approvalPolicy":"untrusted","thread":{{"id":"{response_thread_id}","cwd":{cwd_json}{fork_fields}}}}}}}'
 read -r _turn
-printf '%s\n' '{{"id":4,"result":{{"turn":{{"id":"{TURN_ID}","status":"inProgress"}}}}}}'
+printf '%s\n' '{{"id":5,"result":{{"turn":{{"id":"{TURN_ID}","status":"inProgress"}}}}}}'
 printf '%s\n' '{{"method":"turn/completed","params":{{"threadId":"{response_thread_id}","turn":{{"id":"{TURN_ID}","status":"completed"}}}}}}'
 "#
         )

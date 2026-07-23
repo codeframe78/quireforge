@@ -1,9 +1,10 @@
 # Architecture
 
-Status: Milestone 0 application proposal with the website foundation and
-desktop work implemented locally through Milestone 14C. Packaging, deployment,
+Status: desktop implementation is locally verified through Milestone 19 and
+the static website is complete through production Milestone 16 with Milestone
+19 accessibility hardening applied locally. Packaging, release publication,
 and unsupported integration-management expansion remain subject to separately
-gated milestones.
+gated work.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -43,6 +44,8 @@ React UI
   ▼
 Rust application core
   ├── project/directory services ── SQLite metadata
+  ├── file preview service ──────── bounded project files
+  ├── attachment staging service ── private conversation images
   ├── Git and PTY services ──────── git / shell processes
   ├── Codex compatibility layer ─── app-server stdio
   │                              └─ CLI JSON fallbacks
@@ -115,6 +118,33 @@ one-time code exist only in the in-memory pending snapshot because they are
 required for user handoff; they disappear after completion or cancellation.
 Logout requires a second explicit UI action. QuireForge does not read Codex
 credential files or browser storage and creates no authentication database.
+
+### Milestone 21A product-readiness boundary
+
+The desktop startup path renders only the local bootstrap, Codex runtime probe,
+and Codex-owned authentication state until access is granted. Project,
+conversation, active-task, session, terminal, integration, Git, worktree, and
+usage readers do not start behind the sign-in gate. The accepted account state
+is normalized by Codex: ChatGPT browser or device login remains the preferred
+OpenAI flow, while an already configured API-key or managed provider can report
+authenticated or no-additional-login-required state without QuireForge reading
+or storing its credential.
+
+The fixed `codex_usage_status` and `codex_usage_refresh` commands invoke only
+the documented `account/rateLimits/read` method after app-server
+initialization. Rust normalizes at most eight named meters and two windows per
+meter into integer used/remaining percentages, bounded durations, bounded Unix
+reset times, and a coarse limit-reached boolean. It discards plan type, credit
+balance, spend controls, account metadata, reset-credit inventory and IDs, and
+all unreviewed fields. Unknown enums, malformed labels/identifiers, impossible
+percentages, and invalid timestamps fail closed. The UI never predicts quota
+or offers reset-credit redemption.
+
+The authenticated React shell is a presentation hierarchy, not a new backend
+capability: Home summarizes existing project and reference-only session state,
+then links to the established fixed-purpose workspaces. Internal roadmap
+milestones remain repository metadata and are not rendered as product
+navigation.
 
 ### Milestone 6 implementation boundary
 
@@ -360,6 +390,87 @@ the metadata while the directory and inventory entry remain absent. Generic
 prune is unavailable because Git cannot scope it to one app-owned target. See
 [ADR 0016](DECISIONS/0016-safe-managed-worktree-cleanup.md).
 
+### Milestone 15A safe file-preview boundary
+
+`FilePreviewService` is stateless and accepts one app-owned project UUIDv7 plus
+the path returned directly by the native picker. Before any content crosses
+IPC, Rust reloads the attachment, revalidates directory identity and readable
+accessibility, canonicalizes the selection, requires attachment containment,
+rejects symlinks/non-regular files, retains an identity-checked root directory
+descriptor, opens the relative target through that descriptor with
+`O_NOFOLLOW`, and rechecks the opened path/device/inode. Absolute paths never
+enter React.
+
+The closed schema distinguishes normalized UTF-8 text, bounded PNG/JPEG image,
+and metadata-only PDF presentation. Text is capped at 128 KiB/2,000 lines and
+has controls and bidi overrides replaced. Images are capped at 4 MiB, 8,192
+pixels per dimension, and 16 million pixels; type/dimensions are checked before
+and after the full read, and APNG is refused. PDF bytes, unknown binary content,
+and active documents never enter the privileged webview. HTML/SVG markup can
+appear only as inert normalized text, never as active markup. Source files are
+capped at 8 MiB and preview state is never persisted.
+
+The production CSP permits `data:` only for image sources so the two bounded
+image types can render. Browser preview cannot select or read a local file.
+Conversation attachments use the separate 15B boundary below. Notifications,
+reviewed open-with behavior, and Linux verification use the 15C boundary below.
+See [ADR 0021](DECISIONS/0021-safe-project-file-previews.md).
+
+### Milestone 15B conversation-image boundary
+
+`ConversationAttachmentService` accepts explicit paths returned by the native
+picker, bounded PNG/JPEG bytes from an HTML drag/drop event, or a one-use Linux
+file-manager drop captured by GTK. Tauri's default file-drop handling remains
+disabled so the webview never receives native filesystem paths. Picker paths
+remain in Rust; dropped browser `File` objects are read only after an explicit
+user gesture and carry bytes, a safe display name, and a declared image type to
+the fixed staging command. When WebKitGTK supplies an empty HTML `FileList`, a
+Linux-only GTK signal retains at most five file URIs (four allowed plus one
+overflow sentinel) in process memory for 30 seconds. The drop zone invokes a
+separate path-free claim command, after which Rust consumes the slot and applies
+the normal file/content limits.
+
+Rust independently validates the real PNG/JPEG structure, dimensions, MIME,
+4 MiB per-file and four-file/16 MiB aggregate limits, refuses symlinks and
+unsafe names, and writes app-owned copies beneath a mode-`0700` staging root as
+mode-`0600` UUIDv7 files. React receives only opaque draft IDs and normalized
+name/type/size/dimension metadata. Draft IDs are project-bound, expire after
+15 minutes, are consumed once by explicit start/resume/fork, and never enter
+SQLite.
+
+Immediately before a turn, native code reopens and revalidates each staged
+file's device, inode, length, type, and dimensions. It then constructs only the
+documented Codex `localImage` input from the private path. Because
+`turn/start` returns the initial turn before streamed work completes and the
+official contract gives no earlier consumption guarantee, claimed copies stay
+native-owned until the normalized turn is completed, interrupted, blocked, or
+failed. Cancellation, failed sends, expiry, and startup reconciliation provide
+the other cleanup paths. Generic files remain unsupported because the reviewed
+Codex 0.145.0 turn schema has no generic local-file input. See
+[ADR 0022](DECISIONS/0022-bounded-conversation-image-attachments.md).
+
+### Milestone 15C desktop-integration boundary
+
+Each ready safe preview now registers one process-local, five-minute UUIDv7
+open action. React can review the attachment-relative file name and the closed
+`System default application` destination, but it cannot provide a path,
+application, executable, argument, MIME type, URL, or working directory. Claim
+is one-use; native code reloads the attachment and revalidates canonical
+containment, regular non-symlink state, descriptor identity, and the previewed
+device/inode before calling Tauri's opener. Replacement, clear, expiry, and
+successful claim remove the action, and at most 16 actions exist.
+
+Background conversation notifications accept only an app-owned conversation
+UUIDv7 and re-resolve it against the native recent-state registry. Pending
+approval, completion, block, and failure select fixed privacy-safe copy;
+interrupted and other states are ineligible. The main window's native focus
+state suppresses foreground alerts, and approval/terminal identity provides
+bounded deduplication. Project names, prompts, paths, model/account data,
+outputs, diagnostics, and raw protocol fields never enter the notification.
+The official Rust notification plugin is initialized without granting its
+commands to the webview; the main capability list remains empty. See
+[ADR 0023](DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md).
+
 ## Application layers
 
 ### Frontend
@@ -375,6 +486,16 @@ bounded branch name; existing paths come from the native picker, and every
 worktree confirmation supplies only its native-held token. Recovery and cleanup
 previews add only opaque app-owned recovery/project IDs; React still cannot
 submit a worktree path, branch for removal, cwd, executable, or Git argument.
+File preview adds only an opaque project ID; the native picker owns the path,
+and React can consume only the strict bounded snapshot. Its optional desktop
+handoff adds one native-held open-action ID with a fixed default-application
+destination; React still cannot submit a path or application.
+Conversation attachments add only opaque project/attachment IDs plus bounded
+dragged image bytes; no source path, staged path, generic file handle, or
+arbitrary read operation crosses the boundary.
+Notifications add only an app-owned conversation ID and return a closed
+delivery status; native code owns eligibility, focus suppression, copy, and
+deduplication.
 
 ### Native application core
 
@@ -404,8 +525,8 @@ The implemented compatibility boundary consists of:
 - `ConversationRegistrySnapshot`: strict active-only capacity/task projection
   with no event replay or native identity.
 
-Milestone 18 plans a `ModelSelectionService` inside this boundary after
-Milestone 13 validates the required app-server lifecycle. The service owns the
+Milestone 18 implements `ModelSelectionService` inside this boundary using the
+Milestone 13 validated app-server lifecycle. The service owns the
 normalized catalog, current effective selection, one pending next-turn
 selection, selector-ownership policy, and bounded provenance. A Codex request
 can only stage a change after native revalidation; the current turn continues
@@ -413,9 +534,13 @@ on its existing model, and the pending value is applied only when constructing
 the next `turn/start`. React cannot submit an unadvertised model, private model
 identifier, raw protocol payload, or direct configuration edit.
 
-Later milestones extend recovery, approvals, and presentation without bypassing
-this normalization layer. Generated schemas and sanitized fixtures drive
-contract tests.
+Registration rejection retries the thread without the dynamic tool and exposes
+recommendation-only availability. Conversation and session schema version 3
+carry a schema-versioned selector snapshot, while `model_selection_update`
+accepts only an opaque conversation ID, reviewed choice, closed policy, and
+pending action. Later milestones extend hardening without bypassing this
+normalization layer. Generated schemas and sanitized fixtures drive contract
+tests.
 
 ## Required service boundaries
 
@@ -438,7 +563,11 @@ contract tests.
   snapshots.
 - `TerminalService`: independent PTY sessions rooted in verified directories.
 - `ApprovalService`: request correlation, scope, decision validation, expiry.
-- `PreviewService`: bounded MIME/type-aware previews.
+- `PreviewService`: implemented project-contained normalized text, bounded
+  PNG/JPEG, and metadata-only PDF previews; no general read operation.
+- `ConversationAttachmentService`: implemented private PNG/JPEG staging,
+  one-use project-bound drafts, native `localImage` construction, and terminal-
+  turn cleanup; no generic local-file input or credential storage.
 - `SettingsService`: application settings without secret ownership.
 - `CapabilityService`: Codex/runtime/version/policy capability map.
 - `ModelSelectionService`: live catalog validation, Manual/Recommend/Automatic
@@ -534,12 +663,30 @@ health state. Plugin enable/disable, generic connector installation or
 configuration, MCP add/remove/logout/configuration, arbitrary health repair,
 generic config editing, and the app-owned dynamic tool remain unimplemented.
 
-The future app-owned dynamic-tool boundary registers a closed schema through
+Milestone 17A advances the catalog boundary to `codex-integration-v2` and adds
+`scheduledTasks` without adding a second IPC surface. The service derives a
+bounded native-only lookup list from installed, enabled plugin rows and exact
+marketplace roots, then calls stable `plugin/read` on the already-owned
+app-server process. It accepts only the reviewed plugin detail and schedule
+shapes, binds every task to an existing normalized plugin entry, bounds global
+and per-plugin counts, collapses prompts to inert single-line previews, and
+removes unsafe control/directional characters. Raw paths, plugin loader
+metadata, and protocol errors never cross IPC.
+
+The Scheduled React workspace consumes only schema-v2 task metadata and has no
+mutation bridge or action control. A degraded task response does not erase
+unrelated catalog categories. QuireForge does not persist or execute task
+prompts and implements no local or hosted scheduler. See
+[ADR 0025](DECISIONS/0025-read-only-scheduled-task-catalog.md).
+
+The implemented app-owned dynamic-tool boundary registers a closed schema through
 `thread/start`, accepts only the correlated `item/tool/call` server request,
 and returns a bounded response. Registration, invocation, and response IDs are
-native-owned. Milestone 13A marks the lifecycle contract-only; Milestone 18 may
-use it to stage a policy-valid model choice for the next turn, never to replace
-the executing turn's model.
+native-owned. Milestone 13A established the lifecycle contract; Milestone 18
+uses it to stage a policy-valid model choice only after successful turn
+completion and to apply it after a fresh catalog check on the next turn, never
+to replace the executing turn's model. See
+[ADR 0026](DECISIONS/0026-policy-bounded-next-turn-selection.md).
 
 ## Project and directory data model
 
@@ -748,15 +895,58 @@ consume layered CSS tokens and approved vector/raster brand exports. Screenshots
 and compatibility data are curated release assets; local project, connector,
 and account data never enter the site build.
 
-Production is `https://quireforge.jamesjennison.net` on Cloudflare Pages.
-GitHub owns source, validation, issues, and release binaries; GitHub Pages
-remains disabled. Cloudflare is authoritative DNS. The deployment adapter
-builds a static artifact, creates isolated previews, applies version-controlled
-headers/redirects, and promotes only an approved production-branch deployment.
-DNS cutover is independently approval-gated and recoverable. The generated
-artifact is checked for routes, links, assets, canonical metadata, disclaimers,
-inline code, and version-controlled headers before browser tests exercise its
+Production is `https://quireforge.jamesjennison.net` on a Webuzo-managed
+Apache origin, with Cloudflare retained as authoritative DNS and the proxied
+TLS/cache edge. Source, validation, issues, and development activity remain
+private; GitHub Pages and Cloudflare Pages remain disabled. The deployment
+workflow builds outside public storage, records a per-file artifact manifest,
+uses origin-only staging, applies a version-controlled Apache `.htaccess`, and
+promotes only an exact approved artifact to the Webuzo-reported document root.
+Domain creation, staging, and the one-record DNS cutover completed through
+separate approvals and remain independently recoverable. The generated artifact
+is checked for routes, links, assets, canonical metadata, disclaimers, inline
+code, and version-controlled headers before browser tests exercise its
 desktop/mobile structure, themes, overflow, and accessibility baseline.
+
+The dormant download record is an unavailable/published typed union. A
+published value must contain exactly one version-coherent x86_64 AppImage and
+one Debian package, positive sizes, lowercase SHA-256 values, UTC publication
+time, and credential-free HTTPS package/manifest/checksum URLs on the approved
+QuireForge origin. The website build also requires an approved private security
+reporting URL before it can render a published release. Package promotion to a
+versioned owner-hosted directory, download-record activation, and website
+deployment are independent exact-artifact operations with separate rollback
+points. The private source repository and its access-controlled release records
+are not an anonymous public package host.
+
+## Milestone 19 hardening boundary
+
+The pre-packaging hardening pass does not add a privileged product capability.
+It makes the existing boundary repeatable and fail-closed:
+
+- the main Linux webview capability remains permission-empty, the global Tauri
+  object and asset protocol are explicitly disabled, and production builds
+  prune unused plugin commands;
+- the production CSP begins at `default-src 'none'`, admits only local
+  frontend assets, data images, and Tauri IPC, and pairs with restrictive
+  response headers;
+- direct production-frontend active HTML insertion, string evaluation,
+  fetch/XHR, and WebSocket primitives fail repository validation;
+- pnpm and Cargo dependency audits run in CI, GitHub Actions must use immutable
+  SHAs, and the exact unavoidable Tauri/GTK3 RustSec exceptions remain visible;
+- the startup entry, application shell, and heavy xterm workspace are separate
+  production chunks with deterministic per-chunk and total asset budgets; an
+  opaque loading overlay remains mounted until the application commits and
+  paints;
+- keyboard skip targets, reduced motion, forced colors, terminal confirmation
+  focus ownership, and a raw-error-free React recovery boundary are covered in
+  both unit and browser gates.
+
+Tauri's `freezePrototype` remains disabled because enabling it breaks the
+verified Vite/React production mount. Inline style permission remains limited
+to the stable xterm renderer. These exceptions, the inherited GTK3 advisory
+set, and the full acceptance record are documented in the
+[Milestone 19 hardening review](MILESTONE_19_HARDENING.md).
 
 ## Testing seams
 
@@ -777,8 +967,8 @@ Most tests require neither model calls nor third-party authorization.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or
   only through Codex-supported configuration RPCs.
-- Cloudflare Git integration versus protected GitHub Actions direct upload,
-  pending project-level permission review.
+- Long-term manual artifact promotion versus a separately approved
+  least-privilege protected deployment workflow.
 - Functional validation that the selected Tauri, GTK, desktop-entry, D-Bus,
   and packaging toolchain versions preserve the canonical application ID and
   reverse-DNS desktop filename.

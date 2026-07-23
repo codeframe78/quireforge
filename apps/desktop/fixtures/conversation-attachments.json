@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "state": "ready",
+  "projectId": "018f6f24-8b71-7c72-9b41-4e0b8ce4c61a",
+  "attachments": [
+    {
+      "attachmentId": "018f6f24-8b71-7c72-9b41-4e0b8ce4c620",
+      "displayName": "review.png",
+      "source": "drag-drop",
+      "mimeType": "image/png",
+      "byteSize": 67,
+      "imageWidth": 1,
+      "imageHeight": 1
+    }
+  ],
+  "diagnosticCode": null
+}

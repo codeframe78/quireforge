@@ -802,3 +802,159 @@ seconds, and 1 minute 55 seconds. Post-merge `main` workflow
 completed them in 7 seconds, 1 minute 18 seconds, and 1 minute 40 seconds. Both
 hosted gates passed without a cache, workflow, runner, or host configuration
 change.
+
+## Milestone 15A measurements
+
+The safe file-preview checkpoint reused warm Cargo, pnpm, Vite, Astro, and
+browser caches. It added no dependency, clean build, cache reset, linker,
+driver, CUDA, swap, or zram change, and the RTX 3050 remained unused.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                  |
+| ----------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.67 seconds |        about 266 MiB | Passed with zero swaps                                                                  |
+| Four-worker Cargo preflight                     |       0.25 seconds |        about 109 MiB | Passed with zero swaps                                                                  |
+| Complete desktop unit suite                     |      10.51 seconds |                  n/a | Passed 127 tests across 22 files                                                        |
+| Final complete non-browser `pnpm validate` gate |      40.20 seconds |       about 1.01 GiB | Passed 127 frontend tests and 152 Rust tests; 149 passed and 3 live probes were ignored |
+| Final desktop Playwright regression             |      24.04 seconds |        about 435 MiB | Passed 22 desktop/mobile checks, including preview, accessibility, and overflow         |
+| Isolated website Playwright regression          |       7.23 seconds |        about 253 MiB | Passed 8 desktop/mobile checks on temporary port 14321                                  |
+| Final warm unbundled native release build       |      43.34 seconds |       about 1.97 GiB | Passed, including a 39.22-second optimized compile/link                                 |
+
+The combined root Playwright command could not validate the website because a
+separate user-owned Astro preview from another working directory already held
+port 4321 and the local Playwright configuration reused it. QuireForge's
+desktop suite still passed 22/22. The external process was preserved, and the
+unchanged website suite then passed 8/8 on an isolated temporary port. This is
+an orchestration/environment collision, not a product-test failure; generated
+preview suites remain safest when sequenced with verified port ownership.
+
+## Milestone 15B measurements
+
+The bounded conversation-image checkpoint reused warm Cargo, pnpm, Vite,
+Astro, and browser caches. It added no dependency, clean build, cache reset,
+schema migration, linker, driver, CUDA, swap, or zram change, and the RTX 3050
+remained unused.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                             |
+| ----------------------------------------------- | -----------------: | -------------------: | -------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.63 seconds |        about 260 MiB | Passed with zero swaps                                                                             |
+| Four-worker Cargo preflight                     |       0.26 second  |        about 109 MiB | Passed with zero swaps                                                                             |
+| Final complete non-browser `pnpm validate` gate |      68.50 seconds |       about 1.51 GiB | Passed 138 frontend tests and 160 Rust tests; 157 passed and 3 deliberate live probes were ignored |
+| Final desktop Playwright regression             |      26.81 seconds |        about 436 MiB | Passed 24 desktop/mobile checks, including attachment, accessibility, and overflow                 |
+| Final website Playwright regression             |       7.10 seconds |        about 253 MiB | Passed 8 desktop/mobile checks after verifying port 4321 was free                                  |
+| Final warm unbundled native release build       |      39.63 seconds |       about 2.28 GiB | Passed, including a 35.50-second optimized compile/link                                            |
+
+All resource-timed final operations reported zero swaps. The desktop bundle
+retained its existing chunk-size warning at 785.35 kB/211.10 kB gzip; this
+checkpoint did not introduce a new dependency or separate chunk. Routine tests
+used only deterministic fixtures, temporary files, and mock app-server
+processes. They performed no personal-file inspection, personal Codex-state
+read or mutation, live/billable model call, package, release, deployment, or
+hosting change.
+
+The full validation peak increased from 15A because the attachment lifecycle
+and final retention correction recompiled more Rust targets during the timed
+gate; the warm release build remained below 15A's wall time while its peak RSS
+rose to about 2.28 GiB. Both remained comfortably within the host's available
+memory and forecasted command allowance. An initial targeted browser run used
+the previous production `dist`; rebuilding before Playwright produced the
+expected attachment surface and all final checks passed.
+
+## Milestone 15C measurements
+
+The reviewed desktop-integration checkpoint reused warm Cargo, pnpm, Vite,
+Astro, and browser caches. It added Tauri's official Rust notification plugin
+and later made the already-transitive GTK binding direct for a path-private
+Linux drop fallback; no clean build, cache reset, schema migration, linker,
+driver, CUDA, swap, or zram change was made, and the RTX 3050 remained unused.
+
+| Operation                                       | Observed wall time | Approximate peak RSS | Result                                                                                                   |
+| ----------------------------------------------- | -----------------: | -------------------: | -------------------------------------------------------------------------------------------------------- |
+| Desktop TypeScript preflight                    |       1.61 seconds |        about 271 MiB | Passed with zero swaps                                                                                   |
+| Cargo preflight                                 |       1.72 seconds |        about 588 MiB | Passed with zero swaps                                                                                   |
+| Final complete non-browser `pnpm validate` gate |      59.03 seconds |       about 1.67 GiB | Passed 142 frontend tests and 166 Rust tests; 163 passed and 3 deliberate live probes were ignored       |
+| Final desktop Playwright regression             |      27.17 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
+| Final website Playwright regression             |       7.16 seconds |        about 252 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
+| Final configured unbundled Tauri release build  |      45.67 seconds |       about 2.35 GiB | Passed, including a 41.40-second optimized compile/link and the existing frontend chunk-size warning     |
+| Feature-enabled complete native test suite      |       8.11 seconds |       about 1.35 GiB | Passed 167 tests; 164 passed and 3 deliberate live probes were ignored                                   |
+| Feature-gated native notification-probe build   |      38.22 seconds |       about 2.36 GiB | Passed, including a 34.42-second optimized compile/link; enabled no webview command or arbitrary content  |
+| Restored normal unbundled Tauri release build   |      36.88 seconds |       about 2.36 GiB | Passed, including a 32.82-second optimized compile/link; binary scan found no probe flag/delivery string  |
+| Post-probe complete default `pnpm validate` gate |      74.35 seconds |       about 1.62 GiB | Passed 142 frontend tests and 166 default-feature Rust tests; 163 passed and 3 live probes were ignored   |
+| Post-probe desktop Playwright regression        |      27.47 seconds |        about 441 MiB | Passed 24 desktop/mobile checks, including handoff confirmation, accessibility, and overflow             |
+| Post-probe website Playwright regression        |       7.25 seconds |        about 253 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
+| Post-X11-fix complete default `pnpm validate`    |      62.29 seconds |       about 1.34 GiB | Passed 143 frontend tests and 167 Rust tests; 164 passed and 3 deliberate live probes were ignored       |
+| Post-X11-fix desktop Playwright regression       |      27.18 seconds |        about 443 MiB | Passed 24 desktop/mobile checks, including attachment metadata, accessibility, and overflow              |
+| Post-X11-fix website Playwright regression       |       7.02 seconds |        about 250 MiB | Passed 8 desktop/mobile checks after verifying port 4321 ownership                                       |
+| Final native-Wayland acceptance build            |      40.67 seconds |       about 2.38 GiB | Configured production artifact built the exact reviewed tree before the interactive Wayland pass         |
+
+Every resource-timed final operation reported zero swaps. The desktop bundle
+is 788.43 kB/211.88 kB gzip and retains the existing chunk-size warning. The
+configured production artifact started under Wayland and completed the native
+picker, preview, second confirmation, system-default opener, and consumed-
+action path under XWayland against disposable app data. A raw Cargo release
+diagnostic was rejected because it retained the development URL and attempted
+`127.0.0.1:1420`; rebuilding through `pnpm desktop:build` embedded `dist` and
+provided the accepted native artifact. Routine tests made no personal Codex-
+state read/mutation, live/billable model call, package, release, deployment, or
+hosting change. The native probe delivered only fixed production copy through
+the GNOME Wayland notification service, and the normal artifact replaced it
+immediately afterward.
+
+The later true-X11 QA pass reused the guest's warm target and pnpm stores. The
+corrected production build compiled in 37.38 seconds, the feature-gated probe
+in 40.15 seconds, and the restored normal build in 37.94 seconds. The pass used
+an Ubuntu 24.04 GNOME 46 Xorg guest and the attached repository via virtiofs;
+it caught and corrected WebKitGTK's empty HTML `FileList` for Nautilus drops.
+The corrected host gates and both browser suites then passed with zero swaps as
+recorded above. A final configured build of the exact reviewed tree compiled in
+37.81 seconds and again excluded the probe-only markers. No package, release,
+deployment, host desktop-package change, or live model call was made.
+
+The final native Wayland pass first rebuilt the configured production artifact
+in 40.67 seconds at about 2.38 GiB with zero swaps. Against disposable XDG data,
+it completed project/file/image pickers, bounded README preview, and a real
+Nautilus image drop that staged normalized `drag drop` metadata. A portal-
+approved Remote Desktop session supplied test-only compositor input and was
+closed after the pass; it added no QuireForge dependency or permission. This
+closed the remaining Milestone 15 display-session evidence without a package,
+release, deployment, hosting mutation, or live model call.
+
+## Milestone 19 measurements
+
+The pre-packaging hardening pass reused warm Cargo, pnpm, Vite, Astro, and
+browser caches. It added no clean build, cache reset, linker, driver, CUDA,
+swap, or zram change, and the GPU remained unused.
+
+| Operation                                      | Observed wall time | Approximate peak RSS | Result                                                                                                    |
+| ---------------------------------------------- | -----------------: | -------------------: | --------------------------------------------------------------------------------------------------------- |
+| Complete non-browser `pnpm validate` gate      |      43.91 seconds |       about 1.09 GiB | Passed 152 desktop tests, 5 website tests, and 177 Rust tests; 174 passed and 3 live probes were ignored |
+| Final desktop Playwright regression            |      33.71 seconds |        about 466 MiB | Passed all 32 desktop/mobile checks, including axe, keyboard, motion, contrast, focus, and overflow      |
+| Final website Playwright regression            |      13.12 seconds |        about 336 MiB | Passed all 8 desktop/mobile checks, including axe, keyboard, motion, contrast, and overflow               |
+| Final configured unbundled Tauri release build |      26.37 seconds |       about 1.78 GiB | Passed with the reviewed production CSP, response headers, command pruning, and embedded frontend         |
+| Exact cold isolated native visual probe        |        8.44-second sample |                  n/a | Loading view visible at 1.27 seconds; complete workspace visible at 8.44 seconds                         |
+
+Every resource-timed accepted operation reported zero swaps. The configured
+binary is 18,341,600 bytes. Generated desktop assets are a 193,549-byte startup
+entry, 266,135-byte application shell, 350,014-byte terminal chunk, 809,698
+total JavaScript bytes, and 84,133 total CSS bytes. Compared with the former
+805,736-byte monolith, the entry is 76.0% smaller and the full 459,684-byte
+pre-terminal path is 42.9% smaller.
+
+The initial process-only native smoke was insufficient: its three-second window
+showed only the native background, even though process, D-Bus, and database
+checks passed. Production-policy bisection ruled out CSP, response headers, and
+unused-command pruning. An explicit app-module split plus a loading overlay
+retained through the first committed paints removed the black interval. The
+final probe ran with no Vite listener and isolated QuireForge and Codex data,
+emitted no stdout/stderr, used `0700`/`0600` metadata permissions, applied all
+six migrations, persisted no records, and reaped its dry Codex app-server child
+on exit.
+
+The dependency gates also passed: the Node graph resolves the reviewed
+`fast-uri` 3.1.4 correction, and warning-denying `cargo audit` scanned all 503
+locked dependencies with only the 17 exact reviewed Tauri/GTK3 and
+`tauri-utils` exceptions. No personal Codex state, connector authorization,
+live/billable model call, package, release, publication, deployment, or hosting
+mutation was used by the automated gates or accepted final probe. One earlier
+visual diagnostic inherited the ordinary host Codex home while exercising the
+real application startup; it retained and logged no account identity, was
+replaced by the isolated accepted probe, and made no model call or mutation.

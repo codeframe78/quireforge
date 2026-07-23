@@ -41,6 +41,7 @@ SELECTED_SCHEMAS = (
     "v2/ConfigWarningNotification.json",
     "v2/GetAccountParams.json",
     "v2/GetAccountResponse.json",
+    "v2/GetAccountRateLimitsResponse.json",
     "v2/ListMcpServerStatusParams.json",
     "v2/ListMcpServerStatusResponse.json",
     "v2/LoginAccountParams.json",
@@ -183,7 +184,9 @@ def main() -> None:
                 "initialize, model/list, stable account lifecycle, the "
                 "Milestone 7 conversation runtime, Milestone 8A thread "
                 "lifecycle, Milestone 9A approval/activity, and Milestone "
-                "13 integration discovery and dynamic-tool contract evidence"
+                "13 integration discovery/dynamic-tool plus Milestone 17A "
+                "read-only plugin scheduled-task evidence and Milestone 21A "
+                "read-only account rate-limit evidence"
             ),
             "files": manifest_files,
         }

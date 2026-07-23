@@ -2,6 +2,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { z } from "zod";
 
 import {
+  conversationAttachmentCancelRequestSchema,
+  conversationAttachmentDropRequestSchema,
+  conversationAttachmentSnapshotSchema,
+  type ConversationAttachmentCancelRequest,
+  type ConversationAttachmentDropRequest,
+  type ConversationAttachmentSnapshot,
+} from "./attachment";
+import {
   gitDiffRequestSchema,
   gitDiffSchema,
   gitMutationConfirmRequestSchema,
@@ -27,7 +35,18 @@ import {
   type CodexAuthSnapshot,
 } from "./auth";
 import { codexRuntimeSchema, type CodexRuntimeSnapshot } from "./codex";
+import { codexUsageSchema, type CodexUsageSnapshot } from "./usage";
 import { desktopBootstrapSchema, type DesktopBootstrap } from "./contract";
+import {
+  filePreviewHandoffRequestSchema,
+  filePreviewSchema,
+  type FilePreviewHandoffRequest,
+  type FilePreviewSnapshot,
+} from "./filePreview";
+import {
+  desktopNotificationResultSchema,
+  type DesktopNotificationResult,
+} from "./desktopIntegration";
 import {
   integrationCatalogSchema,
   integrationControlActionRequestSchema,
@@ -50,6 +69,12 @@ import {
   type IntegrationMutationPreviewSnapshot,
   type IntegrationMutationResultSnapshot,
 } from "./integration";
+import {
+  modelSelectionSnapshotSchema,
+  modelSelectionUpdateRequestSchema,
+  type ModelSelectionSnapshot,
+  type ModelSelectionUpdateRequest,
+} from "./modelSelection";
 import {
   conversationSnapshotSchema,
   conversationRegistrySchema,
@@ -115,6 +140,8 @@ export const CODEX_AUTH_START_COMMAND = "codex_auth_start";
 export const CODEX_AUTH_CANCEL_COMMAND = "codex_auth_cancel";
 export const CODEX_AUTH_LOGOUT_COMMAND = "codex_auth_logout";
 export const CODEX_AUTH_OPEN_BROWSER_COMMAND = "codex_auth_open_browser";
+export const CODEX_USAGE_STATUS_COMMAND = "codex_usage_status";
+export const CODEX_USAGE_REFRESH_COMMAND = "codex_usage_refresh";
 export const DESKTOP_BOOTSTRAP_COMMAND = "desktop_bootstrap";
 export const INTEGRATION_CATALOG_READ_COMMAND = "integration_catalog_read";
 export const INTEGRATION_CATALOG_REFRESH_COMMAND =
@@ -138,6 +165,19 @@ export const PROJECT_CANCEL_ATTACHMENT_COMMAND = "project_cancel_attachment";
 export const PROJECT_DETACH_COMMAND = "project_detach";
 export const PROJECT_ARCHIVE_COMMAND = "project_archive";
 export const PROJECT_PREFLIGHT_COMMAND = "project_preflight";
+export const FILE_PREVIEW_PICK_COMMAND = "file_preview_pick";
+export const FILE_PREVIEW_OPEN_COMMAND = "file_preview_open";
+export const FILE_PREVIEW_CANCEL_COMMAND = "file_preview_cancel";
+export const CONVERSATION_ATTACHMENT_STATUS_COMMAND =
+  "conversation_attachment_status";
+export const CONVERSATION_ATTACHMENT_PICK_COMMAND =
+  "conversation_attachment_pick";
+export const CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND =
+  "conversation_attachment_stage_drop";
+export const CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND =
+  "conversation_attachment_stage_native_drop";
+export const CONVERSATION_ATTACHMENT_CANCEL_COMMAND =
+  "conversation_attachment_cancel";
 export const WORKTREE_STATUS_COMMAND = "worktree_status";
 export const WORKTREE_CREATE_PREVIEW_COMMAND = "worktree_create_preview";
 export const WORKTREE_RECOVER_PREVIEW_COMMAND = "worktree_recover_preview";
@@ -153,11 +193,13 @@ export const GIT_MUTATION_CONFIRM_COMMAND = "git_mutation_confirm";
 export const GIT_MUTATION_RECOVER_COMMAND = "git_mutation_recover";
 export const CONVERSATION_STATUS_COMMAND = "conversation_status";
 export const CONVERSATION_ACTIVE_COMMAND = "conversation_active";
+export const CONVERSATION_NOTIFY_COMMAND = "conversation_notify";
 export const CONVERSATION_START_COMMAND = "conversation_start";
 export const CONVERSATION_POLL_COMMAND = "conversation_poll";
 export const CONVERSATION_INTERRUPT_COMMAND = "conversation_interrupt";
 export const CONVERSATION_APPROVAL_DECIDE_COMMAND =
   "conversation_approval_decide";
+export const MODEL_SELECTION_UPDATE_COMMAND = "model_selection_update";
 export const CONVERSATION_SESSIONS_COMMAND = "conversation_sessions";
 export const CONVERSATION_RESUME_COMMAND = "conversation_resume";
 export const CONVERSATION_FORK_COMMAND = "conversation_fork";
@@ -318,6 +360,20 @@ export async function openCodexAuthBrowser(
   await invokeFunction(CODEX_AUTH_OPEN_BROWSER_COMMAND);
 }
 
+export async function loadCodexUsage(
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<CodexUsageSnapshot> {
+  const payload = await invokeFunction(CODEX_USAGE_STATUS_COMMAND);
+  return codexUsageSchema.parse(payload);
+}
+
+export async function refreshCodexUsage(
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<CodexUsageSnapshot> {
+  const payload = await invokeFunction(CODEX_USAGE_REFRESH_COMMAND);
+  return codexUsageSchema.parse(payload);
+}
+
 async function invokeProjectWorkspace(
   command: string,
   args?: Record<string, unknown>,
@@ -408,6 +464,100 @@ export async function preflightProject(
     projectId,
   });
   return projectPreflightSchema.parse(payload);
+}
+
+export async function pickFilePreview(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<FilePreviewSnapshot> {
+  const reviewedProjectId = z
+    .string()
+    .regex(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
+    )
+    .parse(projectId);
+  const payload = await invokeFunction(FILE_PREVIEW_PICK_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return filePreviewSchema.parse(payload);
+}
+
+export async function openFilePreview(
+  request: FilePreviewHandoffRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<void> {
+  const reviewedRequest = filePreviewHandoffRequestSchema.parse(request);
+  await invokeFunction(FILE_PREVIEW_OPEN_COMMAND, { request: reviewedRequest });
+}
+
+export async function cancelFilePreview(
+  request: FilePreviewHandoffRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<boolean> {
+  const reviewedRequest = filePreviewHandoffRequestSchema.parse(request);
+  const payload = await invokeFunction(FILE_PREVIEW_CANCEL_COMMAND, {
+    request: reviewedRequest,
+  });
+  return z.boolean().parse(payload);
+}
+
+export async function loadConversationAttachments(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationAttachmentSnapshot> {
+  const reviewedProjectId =
+    conversationStartRequestSchema.shape.projectId.parse(projectId);
+  const payload = await invokeFunction(CONVERSATION_ATTACHMENT_STATUS_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return conversationAttachmentSnapshotSchema.parse(payload);
+}
+
+export async function pickConversationAttachments(
+  projectId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationAttachmentSnapshot> {
+  const reviewedProjectId =
+    conversationStartRequestSchema.shape.projectId.parse(projectId);
+  const payload = await invokeFunction(CONVERSATION_ATTACHMENT_PICK_COMMAND, {
+    projectId: reviewedProjectId,
+  });
+  return conversationAttachmentSnapshotSchema.parse(payload);
+}
+
+export async function stageDroppedConversationAttachments(
+  request: ConversationAttachmentDropRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationAttachmentSnapshot> {
+  if (request.files.length === 0) {
+    const projectId = conversationStartRequestSchema.shape.projectId.parse(
+      request.projectId,
+    );
+    const payload = await invokeFunction(
+      CONVERSATION_ATTACHMENT_STAGE_NATIVE_DROP_COMMAND,
+      { projectId },
+    );
+    return conversationAttachmentSnapshotSchema.parse(payload);
+  }
+  const reviewedRequest =
+    conversationAttachmentDropRequestSchema.parse(request);
+  const payload = await invokeFunction(
+    CONVERSATION_ATTACHMENT_STAGE_DROP_COMMAND,
+    { request: reviewedRequest },
+  );
+  return conversationAttachmentSnapshotSchema.parse(payload);
+}
+
+export async function cancelConversationAttachments(
+  request: ConversationAttachmentCancelRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ConversationAttachmentSnapshot> {
+  const reviewedRequest =
+    conversationAttachmentCancelRequestSchema.parse(request);
+  const payload = await invokeFunction(CONVERSATION_ATTACHMENT_CANCEL_COMMAND, {
+    request: reviewedRequest,
+  });
+  return conversationAttachmentSnapshotSchema.parse(payload);
 }
 
 export async function loadWorktreeStatus(
@@ -559,6 +709,17 @@ export async function loadConversationStatus(
   return conversationSnapshotSchema.parse(payload);
 }
 
+export async function notifyConversation(
+  conversationId: string,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<DesktopNotificationResult> {
+  const reviewedId = conversationIdSchema.parse(conversationId);
+  const payload = await invokeFunction(CONVERSATION_NOTIFY_COMMAND, {
+    request: { conversationId: reviewedId },
+  });
+  return desktopNotificationResultSchema.parse(payload);
+}
+
 export async function loadActiveConversations(
   invokeFunction: InvokeFunction = invokeTauri,
 ): Promise<ConversationRegistrySnapshot> {
@@ -609,6 +770,17 @@ export async function decideConversationApproval(
     request: reviewedRequest,
   });
   return conversationSnapshotSchema.parse(payload);
+}
+
+export async function updateModelSelection(
+  request: ModelSelectionUpdateRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ModelSelectionSnapshot> {
+  const reviewedRequest = modelSelectionUpdateRequestSchema.parse(request);
+  const payload = await invokeFunction(MODEL_SELECTION_UPDATE_COMMAND, {
+    request: reviewedRequest,
+  });
+  return modelSelectionSnapshotSchema.parse(payload);
 }
 
 export async function loadConversationSessions(

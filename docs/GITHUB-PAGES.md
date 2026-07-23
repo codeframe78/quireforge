@@ -1,10 +1,12 @@
 # Superseded GitHub Pages Plan
 
-Status: superseded by
-[ADR 0006](DECISIONS/0006-cloudflare-pages-production-hosting.md). GitHub Pages
-was never enabled and no site was deployed. This file preserves
-the earlier discovery design for historical review; none of its activation or
-deployment steps are active requirements.
+Status: first superseded by
+[ADR 0006](DECISIONS/0006-cloudflare-pages-production-hosting.md); the unbuilt
+Pages plan was later superseded by
+[ADR 0024](DECISIONS/0024-webuzo-static-website-hosting.md). GitHub Pages was
+never enabled and no site was deployed. This file preserves the earlier design
+for historical review; none of its activation or deployment steps are active
+requirements.
 
 ## Production target
 

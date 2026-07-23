@@ -12,7 +12,7 @@ use uuid::Uuid;
 use super::{
     identity::DirectoryIdentity,
     types::{DirectoryAccessibilityState, ExpectedAccess},
-    ConversationReference,
+    ConversationReference, ConversationSelectionMetadata,
 };
 
 const INITIAL_MIGRATION: &str = r#"
@@ -139,6 +139,33 @@ CREATE INDEX terminal_sessions_project
     ON terminal_sessions(project_id, updated_at_ms DESC, id);
 "#;
 
+const MODEL_SELECTION_MIGRATION: &str = r#"
+ALTER TABLE conversation_references
+    ADD COLUMN selector_availability TEXT NOT NULL DEFAULT 'recommendation-only'
+    CHECK(selector_availability IN ('ready', 'recommendation-only', 'unavailable'));
+ALTER TABLE conversation_references
+    ADD COLUMN selector_mode TEXT NOT NULL DEFAULT 'manual'
+    CHECK(selector_mode IN ('manual', 'recommend', 'automatic'));
+ALTER TABLE conversation_references
+    ADD COLUMN selector_user_locked INTEGER NOT NULL DEFAULT 0
+    CHECK(selector_user_locked IN (0, 1));
+ALTER TABLE conversation_references
+    ADD COLUMN selector_allowed_model_ids_json TEXT NOT NULL DEFAULT '[]';
+ALTER TABLE conversation_references ADD COLUMN selector_reasoning_ceiling TEXT;
+ALTER TABLE conversation_references ADD COLUMN selector_pending_model_id TEXT;
+ALTER TABLE conversation_references ADD COLUMN selector_pending_reasoning_effort TEXT;
+ALTER TABLE conversation_references ADD COLUMN selector_pending_rationale TEXT;
+ALTER TABLE conversation_references
+    ADD COLUMN selector_pending_provenance TEXT
+    CHECK(selector_pending_provenance IS NULL OR selector_pending_provenance IN ('user', 'codex'));
+ALTER TABLE conversation_references
+    ADD COLUMN selector_pending_application TEXT
+    CHECK(selector_pending_application IS NULL OR selector_pending_application IN (
+        'manual', 'recommendation', 'automatic'
+    ));
+ALTER TABLE conversation_references ADD COLUMN selector_pending_requested_at_ms INTEGER;
+"#;
+
 const MIGRATIONS: &[(i64, &str, &str)] = &[
     (1, "projects-and-directory-associations", INITIAL_MIGRATION),
     (
@@ -149,6 +176,7 @@ const MIGRATIONS: &[(i64, &str, &str)] = &[
     (3, "session-lifecycle", SESSION_LIFECYCLE_MIGRATION),
     (4, "worktree-relations", WORKTREE_RELATIONS_MIGRATION),
     (5, "terminal-sessions", TERMINAL_SESSIONS_MIGRATION),
+    (6, "model-selection", MODEL_SELECTION_MIGRATION),
 ];
 
 #[derive(Debug, Error)]
@@ -218,6 +246,17 @@ pub(crate) struct StoredConversationReference {
     pub archived: bool,
     pub created_at_ms: i64,
     pub updated_at_ms: i64,
+    pub selector_mode: String,
+    pub selector_availability: String,
+    pub selector_user_locked: bool,
+    pub selector_allowed_model_ids_json: String,
+    pub selector_reasoning_ceiling: Option<String>,
+    pub selector_pending_model_id: Option<String>,
+    pub selector_pending_reasoning_effort: Option<String>,
+    pub selector_pending_rationale: Option<String>,
+    pub selector_pending_provenance: Option<String>,
+    pub selector_pending_application: Option<String>,
+    pub selector_pending_requested_at_ms: Option<i64>,
 }
 
 #[derive(Clone, Debug)]
@@ -662,9 +701,12 @@ impl ProjectRepository {
             "INSERT INTO conversation_references (
                 id, project_id, codex_thread_id, active_turn_id, model_id,
                 reasoning_effort, sandbox_mode, approval_policy, status,
-                created_at_ms, updated_at_ms, parent_conversation_id, archived_at_ms
+                created_at_ms, updated_at_ms, parent_conversation_id, archived_at_ms,
+                selector_availability, selector_mode, selector_user_locked,
+                selector_allowed_model_ids_json, selector_reasoning_ceiling
              ) VALUES (
-                ?1, ?2, ?3, NULL, ?4, ?5, ?6, ?7, 'thread-started', ?8, ?8, ?9, NULL
+                ?1, ?2, ?3, NULL, ?4, ?5, ?6, ?7, 'thread-started', ?8, ?8, ?9, NULL,
+                ?10, ?11, ?12, ?13, ?14
              )",
             params![
                 reference.conversation_id,
@@ -676,6 +718,11 @@ impl ProjectRepository {
                 reference.approval_policy,
                 timestamp,
                 reference.parent_conversation_id,
+                reference.selection.availability,
+                reference.selection.ownership,
+                reference.selection.user_locked,
+                reference.selection.allowed_model_ids_json,
+                reference.selection.reasoning_ceiling,
             ],
         )?;
         Ok(())
@@ -689,7 +736,13 @@ impl ProjectRepository {
             .query_row(
                 "SELECT id, project_id, codex_thread_id, active_turn_id, model_id,
                         reasoning_effort, sandbox_mode, approval_policy, status,
-                        parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms
+                        parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms,
+                        selector_availability, selector_mode, selector_user_locked,
+                        selector_allowed_model_ids_json, selector_reasoning_ceiling,
+                        selector_pending_model_id,
+                        selector_pending_reasoning_effort, selector_pending_rationale,
+                        selector_pending_provenance, selector_pending_application,
+                        selector_pending_requested_at_ms
                  FROM conversation_references WHERE id = ?1",
                 [conversation_id],
                 stored_conversation_reference,
@@ -705,7 +758,13 @@ impl ProjectRepository {
         let mut statement = self.connection.prepare(
             "SELECT id, project_id, codex_thread_id, active_turn_id, model_id,
                     reasoning_effort, sandbox_mode, approval_policy, status,
-                    parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms
+                    parent_conversation_id, archived_at_ms, created_at_ms, updated_at_ms,
+                    selector_availability, selector_mode, selector_user_locked,
+                    selector_allowed_model_ids_json, selector_reasoning_ceiling,
+                    selector_pending_model_id,
+                    selector_pending_reasoning_effort, selector_pending_rationale,
+                    selector_pending_provenance, selector_pending_application,
+                    selector_pending_requested_at_ms
              FROM conversation_references
              WHERE (?1 IS NULL OR project_id = ?1)
              ORDER BY updated_at_ms DESC, id
@@ -767,6 +826,54 @@ impl ProjectRepository {
                  updated_at_ms = ?2
              WHERE id = ?3 AND active_turn_id IS NULL",
             params![archived, timestamp, conversation_id],
+        )?;
+        if updated == 0 {
+            return Err(StorageError::InvalidStoredValue);
+        }
+        Ok(())
+    }
+
+    pub(crate) fn update_model_selection(
+        &mut self,
+        conversation_id: &str,
+        effective: Option<(&str, &str)>,
+        selection: &ConversationSelectionMetadata<'_>,
+    ) -> Result<(), StorageError> {
+        let pending = selection.pending.as_ref();
+        let updated = self.connection.execute(
+            "UPDATE conversation_references
+             SET model_id = COALESCE(?1, model_id),
+                 reasoning_effort = COALESCE(?2, reasoning_effort),
+                 selector_availability = ?3,
+                 selector_mode = ?4,
+                 selector_user_locked = ?5,
+                 selector_allowed_model_ids_json = ?6,
+                 selector_reasoning_ceiling = ?7,
+                 selector_pending_model_id = ?8,
+                 selector_pending_reasoning_effort = ?9,
+                 selector_pending_rationale = ?10,
+                 selector_pending_provenance = ?11,
+                 selector_pending_application = ?12,
+                 selector_pending_requested_at_ms = ?13,
+                 updated_at_ms = ?14
+             WHERE id = ?15",
+            params![
+                effective.map(|value| value.0),
+                effective.map(|value| value.1),
+                selection.availability,
+                selection.ownership,
+                selection.user_locked,
+                selection.allowed_model_ids_json,
+                selection.reasoning_ceiling,
+                pending.map(|value| value.model_id),
+                pending.map(|value| value.reasoning_effort),
+                pending.map(|value| value.rationale),
+                pending.map(|value| value.provenance),
+                pending.map(|value| value.application),
+                pending.map(|value| value.requested_at_ms),
+                now_millis(),
+                conversation_id,
+            ],
         )?;
         if updated == 0 {
             return Err(StorageError::InvalidStoredValue);
@@ -1047,6 +1154,17 @@ fn stored_conversation_reference(
         archived: row.get::<_, Option<i64>>(10)?.is_some(),
         created_at_ms: row.get(11)?,
         updated_at_ms: row.get(12)?,
+        selector_availability: row.get(13)?,
+        selector_mode: row.get(14)?,
+        selector_user_locked: row.get(15)?,
+        selector_allowed_model_ids_json: row.get(16)?,
+        selector_reasoning_ceiling: row.get(17)?,
+        selector_pending_model_id: row.get(18)?,
+        selector_pending_reasoning_effort: row.get(19)?,
+        selector_pending_rationale: row.get(20)?,
+        selector_pending_provenance: row.get(21)?,
+        selector_pending_application: row.get(22)?,
+        selector_pending_requested_at_ms: row.get(23)?,
     })
 }
 
@@ -1199,7 +1317,9 @@ mod tests {
     use uuid::Uuid;
 
     use super::{ProjectRepository, StorageError, INITIAL_MIGRATION};
-    use crate::project::ConversationReference;
+    use crate::project::{
+        ConversationPendingSelection, ConversationReference, ConversationSelectionMetadata,
+    };
 
     #[test]
     fn rejects_a_database_from_a_newer_application() {
@@ -1222,7 +1342,7 @@ mod tests {
     }
 
     #[test]
-    fn migrates_an_existing_project_database_through_terminal_sessions() {
+    fn migrates_an_existing_project_database_through_model_selection() {
         let connection = Connection::open_in_memory().expect("database must open");
         connection
             .execute_batch(
@@ -1254,12 +1374,13 @@ mod tests {
                  WHERE (version = 2 AND name = 'conversation-references')
                     OR (version = 3 AND name = 'session-lifecycle')
                     OR (version = 4 AND name = 'worktree-relations')
-                    OR (version = 5 AND name = 'terminal-sessions')",
+                    OR (version = 5 AND name = 'terminal-sessions')
+                    OR (version = 6 AND name = 'model-selection')",
                 [],
                 |row| row.get(0),
             )
             .expect("migration ledger must be queryable");
-        assert_eq!(migrated, 4);
+        assert_eq!(migrated, 5);
         let lifecycle_columns: i64 = repository
             .connection
             .query_row(
@@ -1270,6 +1391,38 @@ mod tests {
             )
             .expect("lifecycle columns must be queryable");
         assert_eq!(lifecycle_columns, 2);
+        let selector_columns: i64 = repository
+            .connection
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('conversation_references')
+                 WHERE name IN (
+                    'selector_availability',
+                    'selector_mode',
+                    'selector_user_locked',
+                    'selector_allowed_model_ids_json',
+                    'selector_reasoning_ceiling',
+                    'selector_pending_model_id',
+                    'selector_pending_reasoning_effort',
+                    'selector_pending_rationale',
+                    'selector_pending_provenance',
+                    'selector_pending_application',
+                    'selector_pending_requested_at_ms'
+                 )",
+                [],
+                |row| row.get(0),
+            )
+            .expect("selector columns must be queryable");
+        assert_eq!(selector_columns, 11);
+        let migrated_availability_default: String = repository
+            .connection
+            .query_row(
+                "SELECT dflt_value FROM pragma_table_info('conversation_references')
+                 WHERE name = 'selector_availability'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("pre-selector conversations must receive an honest fallback");
+        assert_eq!(migrated_availability_default, "'recommendation-only'");
     }
 
     #[test]
@@ -1394,6 +1547,14 @@ mod tests {
                 sandbox_mode: "read-only",
                 approval_policy: "untrusted",
                 parent_conversation_id: None,
+                selection: ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "manual",
+                    user_locked: false,
+                    allowed_model_ids_json: "[]",
+                    reasoning_ceiling: None,
+                    pending: None,
+                },
             })
             .expect("conversation reference must insert");
         repository
@@ -1445,11 +1606,40 @@ mod tests {
                 sandbox_mode: "read-only",
                 approval_policy: "untrusted",
                 parent_conversation_id: None,
+                selection: ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "manual",
+                    user_locked: false,
+                    allowed_model_ids_json: "[]",
+                    reasoning_ceiling: None,
+                    pending: None,
+                },
             })
             .expect("conversation reference must insert");
         repository
             .update_conversation_turn(&conversation_id, &turn_id)
             .expect("turn reference must update");
+        repository
+            .update_model_selection(
+                &conversation_id,
+                None,
+                &ConversationSelectionMetadata {
+                    availability: "ready",
+                    ownership: "automatic",
+                    user_locked: false,
+                    allowed_model_ids_json: r#"["fixture-next"]"#,
+                    reasoning_ceiling: Some("high"),
+                    pending: Some(ConversationPendingSelection {
+                        model_id: "fixture-next",
+                        reasoning_effort: "high",
+                        rationale: "Use the larger context window.",
+                        provenance: "codex",
+                        application: "automatic",
+                        requested_at_ms: 42,
+                    }),
+                },
+            )
+            .expect("pending selector request must persist");
 
         let connection = repository.connection;
         let recovered = ProjectRepository::from_test_connection(connection)
@@ -1461,6 +1651,26 @@ mod tests {
         assert_eq!(stored.status, "interrupted");
         assert!(stored.active_turn_id.is_none());
         assert_eq!(stored.codex_thread_id, thread_id);
+        assert_eq!(stored.selector_mode, "automatic");
+        assert_eq!(
+            stored.selector_allowed_model_ids_json,
+            r#"["fixture-next"]"#
+        );
+        assert_eq!(stored.selector_reasoning_ceiling.as_deref(), Some("high"));
+        assert_eq!(
+            stored.selector_pending_model_id.as_deref(),
+            Some("fixture-next")
+        );
+        assert_eq!(
+            stored.selector_pending_reasoning_effort.as_deref(),
+            Some("high")
+        );
+        assert_eq!(stored.selector_pending_provenance.as_deref(), Some("codex"));
+        assert_eq!(
+            stored.selector_pending_application.as_deref(),
+            Some("automatic")
+        );
+        assert_eq!(stored.selector_pending_requested_at_ms, Some(42));
     }
 
     #[test]

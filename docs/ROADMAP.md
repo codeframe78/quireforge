@@ -18,9 +18,10 @@ GitHub repository identity, original local working-copy path, and branding
 assets are handled as separately verified and approval-gated migration steps.
 
 The working copy moved through a controlled Codex-session handoff to
-`/mnt/faststorage/quireforge`. The existing GitHub repository was renamed in
-place to `codeframe78/quireforge`; neither operation authorized a push, merge,
-website deployment, or release.
+`/mnt/faststorage/quireforge`. The existing GitHub repository was first renamed
+in place and was later transferred to the private
+`James-Jennison/quireforge` organization location. None of those operations
+authorized a push, public source link, website deployment, or release.
 
 Migration status: the tracked identity contract, authoritative naming audit,
 in-place GitHub repository rename, local working-copy handoff, and core vector
@@ -29,7 +30,7 @@ repository guidance, contribution/security/conduct/support policies, issue and
 pull-request templates, dependency automation, and initial repository CI. The
 work through Milestone 6 is merged on `main`. Milestone 2 added the local static
 website, production web exports, and automated website quality gates without
-creating a Cloudflare project or deployment. Milestone 3 added the locally verified Tauri
+creating a hosting project or deployment. Milestone 3 added the locally verified Tauri
 desktop foundation, narrow typed IPC contract, Linux app icons, and desktop
 quality gates without producing an installable package. Milestone 4 added the
 versioned Codex boundary, supervised app-server probe, normalized model catalog,
@@ -71,44 +72,46 @@ Milestone 12 adds a bounded native PTY registry, controlled shell environment,
 fresh project-cwd verification, tabbed xterm presentation, byte-preserving
 input/output, resize, background-job ownership, and metadata-only restart
 recovery without exposing raw paths or process identity to React.
-Agent-directed model and reasoning selection is deliberately deferred to
-Milestone 18. The current conversation runtime validates a user-selected model
-and effort, while Milestone 13A confirms the app-owned dynamic-tool
-registration, invocation, and result lifecycle needed for a future selector
-control. Milestone 13B establishes live read-only integration discovery.
+Milestone 18 implements app-owned, policy-bounded model and reasoning selection
+for the next turn. The current turn never replaces itself; Manual, Recommend,
+and explicitly bounded Automatic ownership remain under visible user control.
+Milestone 13A supplied the validated dynamic-tool lifecycle used by that
+selector. Milestone 13B establishes live read-only integration discovery.
 Milestone 14A establishes the confirmed native plugin and marketplace mutation
 boundary. Milestone 14B adds the user-facing Integration Center over that
 boundary without broadening it. Milestone 14C adds only reviewed connector/MCP
 authorization, skill enablement, refresh, and connector prompt mentions. Later
-Milestones 15–17 still need to establish the remaining desktop and advanced-
-feature prerequisites before that control is implemented.
+Milestones 15A–15C complete the bounded local preview, conversation-image, and
+desktop-integration surfaces. Milestone 16 completes the production static
+website. Milestone 17A establishes read-only installed-plugin task-template
+discovery; scheduling management and execution remain unsupported.
 
 ## Status
 
-| Milestone | Scope                                                             | Size         | Status                                                              |
-| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------- |
-|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                          |
-|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                          |
-|         2 | QuireForge brand and Cloudflare website foundation                | Large        | Complete; merged to `main`; not deployed                            |
-|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                            |
-|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                          |
-|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                          |
-|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                          |
-|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                          |
-|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                          |
-|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history   |
-|        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change |
-|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                           |
-|        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
-|        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
-|        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                 |
-|        15 | File previews and desktop integration                             | Large        | Planned                                                             |
-|        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
-|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
-|        18 | Agent-directed model and reasoning selection                      | Large        | Planned/dependency-gated                                            |
-|        19 | Security, accessibility, and performance hardening                | Very large   | Planned                                                             |
-|        20 | Packaging and release automation                                  | Large        | Planned                                                             |
-|        21 | Cloudflare Pages production deployment and beta release           | Very large   | Planned/approval-gated                                              |
+| Milestone | Scope                                                             | Size         | Status                                                                   |
+| --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------ |
+|         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                               |
+|         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                               |
+|         2 | QuireForge brand and static website foundation                    | Large        | Complete; merged to `main`; deployed later through Milestone 16          |
+|         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                                 |
+|         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                               |
+|         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                               |
+|         6 | Projects and direct local-directory attachment                    | Very large   | Complete; merged to `main`                                               |
+|         7 | Conversation MVP                                                  | Very large   | Complete; merged to `main`                                               |
+|         8 | Session lifecycle and crash recovery                              | Large        | Complete; merged to `main`                                               |
+|         9 | Approvals and command presentation                                | Large        | Complete and verified; publication recorded in repository history        |
+|        10 | Git status, diff review, and controlled mutations                 | Large        | Complete and verified; publication tracked by this milestone change      |
+|        11 | Worktrees and parallel work                                       | Very large   | Complete through 11C and verified locally                                |
+|        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                                 |
+|        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                                   |
+|        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                      |
+|        15 | File previews and desktop integration                             | Large        | Complete through 15C; verified locally                                   |
+|        16 | Complete Webuzo-hosted static website                             | Very large   | Complete through 16D; production and automatic origin TLS renewal active |
+|        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Complete through 17A locally; management/execution deferred              |
+|        18 | Agent-directed model and reasoning selection                      | Large        | Complete and verified locally; not published                             |
+|        19 | Security, accessibility, and performance hardening                | Very large   | Complete and verified locally                                            |
+|        20 | Packaging and release automation                                  | Large        | Complete and verified locally; not published                             |
+|        21 | Product readiness, beta publication, and download activation       | Very large   | 21A complete; 21B local preflight passed, publication approval-gated      |
 
 ## Milestone definitions
 
@@ -540,26 +543,86 @@ release, deployment, or hosting change was made.
 
 ### 15 — File Previews and Desktop Integration
 
-Add safe previews, drag/drop and attachments, notifications, editor/open-with,
-and Wayland/X11 verification.
+Split this milestone so each security/desktop boundary is independently
+reviewable:
 
-### 16 — Complete Cloudflare Pages Website
+- **15A — safe project-file previews:** use a native picker and opaque project
+  ID; revalidate attachment identity, containment, symlink/regular-file state,
+  and opened file identity. Return only attachment-relative names and bounded
+  normalized UTF-8 text, PNG/JPEG data, or metadata-only PDF state through a
+  strict contract. Browser preview cannot select or read local files. See
+  [ADR 0021](DECISIONS/0021-safe-project-file-previews.md).
+- **15B — drag/drop and conversation attachments:** define source ownership,
+  staging/retention, model-interface support, explicit send semantics, size and
+  count limits, cancellation, and cleanup without turning drag/drop into a
+  general path bridge. The implemented checkpoint accepts only PNG/JPEG,
+  disables Tauri's default path-bearing drag/drop events, stages validated
+  browser bytes or one-use native-captured Linux file drops in private app
+  data, sends only native `localImage` paths, and retains each consumed copy
+  until its turn is terminal. See
+  [ADR 0022](DECISIONS/0022-bounded-conversation-image-attachments.md).
+- **15C — desktop handoffs and Linux verification:** add notifications and
+  reviewed editor/open-with behavior, then verify native picker/handoff behavior
+  on supported Wayland and X11 sessions. External destinations stay visible and
+  allowlisted; no generic opener or arbitrary command IPC is allowed. The code
+  checkpoint uses native-held one-use preview actions, an explicit system-
+  default-application review, and fixed privacy-safe background notifications;
+  the completed final Linux display-session gate is recorded below. See
+  [ADR 0023](DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md).
 
-Build Home, Features, Integrations, Downloads, Installation, Documentation,
-Compatibility, Roadmap, Changelog, Security/Privacy, Contributing, FAQ,
-Troubleshooting, About, authentic screenshots, and comprehensive
-production-origin/responsive/accessibility validation. Build a verified static
-artifact and deploy only to separately approved non-production staging.
+Milestones 15A–15C are implemented and verified locally. The 15C handoff and
+notification checkpoint uses the official Tauri notification plugin, a Linux
+binding already present in the Tauri stack, and no source-path persistence,
+unrelated user-file access, billable model call, package, release, or
+deployment. Its production native Wayland project/file/image picker, bounded-
+preview, real Nautilus-drop, and fixed-copy notification evidence is complete
+against disposable app data. Complete XWayland and true-X11 picker/preview/
+default-application/attachment paths remain separately recorded. Milestone 17
+is the next planned implementation milestone.
+
+### 16 — Complete the Webuzo-Hosted Static Website
+
+Milestone 16A reconciles Home, Features, Integrations, Downloads, Installation,
+Documentation, Compatibility, Roadmap, Releases, Security/Privacy, Development,
+FAQ, Troubleshooting, and About for a public site backed by private source. It
+retains the approved design, removes private repository/activity links,
+supersedes the unimplemented Cloudflare Pages plan, and produces a verified
+Apache-compatible static artifact.
+
+Milestone 16B created the isolated Webuzo origin and staged the reviewed
+artifact without public DNS. Trusted origin TLS, route/header validation, and
+rollback rehearsal passed. Milestone 16C separately activated the canonical
+hostname after owner approval. Public DNS, Full (Strict), scoped HSTS, live
+route/accessibility checks, 100/100/100/100 mobile and desktop Lighthouse
+results, and post-launch recovery verification passed. Milestone 16D then
+completed provider-managed automatic origin TLS and renewal validation. Private
+provider identifiers and operational diagnostics remain outside source
+control.
 
 ### 17 — Scheduled Tasks and Advanced Features
 
 Implement only capabilities exposed through supported interfaces. Distinguish
 local scheduling from hosted scheduling and defer unsupported features.
 
+Milestone 17A implements the supported read-only portion. The native
+integration service queries stable `plugin/read` only for installed, enabled
+plugins already established by the CLI catalog. Raw marketplace roots and
+lookup values remain native-only. Scheduled task names and prompts are treated
+as untrusted plugin content, normalized into bounded inert previews, and paired
+with a strict hourly/daily/weekdays/weekly schedule. The existing integration
+catalog read/refresh IPC advances to schema version 2, and the Scheduled
+workspace exposes no action controls.
+
+The reviewed stable request set and plugin CLI provide no task create, edit,
+enable, run, pause, or delete route. QuireForge therefore implements no local
+scheduler, hosted scheduler, official-client automation, or private web
+integration. Those capabilities remain deferred pending a separately reviewed
+supported interface and explicit approval. See
+[ADR 0025](DECISIONS/0025-read-only-scheduled-task-catalog.md).
+
 ### 18 — Agent-Directed Model and Reasoning Selection
 
-After Milestone 13 validates the installed app-server control lifecycle and the
-intervening product surfaces are established, add a typed, app-owned
+Milestone 18 is implemented and verified locally. It adds a typed, app-owned
 selector-control boundary that lets Codex inspect the normalized `model/list`
 catalog, current effective choice, pending next-turn choice, and user policy.
 Codex may request at most one model/reasoning change per completed turn with a
@@ -585,11 +648,37 @@ automatic control. Deterministic mocks must cover prompt-injection attempts,
 stale/unadvertised models, unsupported efforts, manual locks, policy ceilings,
 one-change-per-turn enforcement, restart behavior, and next-turn application.
 
+The implementation registers the closed `quireforge_model_selector` dynamic
+tool, keeps exact request/thread/turn/call correlation native, stages a valid
+request only after successful turn completion, persists bounded policy and
+provenance separately from the effective choice, and revalidates immediately
+before resume. Strict schema-v3 conversation/session contracts and the
+`model_selection_update` command expose only app-owned state. The responsive UI
+shows effective versus pending selection, provenance and rationale, manual
+override, recommendation acceptance/dismissal, automatic allowlists/ceilings,
+and the user lock. Registration rejection produces an explicit
+recommendation-only state. See
+[ADR 0026](DECISIONS/0026-policy-bounded-next-turn-selection.md).
+
 ### 19 — Security, Accessibility, and Performance Hardening
 
 Revisit the threat model; audit secret handling, injection, filesystem races,
 integration supply chain, credentials, Tauri permissions/CSP, accessibility,
 performance, reliability, and crash recovery.
+
+Complete locally. The main capability remains Linux/window-scoped and
+permission-empty; the global Tauri API and asset protocol are explicitly
+disabled, unused plugin commands are removed from production builds, CSP and
+response headers are narrowed, and repository validation rejects unpinned
+Actions or direct frontend active-content/network primitives. High-severity
+pnpm and warning-denying RustSec audits now run in CI with exact reviewed
+Tauri/GTK3 exceptions. Keyboard skip/focus, reduced motion, forced colors,
+terminal confirmation focus ownership, and raw-error-free reload recovery are
+covered across desktop and website profiles. Separate startup, application,
+and terminal chunks reduce the startup entry from 805,736 to 193,549 bytes and
+the pre-terminal application path to 459,684 bytes, with an opaque startup
+overlay and enforced generated-asset budgets. See the
+[Milestone 19 hardening review](MILESTONE_19_HARDENING.md).
 
 ### 20 — Packaging and Release Automation
 
@@ -597,13 +686,61 @@ Produce AppImage and Debian packages on an appropriate baseline, checksums,
 release workflows, install/upgrade/uninstall tests, and website download data.
 Do not publish a release without approval.
 
-### 21 — Cloudflare Pages Production Deployment and Beta Release
+Complete locally. The `0.1.0-beta.1` x86_64 AppImage and Debian candidates are
+built inside a digest-pinned Ubuntu 22.04 container with Rust 1.95 and Node
+22.22.1 inputs. Tauri's Linux helper downloads are checksum-pinned and verified
+before use; normalized packages have canonical identities, deterministic
+timestamps, an exact release manifest, and `SHA256SUMS`. Structural,
+AppStream, GLIBC 2.35, visible X11 launch, install, upgrade, uninstall, data
+preservation, and repeated-normalization checks pass. The release workflow is
+manual-only, uses immutable Action revisions, uploads review artifacts, and
+requires an exact tag, confirmation phrase, protected environment, clean source
+manifest, attestation, and separately approved publish operation before it can
+create a prerelease. Website download data remains explicitly unavailable.
+See the [Milestone 20 packaging report](MILESTONE_20_PACKAGING.md) and
+[release procedure](RELEASING.md).
 
-Run final website/package QA; confirm project, custom domain, artifact, DNS
-cutover, and rollback; request approval for Cloudflare production deployment;
-verify DNS, HTTPS, headers, live assets, the unaffected main site, and rollback;
-then request separate beta-release approval and verify downloads and checksums.
-Deployment and release remain independently approval-gated.
+### 21 — Product Readiness, Beta Publication, and Download Activation
+
+Milestone 21A closes the remaining user-facing beta-readiness gaps before any
+publication: remove internal milestone scaffolding from the product UI, require
+a verified Codex account state before exposing Codex work surfaces, introduce
+an original QuireForge home/workspace hierarchy informed by the approved visual
+reference, and display read-only remaining Codex usage only when the documented
+app-server rate-limit endpoint provides it. QuireForge must not scrape a
+website, estimate quota, read Codex credential files, expose raw account
+metadata, or redeem reset credits.
+
+Milestone 21A is complete locally. The desktop now opens on a Codex-owned
+authentication gate, starts workspace and account-data reads only after the
+normalized account state grants access, and presents an original responsive
+QuireForge home with project, recent-thread, quick-action, account, and
+remaining-usage regions. Remaining percentages and reset times come only from
+the documented `account/rateLimits/read` response and degrade to an honest
+unavailable or not-metered state. Raw plan, balance, account, reset-credit, and
+protocol metadata are discarded in Rust. User-facing milestone labels are no
+longer rendered. See the
+[Milestone 21A product-readiness report](MILESTONE_21A_PRODUCT_READINESS.md).
+
+Milestone 21B retains the external release boundary:
+
+Run final package and supported-platform QA; confirm the approved distribution
+location, release artifact, checksums, provenance, download data, and rollback;
+then request beta-publication approval. Update the already hosted website only
+with the approved package metadata and verify downloads, installation guidance,
+known limitations, and checksums. Website updates and application release
+publication remain independently approval-gated.
+
+The local 21B preflight now passes for the clean pinned Ubuntu 22.04 candidate,
+repeated byte-identical normalization, disposable lifecycle, current-host
+AppImage and extracted-Debian launches, and the signed-out product pixels. The
+dormant website publication path validates exact same-origin versioned
+packages, hashes, sizes, and manifest/checksum URLs while the committed state
+remains unavailable. The repository is private, so its GitHub prerelease cannot
+serve as an anonymous public download location. Exact owner-hosted package
+promotion, source/tag publication, public retrieval checks, website activation,
+and deployment remain the terminal approval gates. See the
+[Milestone 21B release-readiness report](MILESTONE_21B_RELEASE_READINESS.md).
 
 ## Forecast policy
 

@@ -1,5 +1,14 @@
 import { useMemo, useRef, useState } from "react";
 
+import { ConversationAttachmentTray } from "./ConversationAttachmentTray";
+import {
+  ModelSelectionPanel,
+  ModelSelectionPolicyFields,
+} from "./ModelSelectionPanel";
+import type {
+  ConversationAttachmentDropRequest,
+  ConversationAttachmentSnapshot,
+} from "./lib/attachment";
 import type { CodexRuntimeSnapshot } from "./lib/codex";
 import {
   conversationStartRequestSchema,
@@ -14,6 +23,11 @@ import {
 } from "./lib/conversationView";
 import type { ProjectWorkspaceSnapshot } from "./lib/project";
 import type { IntegrationCatalogSnapshot } from "./lib/integration";
+import {
+  defaultModelSelectionPolicy,
+  type ModelSelectionSnapshot,
+  type ModelSelectionUpdateRequest,
+} from "./lib/modelSelection";
 
 type ConversationAvailability = "checking" | "native" | "preview";
 type Project = ProjectWorkspaceSnapshot["projects"][number];
@@ -25,13 +39,27 @@ interface ConversationWorkspaceProps {
   runtime: CodexRuntimeSnapshot;
   project: Project | undefined;
   integrations: IntegrationCatalogSnapshot;
+  attachments: ConversationAttachmentSnapshot;
   busy: boolean;
+  attachmentBusy: boolean;
   actionError: boolean;
+  attachmentActionError: boolean;
   onStart: (request: ConversationStartRequest) => Promise<ConversationSnapshot>;
   onInterrupt: (conversationId: string) => Promise<ConversationSnapshot>;
   onDecideApproval: (
     request: ConversationApprovalDecisionRequest,
   ) => Promise<ConversationSnapshot>;
+  onUpdateModelSelection: (
+    request: ModelSelectionUpdateRequest,
+  ) => Promise<ModelSelectionSnapshot>;
+  onAttachmentPick: (projectId: string) => Promise<void>;
+  onAttachmentDrop: (
+    request: ConversationAttachmentDropRequest,
+  ) => Promise<void>;
+  onAttachmentCancel: (
+    projectId: string,
+    attachmentId: string,
+  ) => Promise<void>;
 }
 
 const sandboxOptions = [
@@ -77,6 +105,8 @@ const diagnosticMessages: Record<
   "reasoning-unavailable": "The selected reasoning level is unavailable.",
   "integration-unavailable":
     "A selected connector is no longer authorized, enabled, or callable.",
+  "attachment-unavailable":
+    "A staged image is no longer available. Add it again before retrying.",
   "metadata-unavailable":
     "QuireForge could not read its conversation metadata.",
   "approval-required": "Codex needs an approval before it can continue.",
@@ -221,6 +251,14 @@ function EventCard({ event }: { event: ConversationEvent }) {
       </p>
     );
   }
+  if (event.type === "model-selection-requested") {
+    return (
+      <p className="conversation-event__selection">
+        Codex requested {event.choice.modelId} · {event.choice.reasoningEffort}{" "}
+        for the next turn ({event.application}).
+      </p>
+    );
+  }
   if (event.type === "error") {
     return (
       <p className="conversation-event__error" role="alert">
@@ -245,11 +283,18 @@ export function ConversationWorkspace({
   runtime,
   project,
   integrations,
+  attachments,
   busy,
+  attachmentBusy,
   actionError,
+  attachmentActionError,
   onStart,
   onInterrupt,
   onDecideApproval,
+  onUpdateModelSelection,
+  onAttachmentPick,
+  onAttachmentDrop,
+  onAttachmentCancel,
 }: ConversationWorkspaceProps) {
   const defaultModel =
     runtime.models.find((model) => model.isDefault) ?? runtime.models[0];
@@ -262,6 +307,9 @@ export function ConversationWorkspace({
     useState<ConversationStartRequest["sandboxMode"]>("workspace-write");
   const [approvalPolicy, setApprovalPolicy] =
     useState<ConversationStartRequest["approvalPolicy"]>("on-request");
+  const [selectionPolicy, setSelectionPolicy] = useState(
+    defaultModelSelectionPolicy,
+  );
   const [selectedConnectorIds, setSelectedConnectorIds] = useState<Set<string>>(
     new Set(),
   );
@@ -340,13 +388,22 @@ export function ConversationWorkspace({
         .map((entry) => entry.id),
     [availableConnectors, effectiveSelectedConnectorIds],
   );
+  const attachmentIds = useMemo(
+    () =>
+      attachments.projectId === project?.id && attachments.state === "ready"
+        ? attachments.attachments.map((attachment) => attachment.attachmentId)
+        : [],
+    [attachments, project?.id],
+  );
   const request = useMemo(
     () => ({
       projectId: project?.id ?? "",
       prompt,
+      attachmentIds,
       integrationEntryIds,
       modelId: effectiveModelId,
       reasoningEffort: effectiveReasoningEffort,
+      selectionPolicy,
       sandboxMode,
       approvalPolicy,
     }),
@@ -356,7 +413,9 @@ export function ConversationWorkspace({
       effectiveReasoningEffort,
       project?.id,
       prompt,
+      attachmentIds,
       integrationEntryIds,
+      selectionPolicy,
       sandboxMode,
     ],
   );
@@ -447,6 +506,8 @@ export function ConversationWorkspace({
         <p>
           Work stays scoped to the attached directory. QuireForge displays a
           normalized event stream and does not persist transcript content.
+          Background approval, completion, and failure alerts use fixed text
+          without project names, prompts, paths, or task output.
         </p>
       </div>
 
@@ -466,6 +527,17 @@ export function ConversationWorkspace({
             value={prompt}
             disabled={active || busy}
             onChange={(event) => setPrompt(event.target.value)}
+          />
+          <ConversationAttachmentTray
+            availability={availability}
+            projectId={project?.id ?? null}
+            snapshot={attachments}
+            busy={attachmentBusy}
+            disabled={active || busy || !projectReady}
+            actionError={attachmentActionError}
+            onPick={onAttachmentPick}
+            onDrop={onAttachmentDrop}
+            onCancel={onAttachmentCancel}
           />
           <fieldset className="conversation-integrations">
             <legend>Connected integrations</legend>
@@ -519,6 +591,19 @@ export function ConversationWorkspace({
                   setModelId(event.target.value);
                   if (nextModel) {
                     setReasoningEffort(nextModel.defaultReasoningEffort);
+                    setSelectionPolicy((current) =>
+                      current.ownership === "automatic"
+                        ? {
+                            ...current,
+                            allowedModelIds: [
+                              ...new Set([
+                                ...current.allowedModelIds,
+                                nextModel.id,
+                              ]),
+                            ].slice(0, 32),
+                          }
+                        : current,
+                    );
                   }
                 }}
               >
@@ -587,6 +672,20 @@ export function ConversationWorkspace({
             </label>
           </div>
 
+          {selectedModel && (
+            <ModelSelectionPolicyFields
+              idPrefix="conversation-start-selection"
+              policy={selectionPolicy}
+              effectiveChoice={{
+                modelId: effectiveModelId,
+                reasoningEffort: effectiveReasoningEffort,
+              }}
+              models={runtime.models}
+              disabled={active || busy || !runtimeReady}
+              onChange={setSelectionPolicy}
+            />
+          )}
+
           <div className="conversation-prerequisite" aria-live="polite">
             {availability === "checking" &&
               "Checking the native conversation runtime…"}
@@ -649,6 +748,27 @@ export function ConversationWorkspace({
               <span className="conversation-pulse" aria-hidden="true" />
             )}
           </div>
+
+          {snapshot.conversationId && snapshot.modelSelection && (
+            <ModelSelectionPanel
+              key={[
+                snapshot.conversationId,
+                snapshot.modelSelection.availability,
+                snapshot.modelSelection.effective.modelId,
+                snapshot.modelSelection.effective.reasoningEffort,
+                snapshot.modelSelection.pending?.requestedAtMs ?? "none",
+                snapshot.modelSelection.policy.ownership,
+                snapshot.modelSelection.policy.userLocked,
+                snapshot.modelSelection.policy.allowedModelIds.join(","),
+                snapshot.modelSelection.policy.reasoningCeiling ?? "none",
+              ].join(":")}
+              conversationId={snapshot.conversationId}
+              selection={snapshot.modelSelection}
+              models={runtime.models}
+              disabled={busy || availability !== "native"}
+              onUpdate={onUpdateModelSelection}
+            />
+          )}
 
           <div
             className="conversation-events"

@@ -57,6 +57,7 @@ const capabilitySchema = z
       "skill",
       "mcp",
       "policy",
+      "scheduled-task",
       "dynamic-tool",
     ]),
     operation: z.enum([
@@ -286,10 +287,48 @@ const dynamicToolSchema = z
     }
   });
 
+const weekdaySchema = z.enum(["MO", "TU", "WE", "TH", "FR", "SA", "SU"]);
+const uniqueWeekdaysSchema = z
+  .array(weekdaySchema)
+  .max(7)
+  .refine(
+    (days) => new Set(days).size === days.length,
+    "Scheduled task weekdays must be unique",
+  );
+const scheduleTimeSchema = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/u);
+const scheduledTaskScheduleSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("hourly"),
+      intervalHours: z.number().int().min(1).max(168),
+      days: uniqueWeekdaysSchema.nullable(),
+    })
+    .strict(),
+  z.object({ type: z.literal("daily"), time: scheduleTimeSchema }).strict(),
+  z.object({ type: z.literal("weekdays"), time: scheduleTimeSchema }).strict(),
+  z
+    .object({
+      type: z.literal("weekly"),
+      days: uniqueWeekdaysSchema.min(1),
+      time: scheduleTimeSchema,
+    })
+    .strict(),
+]);
+const scheduledTaskSchema = z
+  .object({
+    id: identifierSchema,
+    sourcePluginId: identifierSchema,
+    name: displayTextSchema(128),
+    promptPreview: displayTextSchema(1200),
+    promptTruncated: z.boolean(),
+    schedule: scheduledTaskScheduleSchema,
+  })
+  .strict();
+
 export const integrationCatalogSchema = z
   .object({
-    schemaVersion: z.literal(1),
-    adapterVersion: z.literal("codex-integration-v1"),
+    schemaVersion: z.literal(2),
+    adapterVersion: z.literal("codex-integration-v2"),
     cliVersion: z
       .string()
       .max(32)
@@ -297,6 +336,7 @@ export const integrationCatalogSchema = z
     catalogState: availabilitySchema,
     capabilities: z.array(capabilitySchema).max(128),
     entries: z.array(entrySchema).max(512),
+    scheduledTasks: z.array(scheduledTaskSchema).max(256),
     policy: z
       .object({
         state: availabilitySchema,
@@ -334,6 +374,7 @@ export const integrationCatalogSchema = z
       snapshot.capabilities.map((capability) => capability.id),
     );
     const entryIds = new Set(snapshot.entries.map((entry) => entry.id));
+    const taskIds = new Set(snapshot.scheduledTasks.map((task) => task.id));
 
     if (capabilityIds.size !== snapshot.capabilities.length) {
       context.addIssue({
@@ -349,6 +390,13 @@ export const integrationCatalogSchema = z
         path: ["entries"],
       });
     }
+    if (taskIds.size !== snapshot.scheduledTasks.length) {
+      context.addIssue({
+        code: "custom",
+        message: "Scheduled task IDs must be unique",
+        path: ["scheduledTasks"],
+      });
+    }
 
     snapshot.entries.forEach((entry, entryIndex) => {
       entry.capabilityIds.forEach((capabilityId, capabilityIndex) => {
@@ -361,6 +409,36 @@ export const integrationCatalogSchema = z
         }
       });
     });
+    const pluginIds = new Set(
+      snapshot.entries
+        .filter((entry) => entry.kind === "plugin")
+        .map((entry) => entry.id),
+    );
+    snapshot.scheduledTasks.forEach((task, taskIndex) => {
+      if (!pluginIds.has(task.sourcePluginId)) {
+        context.addIssue({
+          code: "custom",
+          message: "Scheduled task references an unknown plugin",
+          path: ["scheduledTasks", taskIndex, "sourcePluginId"],
+        });
+      }
+    });
+
+    const scheduledCapability = snapshot.capabilities.find(
+      (capability) => capability.id === "scheduled-task.catalog",
+    );
+    if (
+      scheduledCapability?.domain !== "scheduled-task" ||
+      scheduledCapability.operation !== "discover" ||
+      scheduledCapability.mutating ||
+      scheduledCapability.requiresConfirmation
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Scheduled task catalog capability is missing or inconsistent",
+        path: ["capabilities"],
+      });
+    }
 
     if (
       snapshot.catalogState === "ready" &&
@@ -395,6 +473,8 @@ export const integrationCatalogSchema = z
 export type IntegrationCatalogSnapshot = z.infer<
   typeof integrationCatalogSchema
 >;
+export type ScheduledTaskTemplate =
+  IntegrationCatalogSnapshot["scheduledTasks"][number];
 
 export const scaffoldIntegrationCatalog =
   integrationCatalogSchema.parse(integrationFixture);

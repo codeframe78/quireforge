@@ -1,17 +1,20 @@
 # Building QuireForge
 
-Status: the Milestone 2 website and desktop work through Milestone 14C can be
+Status: the website and desktop code through Milestone 20 can be
 developed and built locally, including Codex/authentication, project and
 conversation lifecycle, reviewed Git/worktree workflows, the native terminal,
-and normalized/confirmed integration workflows. An installable application
-package does not yet exist.
+normalized/confirmed integration workflows, bounded project-file previews, and
+private conversation-image attachments, reviewed default-application handoffs,
+privacy-safe background notifications, policy-bounded next-turn selection,
+hardening, and local Linux packaging. Local installable candidates exist; no
+public release or activated website download exists.
 
 ## Supported development baseline
 
 - Linux development host
 - Node.js `22.12.0` or newer in the Node 22 line
 - pnpm `11.15.0`, as pinned by the root `packageManager` field
-- Rust `1.88` or newer with Cargo, rustfmt, and Clippy
+- Rust `1.95` or newer with Cargo, rustfmt, and Clippy
 - Tauri 2 Linux development packages listed below
 - Python 3 for the dependency-free repository validator
 - Git
@@ -75,11 +78,14 @@ pnpm preview
 
 The generated static artifact is `apps/website/dist/`. It is ignored by Git and
 must not contain credentials, local account data, Codex state, or locally
-installed integration information.
+installed integration information. It contains the domain-scoped Apache
+`.htaccess` used by the Webuzo-managed production origin.
 
 The production origin is `https://quireforge.jamesjennison.net` with base path
-`/`. Local development continues to use Astro's local origin. No server runtime,
-database, Pages Function, or Cloudflare adapter is required.
+`/`. Local development continues to use Astro's local origin. No database,
+persistent process, reverse proxy, Pages Function, Cloudflare adapter, or Astro
+server adapter is required. Cloudflare remains the public edge, not the origin
+host.
 
 ## Develop and build the desktop scaffold
 
@@ -93,6 +99,11 @@ the frontend and produces the unbundled executable `target/release/quireforge`.
 The output is ignored by Git and is a local verification artifact, not a Debian
 package, AppImage, release, or supported installation.
 
+Use `pnpm desktop:build` before treating that executable as a production
+artifact. A direct `cargo build --release` does not run Tauri's frontend build
+hook or embed `dist`; launching that diagnostic binary can retain the configured
+development URL and fail at `127.0.0.1:1420` when Vite is not running.
+
 After a production build, launch `./target/release/quireforge` and verify that
 the rendered workspace—not only the native title bar and dark background—is
 visible. QuireForge intentionally keeps Tauri's `freezePrototype` option at its
@@ -100,6 +111,63 @@ documented default of `false`: the current Vite/React production bundle assigns
 an own `toString` property during startup and otherwise fails before mounting.
 The explicit production CSP, restricted Tauri capability, and narrow typed IPC
 remain the primary webview/native controls.
+
+## Build local Linux package candidates
+
+The authoritative package build uses Docker, not the newer discovery host:
+
+```bash
+./scripts/run_linux_package_container.sh
+```
+
+The script builds the digest-pinned Ubuntu 22.04 image, uses isolated ignored
+caches, fetches only checksum-reviewed Tauri Linux tools, builds both Tauri
+bundles, normalizes their identity and timestamps, and validates metadata,
+checksums, GLIBC 2.35 compatibility, disposable package lifecycle, and visible
+X11 launches. It does not install either package on the host.
+
+Successful candidates are written to:
+
+```text
+target/ubuntu-22.04/release/packages/
+├── QuireForge-0.1.0-beta.1-x86_64.AppImage
+├── quireforge_0.1.0~beta.1_amd64.deb
+├── release-manifest.json
+└── SHA256SUMS
+```
+
+The directory is ignored by Git. A dirty source tree deliberately produces a
+`local-candidate` manifest; only a clean exact-tag build can pass the separate
+publication validator. Building candidates does not authorize a GitHub
+release, website edit, deployment, package installation, or signing action.
+See [Releasing](RELEASING.md) for the guarded handoff.
+
+### Native-only notification probe
+
+The manual Milestone 15 notification check has a disabled-by-default Cargo
+feature. It adds no Tauri command or webview permission, accepts only the exact
+native process flag, and sends the same fixed completed-task copy used by the
+production notification state machine:
+
+```bash
+pnpm desktop:build:notification-probe
+QUIRE_FORGE_PROBE_ROOT="$(mktemp -d /tmp/quireforge-notification-probe-XXXXXX)"
+mkdir -p \
+  "$QUIRE_FORGE_PROBE_ROOT/config" \
+  "$QUIRE_FORGE_PROBE_ROOT/data" \
+  "$QUIRE_FORGE_PROBE_ROOT/cache"
+env \
+  GDK_BACKEND=wayland \
+  XDG_CONFIG_HOME="$QUIRE_FORGE_PROBE_ROOT/config" \
+  XDG_DATA_HOME="$QUIRE_FORGE_PROBE_ROOT/data" \
+  XDG_CACHE_HOME="$QUIRE_FORGE_PROBE_ROOT/cache" \
+  ./target/release/quireforge --manual-notification-probe
+```
+
+Use `GDK_BACKEND=x11` only from a confirmed true X11 login when recording X11
+evidence. The probe accepts no title, body, project, conversation, path, or
+protocol data. After the manual check, run `pnpm desktop:build` again; that
+normal artifact excludes the feature and its flag.
 
 The browser-only shell preview is available with:
 
@@ -125,6 +193,24 @@ accepts only an opaque project ID, bounded prompt, and closed model/reasoning,
 sandbox, and approval values plus up to eight normalized connector catalog IDs;
 cwd, `app://` paths, and native Codex IDs never enter from the webview. Poll and
 interrupt accept only QuireForge's application conversation ID.
+
+Conversation start/resume/fork may additionally carry at most four opaque
+attachment UUIDv7s. `conversation_attachment_pick` owns its native picker path;
+`conversation_attachment_stage_drop` accepts only bounded PNG/JPEG bytes and
+safe display metadata. On Linux,
+`conversation_attachment_stage_native_drop` claims only the current one-use,
+30-second GTK file-manager capture for an opaque project ID; no source path is
+an IPC field or response. Status/cancel commands expose no path. Native code
+revalidates private staged copies and constructs documented `localImage` turn
+inputs. Tauri default drag/drop path events remain disabled. Generic file
+attachments and arbitrary filesystem reads are not exposed.
+
+`file_preview_pick` also accepts only an opaque project ID. The file path comes
+from the native picker and remains in Rust while attachment containment,
+identity, file type, size, and content limits are checked. The response contains
+only a relative display path and bounded normalized text or PNG/JPEG data; PDF
+is metadata-only. Browser preview cannot use this command or a browser file
+input to simulate local access.
 
 The integration surface is also fixed-purpose:
 `integration_catalog_read`/`integration_catalog_refresh`, closed

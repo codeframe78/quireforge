@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.codeframe78.QuireForge</id>
+  <name>QuireForge</name>
+  <summary>An unofficial native Linux workspace for Codex</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <developer id="io.github.codeframe78.quireforge">
+    <name>QuireForge contributors</name>
+  </developer>
+  <description>
+    <p>
+      QuireForge is an unofficial native Linux workspace for local, observable,
+      and approval-aware Codex workflows. It is not made, endorsed, supported,
+      or distributed by OpenAI.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.codeframe78.QuireForge.desktop</launchable>
+  <url type="homepage">https://quireforge.jamesjennison.net</url>
+  <provides>
+    <binary>quireforge</binary>
+  </provides>
+  <releases>
+    <release version="0.1.0-beta.1" date="2026-07-23" type="development" />
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

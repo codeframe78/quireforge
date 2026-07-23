@@ -27,6 +27,17 @@ describe("integration catalog contract", () => {
         (capability) => capability.implementation === "contract-only",
       ),
     ).toBe(true);
+    expect(scaffoldIntegrationCatalog.scheduledTasks).toEqual([
+      expect.objectContaining({
+        sourcePluginId: "plugin:fixture-review",
+        promptTruncated: false,
+        schedule: {
+          type: "weekly",
+          days: ["MO", "TH"],
+          time: "09:30",
+        },
+      }),
+    ]);
   });
 
   it("preserves blocked, degraded, and unknown states without raw payloads", () => {
@@ -43,6 +54,28 @@ describe("integration catalog contract", () => {
       integrationCatalogSchema.parse({
         ...integrationFixture,
         accountId: "raw-account-identity",
+      }),
+    ).toThrow();
+    expect(() =>
+      integrationCatalogSchema.parse({
+        ...integrationFixture,
+        scheduledTasks: [
+          {
+            ...integrationFixture.scheduledTasks[0],
+            sourcePluginId: "plugin:missing",
+          },
+        ],
+      }),
+    ).toThrow();
+    expect(() =>
+      integrationCatalogSchema.parse({
+        ...integrationFixture,
+        scheduledTasks: [
+          {
+            ...integrationFixture.scheduledTasks[0],
+            schedule: { type: "daily", time: "24:00" },
+          },
+        ],
       }),
     ).toThrow();
     expect(() =>

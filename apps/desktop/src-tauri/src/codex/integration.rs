@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-pub const INTEGRATION_SCHEMA_VERSION: u16 = 1;
-pub const INTEGRATION_ADAPTER_VERSION: &str = "codex-integration-v1";
+pub const INTEGRATION_SCHEMA_VERSION: u16 = 2;
+pub const INTEGRATION_ADAPTER_VERSION: &str = "codex-integration-v2";
 pub const INTEGRATION_MUTATION_SCHEMA_VERSION: u16 = 1;
 pub const INTEGRATION_CONTROL_SCHEMA_VERSION: u16 = 1;
 
@@ -18,6 +18,7 @@ pub struct IntegrationCatalogSnapshot {
     pub catalog_state: IntegrationAvailability,
     pub capabilities: Vec<IntegrationCapability>,
     pub entries: Vec<IntegrationEntry>,
+    pub scheduled_tasks: Vec<ScheduledTaskTemplate>,
     pub policy: IntegrationPolicySnapshot,
     pub dynamic_tool: DynamicToolContract,
     pub refresh_reasons: Vec<IntegrationRefreshReason>,
@@ -37,12 +38,16 @@ pub enum IntegrationContractError {
     DuplicateIdentity,
     #[error("integration entry references an unknown capability")]
     UnknownCapability,
+    #[error("scheduled task references an unknown plugin")]
+    UnknownSourcePlugin,
     #[error("integration availability and diagnostics are inconsistent")]
     InconsistentState,
     #[error("mutating integration capability lacks confirmation")]
     ConfirmationRequired,
     #[error("dynamic-tool lifecycle is inconsistent")]
     InvalidDynamicTool,
+    #[error("scheduled task schedule is invalid")]
+    InvalidSchedule,
 }
 
 impl IntegrationCatalogSnapshot {
@@ -55,6 +60,7 @@ impl IntegrationCatalogSnapshot {
         }
         if self.capabilities.len() > 128
             || self.entries.len() > 512
+            || self.scheduled_tasks.len() > 256
             || self.refresh_reasons.len() > 4
         {
             return Err(IntegrationContractError::BoundsExceeded);
@@ -125,6 +131,40 @@ impl IntegrationCatalogSnapshot {
             validate_health(&entry.health)?;
         }
 
+        let scheduled_capability = self
+            .capabilities
+            .iter()
+            .find(|capability| capability.id == "scheduled-task.catalog")
+            .ok_or(IntegrationContractError::UnknownCapability)?;
+        if scheduled_capability.domain != IntegrationDomain::ScheduledTask
+            || scheduled_capability.operation != IntegrationOperation::Discover
+            || scheduled_capability.mutating
+            || scheduled_capability.requires_confirmation
+        {
+            return Err(IntegrationContractError::UnknownCapability);
+        }
+        let plugin_ids = self
+            .entries
+            .iter()
+            .filter(|entry| entry.kind == IntegrationEntryKind::Plugin)
+            .map(|entry| entry.id.as_str())
+            .collect::<HashSet<_>>();
+        let mut task_ids = HashSet::with_capacity(self.scheduled_tasks.len());
+        for task in &self.scheduled_tasks {
+            if !is_identifier(&task.id, 128) || !is_identifier(&task.source_plugin_id, 128) {
+                return Err(IntegrationContractError::InvalidIdentity);
+            }
+            if !task_ids.insert(task.id.as_str()) {
+                return Err(IntegrationContractError::DuplicateIdentity);
+            }
+            if !plugin_ids.contains(task.source_plugin_id.as_str()) {
+                return Err(IntegrationContractError::UnknownSourcePlugin);
+            }
+            validate_display(&task.name, 128)?;
+            validate_display(&task.prompt_preview, 1200)?;
+            task.schedule.validate()?;
+        }
+
         if self.catalog_state == IntegrationAvailability::Ready
             && self
                 .capabilities
@@ -180,6 +220,103 @@ impl IntegrationCatalogSnapshot {
         }
         Ok(())
     }
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
+#[serde(rename_all = "camelCase")]
+pub struct ScheduledTaskTemplate {
+    pub id: String,
+    pub source_plugin_id: String,
+    pub name: String,
+    pub prompt_preview: String,
+    pub prompt_truncated: bool,
+    pub schedule: ScheduledTaskSchedule,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "type")]
+pub enum ScheduledTaskSchedule {
+    #[serde(rename = "hourly")]
+    Hourly {
+        #[serde(rename = "intervalHours")]
+        interval_hours: u32,
+        days: Option<Vec<ScheduledTaskWeekday>>,
+    },
+    #[serde(rename = "daily")]
+    Daily { time: String },
+    #[serde(rename = "weekdays")]
+    Weekdays { time: String },
+    #[serde(rename = "weekly")]
+    Weekly {
+        days: Vec<ScheduledTaskWeekday>,
+        time: String,
+    },
+}
+
+impl ScheduledTaskSchedule {
+    pub(crate) fn validate(&self) -> Result<(), IntegrationContractError> {
+        match self {
+            Self::Hourly {
+                interval_hours,
+                days,
+            } => {
+                if !(1..=168).contains(interval_hours) {
+                    return Err(IntegrationContractError::InvalidSchedule);
+                }
+                if let Some(days) = days {
+                    validate_schedule_days(days, false)?;
+                }
+            }
+            Self::Daily { time } | Self::Weekdays { time } => {
+                if !is_schedule_time(time) {
+                    return Err(IntegrationContractError::InvalidSchedule);
+                }
+            }
+            Self::Weekly { days, time } => {
+                validate_schedule_days(days, true)?;
+                if !is_schedule_time(time) {
+                    return Err(IntegrationContractError::InvalidSchedule);
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+pub enum ScheduledTaskWeekday {
+    MO,
+    TU,
+    WE,
+    TH,
+    FR,
+    SA,
+    SU,
+}
+
+fn validate_schedule_days(
+    days: &[ScheduledTaskWeekday],
+    require_nonempty: bool,
+) -> Result<(), IntegrationContractError> {
+    if days.len() > 7 || (require_nonempty && days.is_empty()) {
+        return Err(IntegrationContractError::InvalidSchedule);
+    }
+    let unique = days.iter().copied().collect::<HashSet<_>>();
+    if unique.len() != days.len() {
+        return Err(IntegrationContractError::InvalidSchedule);
+    }
+    Ok(())
+}
+
+fn is_schedule_time(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    bytes.len() == 5
+        && bytes[2] == b':'
+        && bytes[..2].iter().all(u8::is_ascii_digit)
+        && bytes[3..].iter().all(u8::is_ascii_digit)
+        && value[..2].parse::<u8>().is_ok_and(|hours| hours < 24)
+        && value[3..].parse::<u8>().is_ok_and(|minutes| minutes < 60)
 }
 
 fn validate_availability(
@@ -322,6 +459,7 @@ pub enum IntegrationDomain {
     Skill,
     Mcp,
     Policy,
+    ScheduledTask,
     DynamicTool,
 }
 
@@ -927,8 +1065,9 @@ mod tests {
 
         assert_eq!(snapshot.schema_version, INTEGRATION_SCHEMA_VERSION);
         assert_eq!(snapshot.adapter_version, INTEGRATION_ADAPTER_VERSION);
-        assert_eq!(snapshot.capabilities.len(), 15);
+        assert_eq!(snapshot.capabilities.len(), 16);
         assert_eq!(snapshot.entries.len(), 5);
+        assert_eq!(snapshot.scheduled_tasks.len(), 1);
         assert!(!snapshot.dynamic_tool.current_turn_model_mutable);
         snapshot.validate().expect("shared fixture must be strict");
         assert_eq!(round_trip, original);
@@ -980,6 +1119,24 @@ mod tests {
         assert_eq!(
             snapshot.validate(),
             Err(IntegrationContractError::InvalidVersion)
+        );
+
+        let mut snapshot: IntegrationCatalogSnapshot =
+            serde_json::from_str(raw).expect("integration fixture must match native types");
+        snapshot.scheduled_tasks[0].source_plugin_id = "plugin:missing".to_owned();
+        assert_eq!(
+            snapshot.validate(),
+            Err(IntegrationContractError::UnknownSourcePlugin)
+        );
+
+        let mut snapshot: IntegrationCatalogSnapshot =
+            serde_json::from_str(raw).expect("integration fixture must match native types");
+        snapshot.scheduled_tasks[0].schedule = ScheduledTaskSchedule::Daily {
+            time: "24:00".to_owned(),
+        };
+        assert_eq!(
+            snapshot.validate(),
+            Err(IntegrationContractError::InvalidSchedule)
         );
     }
 

@@ -11,6 +11,30 @@ Milestone 13B adds live read-only native discovery, strict CLI/app-server
 normalization, invalidation, partial-failure, version-gate, and IPC tests.
 Milestones 14A–14C add confirmed lifecycle, Integration Center, authorization,
 skill-control, refresh, and connector-mention coverage.
+Milestone 15A adds a strict bounded file-preview contract, temporary-file
+native tests, and honest browser/native presentation coverage.
+Milestone 15B adds strict conversation-image staging, lifecycle, turn-input,
+component, and browser coverage.
+Milestone 15C adds opaque one-use handoff, native revalidation, fixed-copy
+notification, focus/deduplication state-machine, component, and bridge coverage;
+real display-session results remain separately labeled manual evidence.
+Milestone 17A adds schema-v2 scheduled-template contract, installed-plugin
+lookup, strict `plugin/read` normalization, prompt/schedule safety, component,
+responsive browser, overflow, and axe-core coverage.
+Milestone 18 adds next-turn selector policy, lifecycle, migration,
+revalidation, prompt-injection, ownership, and responsive control coverage.
+Milestone 19 adds Node/Rust dependency audits, immutable-action and
+active-content repository checks, Tauri policy assertions, desktop asset
+budgets, crash-boundary privacy tests, and keyboard/reduced-motion/forced-color
+coverage for desktop and website.
+Milestone 20 adds package-contract unit tests, canonical Debian/AppImage
+inspection, checksum and release-manifest validation, a GLIBC 2.35 ceiling,
+disposable install/upgrade/uninstall preservation checks, isolated visible X11
+launch probes, inactive website-download assertions, and a guarded manual
+release-workflow policy.
+Milestone 21B adds repeated byte-equality evidence, current-host package launch
+review, signed-out package pixels, and dormant same-origin website publication
+validation while keeping the committed download state inactive.
 
 ## Repository, website, and desktop checks
 
@@ -42,6 +66,81 @@ compilation against the locked Cargo graph. Codex adapter tests cover CLI
 version validation, deterministic mock snapshots, selected generated schemas,
 response correlation, notification-payload discard, catalog normalization,
 duplicate/default rejection, early exit, timeout, and child reaping.
+
+Dependency audits are deliberately separate because they refresh external
+advisory databases:
+
+```bash
+pnpm security:audit:node
+cargo install cargo-audit --locked --version 0.22.2
+pnpm security:audit:rust
+```
+
+CI installs the pinned RustSec auditor before running both audits. Local
+`cargo-audit` installation is a developer-tool prerequisite, not a project
+runtime dependency.
+
+## Linux package checks
+
+The authoritative candidate gate is:
+
+```bash
+./scripts/run_linux_package_container.sh
+```
+
+It builds in the pinned Ubuntu 22.04 container and runs structural, checksum,
+AppStream, GLIBC, lifecycle, and visible X11 checks for both package formats.
+It uses isolated ignored caches, no personal Codex home or credentials, no live
+model call, no host package installation, and no local Vite server.
+
+The dependency-free source-contract subset is also part of `pnpm validate`:
+
+```bash
+pnpm package:test
+```
+
+For an already produced artifact directory:
+
+```bash
+python3 scripts/validate_release_artifacts.py \
+  --artifact-dir target/ubuntu-22.04/release/packages
+```
+
+`--lifecycle` adds the disposable Debian sequence and `--smoke` adds isolated
+window launches. `--require-publishable` is reserved for the exact clean,
+tagged, pinned-builder publication boundary and also requires
+`--expected-tag`. Routine local dirty builds are intentionally
+`local-candidate` manifests.
+
+## Manual Milestone 21B checklist
+
+- Start from a clean exact source commit and run the authoritative pinned
+  Ubuntu 22.04 package gate.
+- Confirm the manifest records that exact commit, `treeState: "clean"`, the
+  pinned builder digest, `state: "release-candidate"`, and exactly two
+  installable artifacts.
+- Independently verify `SHA256SUMS`, then rerun normalization from the same raw
+  bundles/source epoch into a separate output directory and require identical
+  hashes for all four files.
+- Launch the AppImage and extracted Debian executable with isolated home/XDG
+  roots. Require a stable signed-out gate, no black frame, and no localhost or
+  connection-refused evidence.
+- Review the proposed x86_64 Ubuntu 22.04-or-newer GNOME Wayland/X11 statement
+  against the baseline package gate and separately recorded display-session
+  evidence. Do not generalize it to arm64, other distributions, or other
+  desktop environments.
+- Confirm the public installation copy verifies checksums before execution,
+  uses `apt` for the Debian dependency path, documents the FUSE-less AppImage
+  fallback, and keeps uninstall separate from project/Codex/metadata deletion.
+- Keep `apps/website/src/data/downloads.ts` unavailable until the exact public
+  files can be retrieved without repository credentials. Exercise the
+  published validator with fixtures and reject private GitHub, cross-origin,
+  credential-bearing, query/fragment, malformed hash/size, duplicate/missing
+  format, and filename/version drift.
+- Before any terminal action, state the exact source commit, tag, operation,
+  public version directory, four files, hashes, and rollback. Treat the push,
+  tag, private release/provenance operation, public package promotion, website
+  data activation, and website deployment as separate approvals.
 Project-core tests cover transactional schema migration, forward-schema
 refusal, app-data permissions, selected/resolved path identity, mount state,
 Git repositories and linked worktrees, duplicate roots, confirmation-time
@@ -133,6 +232,18 @@ from serialized snapshots. The TypeScript bridge test validates the one fixed
 test reads a personal integration catalog, installs an integration, starts an
 authorization flow, changes Codex configuration, or makes a model call.
 
+Milestone 17A extends that deterministic fixture with one installed, enabled
+plugin and one stable `plugin/read` response. Rust tests verify native-only
+marketplace paths, strict plugin/source correlation, bounded counts, unsafe
+prompt control removal, whitespace normalization, truncation, schedule
+validation, stable partial-failure diagnostics, and path-free serialization.
+The shared Rust/TypeScript fixture rejects orphaned plugins, duplicate task IDs
+and weekdays, invalid times/intervals, unsafe display content, unknown fields,
+and schema drift. Component and desktop/mobile Playwright tests assert the
+read-only boundary, absence of task action buttons, inert prompt labeling,
+responsive overflow, and axe-core accessibility. Routine tests neither inspect
+personal plugins nor create, execute, mutate, or authorize a task.
+
 Milestone 14A adds a second shared Rust/TypeScript fixture for the closed
 mutation preview/result contract and strict bridge requests. Deterministic
 native tests run fixed shell fixtures in private temporary directories and
@@ -162,6 +273,28 @@ application tests exercise permission/warning review, opaque browser actions,
 status polling, catalog refresh, and composer selection. No routine test reads
 or changes personal Codex/integration state, opens a real authorization page,
 or makes a model call.
+
+Milestone 15A adds a strict shared Rust/TypeScript preview fixture. Native tests
+use only temporary attached directories and cover identity/containment,
+symlinks, binary refusal, malformed project IDs, text normalization, byte/line
+and image-dimension bounds, metadata-only PDF handling, and a full-file APNG
+marker beyond the sniff window. TypeScript rejects absolute paths, unsafe
+controls, unknown fields, oversized content, and inconsistent kind/rendering
+payloads. Bridge, component, application, and browser tests verify the one
+fixed opaque-ID command, native-picker ownership, browser honesty, axe-core,
+and overflow. They never read a user's project files.
+
+Milestone 15B adds a strict shared Rust/TypeScript conversation-attachment
+fixture. Native tests use temporary images and app-data roots to cover native
+picker, dragged-byte, and one-use native-capture sources, symlink/name/type/size
+refusal, private file permissions, expiry, cancellation, tamper detection, one-
+use claim, path-free serialization, startup reconciliation, documented
+`localImage` construction, and terminal-turn cleanup. TypeScript rejects
+unknown fields, unsafe names, non-PNG/JPEG types, malformed IDs/base64, and
+inconsistent states. Bridge, component, application, and browser tests cover
+the five fixed commands, explicit start/resume/fork IDs, browser drag/drop/
+picker honesty, responsive layout, axe-core, and overflow. They use
+deterministic mock app-server processes and make no live model call.
 
 ## Milestone 13A contract checklist
 
@@ -270,7 +403,128 @@ or makes a model call.
   build. Do not inspect or mutate personal integration state or complete a real
   third-party authorization during routine validation.
 
-## Planned manual Milestone 18 checklist
+## Milestone 15A safe file-preview checklist
+
+- Confirm React supplies only a canonical project UUIDv7; native code opens the
+  picker only after validating it and never serializes an absolute path.
+- Confirm every selection reloads attachment metadata, revalidates readable
+  identity, canonical containment, symlink/regular-file status, and the opened
+  device/inode under `O_NOFOLLOW`.
+- Confirm the source, text byte/line, image byte/dimension/pixel, IPC data-URL,
+  path, and schema collection limits fail closed with stable diagnostics.
+- Confirm controls and bidi overrides are normalized from UTF-8 text; only
+  PNG/JPEG can produce image data; APNG, unknown binary content, and malformed
+  images are refused; HTML/SVG source remains inert text; PDF bytes never enter
+  the webview.
+- Confirm the production CSP permits `data:` only for `img-src`, the preview is
+  never persisted, and browser preview has no local picker/input simulation.
+- Run strict contracts, native temporary-file tests, bridge/component/app unit
+  tests, desktop/mobile Playwright with axe-core/overflow, complete repository
+  gates, and a warm unbundled release build. Do not inspect a user's files or
+  create a package, release, deployment, or hosting change.
+
+## Milestone 15B conversation-image checklist
+
+- Confirm Tauri default file-drop events are disabled, picker paths stay native,
+  and browser drops transmit only explicitly read bounded bytes plus a safe
+  name and declared PNG/JPEG type. On Linux, confirm an empty WebKitGTK HTML
+  `FileList` claims only a 30-second native GTK capture through the fixed path-
+  free command, consumes it once, and returns no source path.
+- Confirm Rust independently validates real type/structure, dimensions, names,
+  4 MiB per-file, four-file, and 16 MiB aggregate limits before creating
+  mode-`0600` UUIDv7 copies under a mode-`0700` app-data root.
+- Confirm snapshots contain only opaque project/attachment IDs and normalized
+  metadata; source/staged paths, bytes, filesystem handles, Codex IDs, and raw
+  protocol input never cross IPC or enter SQLite.
+- Confirm drafts expire after 15 minutes, are consumed once, remain project-
+  bound, and are cleaned by cancel, failed send, terminal turn, or startup.
+  Tampered/replaced copies must fail closed at claim.
+- Confirm start, resume, and fork construct only documented `localImage` inputs
+  natively and retain claimed files until the normalized turn is terminal.
+  Generic file and arbitrary path inputs must remain unavailable.
+- Run strict contracts, temporary native tests, bridge/component/app tests,
+  desktop/mobile Playwright with axe-core/overflow, complete repository gates,
+  and a warm unbundled release build. Do not inspect user files, start a live
+  model turn, or create a package, release, deployment, or hosting change.
+
+## Milestone 15C desktop-integration checklist
+
+- Confirm a ready preview exposes only one UUIDv7 open action and relative
+  display name. The command must accept no path, URL, MIME, application,
+  executable, argument, or working directory.
+- Confirm the UI names `System default application` and requires a separate
+  handoff confirmation. Rust must revalidate attachment identity, canonical
+  containment, regular non-symlink state, descriptor path, and device/inode
+  before opening. Replacement, clear, expiry, replay, and tamper cases must
+  fail closed without creating a generic opener.
+- Confirm the notification command accepts only an app-owned conversation ID,
+  freshly permits pending approval/completed/blocked/failed state, suppresses
+  foreground delivery, and deduplicates approval/terminal identity. Fixed
+  notification copy must not interpolate project names, prompts, paths,
+  model/account data, output, diagnostics, or raw protocol fields.
+- Confirm the official notification plugin is invoked only from Rust and the
+  main webview capability list remains empty. Delivery failure must not change
+  task state and may retry only the same native-reviewed notification.
+- Build the disabled-by-default native probe with
+  `pnpm desktop:build:notification-probe`, launch it only with the exact
+  `--manual-notification-probe` process flag and disposable app data, and verify
+  the real desktop service receives the production fixed copy. The probe must
+  expose no Tauri command, webview permission, or caller-supplied content. Run
+  `pnpm desktop:build` afterward and confirm the normal artifact excludes it.
+- Run strict contracts, temporary-file/native state-machine tests, bridge,
+  component, and application tests, desktop/mobile Playwright with axe-core and
+  overflow, complete repository gates, and a warm unbundled release build.
+- On a disposable app-data root, manually exercise attach, file picker,
+  preview, open confirmation, attachment picker/drop, and a privacy-safe
+  notification on supported Wayland and X11 sessions. Record Wayland,
+  XWayland, and true X11 accurately; one cannot substitute for another. Do not
+  inspect unrelated user files, start a live model turn, or create a package,
+  release, deployment, or hosting change.
+
+Current display evidence: the configured unbundled Tauri production artifact
+starts under native Wayland. With disposable app data it completed project
+attach/review, the `README.md` picker and bounded preview, the native image
+picker, and a real Nautilus image drop that staged normalized `drag drop`
+metadata. Test-only compositor input came from an approved XDG Remote Desktop
+portal session that was closed after the pass; the product did not gain a
+remote-control permission or dependency. It separately completed the attached-
+project picker, file picker, bounded README preview, second confirmation,
+system-default opener, and consumed-action state under XWayland. In a separate
+Ubuntu 24.04 GNOME 46 `ubuntu-xorg` QA guest, `loginctl` reported `Type=x11`, an
+Xorg server owned display `:0`, and the shell environment had no
+`WAYLAND_DISPLAY`. Against the attached repository mounted in place, the
+production artifact completed project attach/review, README picker/preview/
+default-app handoff, attachment picker, and a real Nautilus image drop. That
+drop initially exposed an empty WebKitGTK HTML `FileList`; after the native-only
+GTK capture correction, the UI staged normalized `drag drop` metadata without
+a source path. The feature-gated probe delivered the fixed completed-task copy
+through the X11 session's Freedesktop service, and a filtered D-Bus capture
+contained only QuireForge identity plus the fixed title/body. The normal
+artifact was rebuilt afterward and contains no probe flag or delivery string.
+This closes the Milestone 15 display-session gate; native Wayland, XWayland, and
+true X11 remain accurately distinguished.
+
+## Milestone 17A read-only scheduled-template checklist
+
+- Confirm only installed, enabled plugins become `plugin/read` targets and raw
+  marketplace roots never serialize through IPC.
+- Reject unsupported CLI minors, unknown response fields, mismatched plugin or
+  marketplace identity, oversized collections, duplicate task/weekday
+  identity, invalid hourly intervals/times, and unsafe display controls.
+- Confirm task prompts are whitespace-normalized, bounded, visibly labeled
+  untrusted/inert, never persisted or submitted, and accurately marked when
+  truncated.
+- Degrade only `scheduled-task.catalog` for a malformed read while retaining
+  valid unrelated integration categories and safe task entries.
+- Parse the shared schema-v2 fixture in Rust and TypeScript and verify every
+  task references an existing plugin entry.
+- Run component and desktop/mobile browser checks for all schedule labels,
+  empty/degraded states, absence of task action buttons, responsive overflow,
+  and axe-core accessibility.
+- Make no personal plugin/account read, task mutation, task execution, hosted
+  scheduler request, official-client automation, or billable model call.
+
+## Milestone 18 acceptance checklist
 
 - Use deterministic mock catalogs and control requests; do not make a live or
   billable model call during routine verification.
@@ -292,6 +546,46 @@ or makes a model call.
 - Run against a fixture where the supported control lifecycle is unavailable.
   Confirm honest recommendation-only behavior and no web automation, private
   endpoint, or fabricated success.
+
+Automated Rust coverage exercises closed dynamic-tool parsing, exact
+correlation, Manual/Recommend/Automatic policy, lock/allowlist/ceiling
+precedence, one request per turn, completion-time staging, migration/restart
+persistence, stale-choice discard, fresh next-turn application, and
+registration rejection. TypeScript/component/browser coverage validates strict
+schema-v3 IPC, provenance, effective versus pending presentation,
+recommendation acceptance/dismissal, automatic opt-in limits, lock controls,
+desktop/mobile overflow, and axe-core accessibility. Routine verification uses
+no live turn or personal account mutation.
+
+## Milestone 19 acceptance checklist
+
+- Run the dependency-free repository validator and confirm the capability stays
+  Linux/main-window scoped and permission-empty, all remote Actions use full
+  SHAs, reviewed CSP/header/asset-protocol settings remain exact, and no direct
+  active-content/evaluation/network primitive enters production frontend code.
+- Run the Node high-severity audit and warning-denying RustSec audit. Confirm
+  the lock graph uses `fast-uri` 3.1.4 and every ignored RustSec ID matches the
+  reviewed Tauri/GTK3 or `tauri-utils` transitive graph.
+- Build the desktop frontend and run `desktop validate:dist`. Confirm the
+  startup entry, application shell, and terminal renderer remain separate, the
+  per-chunk/total JS/CSS budgets pass, and the generated HTML loads no external
+  origin.
+- Trigger the React render boundary with sensitive-shaped fixture text.
+  Confirm the raw value is absent and only the bounded reload/reconciliation
+  copy is presented.
+- Navigate both surfaces by keyboard. Verify skip-link focus transfer, visible
+  focus, semantic desktop navigation, reduced-motion CSS and scripted
+  scrolling, and forced-color control boundaries in both browser profiles.
+- Open the terminal close review. Verify accessible name/description, initial
+  focus, Tab/Shift+Tab containment, Escape dismissal, prior-focus restoration,
+  axe-core, and the no-project-deletion copy.
+- Run all source, website, desktop, browser, native, configured production
+  build, secret, and diff gates. Do not package, deploy, authorize an
+  integration, inspect personal Codex state, or make a live/billable model call.
+- Launch the configured production binary without a Vite server and with
+  isolated QuireForge/Codex data. Capture the first cold frames and the complete
+  workspace; the bounded startup overlay must remain visible until the app
+  paints, with no intermediate black frame or surviving child process.
 
 ## Manual Milestone 12 checklist
 
@@ -533,6 +827,34 @@ Confirm either test leaves no additional `codex app-server` process. It must
 not start a thread or turn, write configuration, inspect session content, or
 print the account-visible catalog.
 
+## Manual Milestone 21A checklist
+
+- Start with an unauthenticated fixture and confirm only bootstrap, runtime, and
+  account-status reads occur; project, conversation, active-task, session,
+  terminal, integration, Git, worktree, and usage readers must remain idle.
+- Exercise existing-authenticated, unauthenticated, browser-pending,
+  device-code-pending, unavailable, browser-preview, API-key, managed-provider,
+  and no-additional-login-required normalized states without using a personal
+  login.
+- Confirm the signed-out surface exposes no workspace navigation, projects,
+  session titles, account metadata, task controls, or simulated native state.
+- Validate `account/rateLimits/read` with sanitized single- and multi-meter
+  fixtures, missing windows, invalid percentages/timestamps/durations,
+  duplicate or malformed identifiers, control/bidirectional labels, unknown
+  reached-state enums, oversized meter sets, timeout, RPC rejection, and
+  process failure.
+- Inspect serialized usage snapshots and confirm plan, balance, spend-control,
+  account, reset-credit, credential, and raw protocol fields are absent.
+- Confirm the usage UI reports only returned remaining percentages and reset
+  times; unmetered and unavailable states must not display a calculated
+  estimate or a reset-credit action.
+- Inspect Home in light and dark desktop layouts and the stacked mobile layout.
+  Confirm the permanent QuireForge identity, project/actions/recent/usage
+  hierarchy, milestone-label absence, focus, reduced motion, forced colors,
+  no horizontal overflow, and zero automated accessibility violations.
+- Do not run a live account usage read, login/logout, reset-credit operation, or
+  billable model turn without separate approval.
+
 ## Manual Milestone 8A checklist
 
 - Use deterministic mock app-server fixtures only; do not resume or fork a
@@ -687,9 +1009,13 @@ print the account-visible catalog.
 - Confirm no clipped text, horizontal scroll, stale identity, or broken asset.
 - Confirm Downloads and Installation do not claim an unreleased package.
 - Confirm the unofficial-project disclaimer remains visible.
-- Confirm the built `_headers`, `robots.txt`, sitemap, manifest, icons, and 404
+- Confirm the built `.htaccess`, `robots.txt`, sitemap, manifest, icons, and 404
   page are present.
 
-Production-origin Lighthouse and live-header measurements are deferred until a
-separately approved Cloudflare preview or production deployment exists. Any
-miss against the published quality targets must be recorded with remediation.
+Milestone 16C completed production-origin and Cloudflare-edge header,
+desktop/mobile Lighthouse, route, overflow, and axe measurements. Both
+Lighthouse profiles scored 100 for Performance, Accessibility, Best Practices,
+and SEO; all 28 live route/profile combinations passed with no automatically
+detectable axe violations. Future deployments must repeat these measurements,
+and any miss against the published quality targets requires recorded
+remediation.

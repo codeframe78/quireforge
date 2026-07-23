@@ -1,13 +1,21 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@xterm/xterm", () => ({ Terminal: class {} }));
 vi.mock("@xterm/addon-fit", () => ({ FitAddon: class {} }));
 
 import App from "./App";
+import { sharedConversationAttachmentFixture } from "./lib/attachment";
 import { codexAuthSchema, scaffoldCodexAuth } from "./lib/auth";
 import { scaffoldCodexRuntime } from "./lib/codex";
 import { scaffoldBootstrap } from "./lib/contract";
+import { sharedFilePreviewFixture } from "./lib/filePreview";
 import {
   type ConversationSnapshot,
   conversationSnapshotSchema,
@@ -28,9 +36,30 @@ import {
 } from "./lib/integration";
 import { sessionLifecycleSchema } from "./lib/session";
 import { worktreeWorkspaceSchema } from "./lib/worktree";
+import { scaffoldCodexUsage } from "./lib/usage";
 
 const projectId = "018f0000-0000-7000-8000-000000000001";
 const associationId = "018f0000-0000-7000-8000-000000000002";
+const authenticatedAuth = codexAuthSchema.parse({
+  ...scaffoldCodexAuth,
+  state: "authenticated",
+  accountKind: "chatgpt",
+});
+function modelSelection(reasoningEffort = "high") {
+  return {
+    schemaVersion: 1 as const,
+    availability: "ready" as const,
+    effective: { modelId: "gpt-5.6-sol", reasoningEffort },
+    pending: null,
+    policy: {
+      ownership: "manual" as const,
+      userLocked: false,
+      allowedModelIds: [],
+      reasoningCeiling: null,
+    },
+    diagnosticCode: null,
+  };
+}
 const pendingProject = projectWorkspaceSchema.parse({
   ...scaffoldProjectWorkspace,
   pendingAttachment: {
@@ -132,23 +161,26 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
+        loadUsage={() => Promise.resolve(scaffoldCodexUsage)}
         loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
       />,
     );
 
     expect(
-      screen.getByRole("heading", {
-        name: "A quiet place for ambitious work.",
+      await screen.findByRole("heading", {
+        name: "What should we build today?",
       }),
     ).toBeInTheDocument();
     expect(await screen.findByText("Native IPC verified")).toBeInTheDocument();
-    expect(await screen.findAllByText("Codex adapter ready")).toHaveLength(2);
+    expect(await screen.findAllByText("Codex adapter ready")).toHaveLength(1);
     expect(screen.getAllByText("No project attached")).toHaveLength(2);
     expect(
-      await screen.findByRole("button", { name: "Continue in browser" }),
+      await screen.findByText("Codex account connected"),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(7);
+    expect(screen.queryByText(/Milestone/u)).not.toBeInTheDocument();
+    expect(screen.getAllByText("73%")).not.toHaveLength(0);
+    expect(screen.getAllByText("ready")).toHaveLength(12);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(
@@ -167,20 +199,52 @@ describe("QuireForge desktop shell", () => {
       />,
     );
 
-    expect(await screen.findByText("Browser preview")).toBeInTheDocument();
-    expect(await screen.findAllByText("Native probe unavailable")).toHaveLength(
-      2,
-    );
+    expect(
+      await screen.findByText(
+        "Native Codex authentication is unavailable in this browser preview.",
+      ),
+    ).toBeInTheDocument();
     expect(screen.queryByText("Native IPC verified")).not.toBeInTheDocument();
+    expect(screen.queryByText(/native folder picker/u)).not.toBeInTheDocument();
     expect(
-      await screen.findByText("Native authentication unavailable"),
+      screen.queryByRole("button", { name: "Attach local project" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not read workspace data before Codex authentication", async () => {
+    const loadUsage = vi.fn();
+    const loadProjects = vi.fn();
+    const loadConversation = vi.fn();
+    const loadActiveConversationTasks = vi.fn();
+    const loadSessions = vi.fn();
+    const loadTerminalsTask = vi.fn();
+    const loadIntegrationCatalogTask = vi.fn();
+
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadUsage={loadUsage}
+        loadProjects={loadProjects}
+        loadConversation={loadConversation}
+        loadActiveConversationTasks={loadActiveConversationTasks}
+        loadSessions={loadSessions}
+        loadTerminalsTask={loadTerminalsTask}
+        loadIntegrationCatalogTask={loadIntegrationCatalogTask}
+      />,
+    );
+
+    expect(
+      await screen.findByRole("button", { name: "Continue with ChatGPT" }),
     ).toBeInTheDocument();
-    expect(
-      await screen.findByText(/cannot open a native folder picker/u),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Attach local project" }),
-    ).toBeDisabled();
+    expect(loadUsage).not.toHaveBeenCalled();
+    expect(loadProjects).not.toHaveBeenCalled();
+    expect(loadConversation).not.toHaveBeenCalled();
+    expect(loadActiveConversationTasks).not.toHaveBeenCalled();
+    expect(loadSessions).not.toHaveBeenCalled();
+    expect(loadTerminalsTask).not.toHaveBeenCalled();
+    expect(loadIntegrationCatalogTask).not.toHaveBeenCalled();
   });
 
   it("persists the explicit theme choice", () => {
@@ -188,7 +252,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
       />,
     );
@@ -198,6 +262,111 @@ describe("QuireForge desktop shell", () => {
 
     expect(window.localStorage.getItem("quireforge-theme")).toBe(
       document.documentElement.dataset.theme,
+    );
+  });
+
+  it("previews one native-selected file through an opaque project ID", async () => {
+    const pickFilePreviewTask = vi
+      .fn()
+      .mockResolvedValue({ ...sharedFilePreviewFixture, projectId });
+    const openFilePreviewTask = vi.fn().mockResolvedValue(undefined);
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
+        loadProjects={() => Promise.resolve(attachedProject)}
+        pickFilePreviewTask={pickFilePreviewTask}
+        openFilePreviewTask={openFilePreviewTask}
+      />,
+    );
+
+    const chooseProjectFile = await screen.findByRole("button", {
+      name: "Choose project file",
+    });
+    await waitFor(() => expect(chooseProjectFile).toBeEnabled());
+    fireEvent.click(chooseProjectFile);
+
+    expect(
+      await screen.findByRole("article", {
+        name: "Preview of docs/preview.md",
+      }),
+    ).toBeInTheDocument();
+    expect(pickFilePreviewTask).toHaveBeenCalledWith(projectId);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with desktop app" }),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open with default app" }),
+    );
+    await waitFor(() =>
+      expect(openFilePreviewTask).toHaveBeenCalledWith({
+        openActionId: sharedFilePreviewFixture.openActionId,
+      }),
+    );
+  });
+
+  it("sends only reviewed opaque image IDs with an explicit task start", async () => {
+    const conversationId = "018f0000-0000-7000-8000-000000000010";
+    const attachmentSnapshot = {
+      ...sharedConversationAttachmentFixture,
+      projectId,
+    };
+    const pickConversationAttachmentsTask = vi
+      .fn()
+      .mockResolvedValue(attachmentSnapshot);
+    const startConversationTask = vi.fn().mockResolvedValue(
+      conversationSnapshotSchema.parse({
+        ...scaffoldConversation,
+        state: "running",
+        conversationId,
+        projectId,
+        modelId: "gpt-5.6-sol",
+        reasoningEffort: "medium",
+        modelSelection: modelSelection("medium"),
+        sandboxMode: "workspace-write",
+        approvalPolicy: "on-request",
+        events: [{ type: "lifecycle", sequence: 1, phase: "running" }],
+      }),
+    );
+    render(
+      <App
+        loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
+        loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
+        loadProjects={() => Promise.resolve(attachedProject)}
+        loadConversation={() => Promise.resolve(scaffoldConversation)}
+        pickConversationAttachmentsTask={pickConversationAttachmentsTask}
+        startConversationTask={startConversationTask}
+      />,
+    );
+
+    const chooseImages = await screen.findByRole("button", {
+      name: "Choose images",
+    });
+    await waitFor(() => expect(chooseImages).toBeEnabled());
+    fireEvent.click(chooseImages);
+    expect(await screen.findByText("review.png")).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Task"), {
+      target: { value: "Review the attached image." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Start task" }));
+
+    await waitFor(() =>
+      expect(startConversationTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          projectId,
+          prompt: "Review the attached image.",
+          attachmentIds: [
+            sharedConversationAttachmentFixture.attachments[0]!.attachmentId,
+          ],
+        }),
+      ),
+    );
+    expect(screen.queryByText("review.png")).not.toBeInTheDocument();
+    expect(JSON.stringify(startConversationTask.mock.calls)).not.toContain(
+      "/private/",
     );
   });
 
@@ -236,7 +405,7 @@ describe("QuireForge desktop shell", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel sign-in" }));
     expect(
-      await screen.findByRole("button", { name: "Continue in browser" }),
+      await screen.findByRole("button", { name: "Continue with ChatGPT" }),
     ).toBeInTheDocument();
     expect(cancelAuth).toHaveBeenCalledOnce();
   });
@@ -275,16 +444,18 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
         pickProject={pickProject}
         confirmProject={confirmProject}
       />,
     );
 
-    fireEvent.click(
-      await screen.findByRole("button", { name: "Attach local project" }),
-    );
+    const attachProject = await screen.findByRole("button", {
+      name: "Attach local project",
+    });
+    await waitFor(() => expect(attachProject).toBeEnabled());
+    fireEvent.click(attachProject);
     expect(
       await screen.findByText("~/work/quireforge-link"),
     ).toBeInTheDocument();
@@ -309,7 +480,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         detachProjectDirectory={detachProjectDirectory}
       />,
@@ -331,7 +502,7 @@ describe("QuireForge desktop shell", () => {
 
   it("blocks a missing cwd and relinks through an explicitly reviewed preview", async () => {
     const preflightProjectDirectory = vi.fn().mockResolvedValue({
-      schemaVersion: 2,
+      schemaVersion: 3,
       projectId,
       cwdReady: false,
       displayPath: "~/work/quireforge-link",
@@ -344,7 +515,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(missingProject)}
         preflightProjectDirectory={preflightProjectDirectory}
         pickRelink={pickRelink}
@@ -370,12 +541,13 @@ describe("QuireForge desktop shell", () => {
   it("starts, polls, deduplicates, and completes a native conversation", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,
@@ -398,16 +570,21 @@ describe("QuireForge desktop shell", () => {
     });
     const startConversationTask = vi.fn().mockResolvedValue(running);
     const pollConversationTask = vi.fn().mockResolvedValue(completed);
+    const notifyConversationTask = vi.fn().mockResolvedValue({
+      schemaVersion: 1 as const,
+      status: "foreground" as const,
+    });
 
     render(
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         loadConversation={() => Promise.resolve(scaffoldConversation)}
         startConversationTask={startConversationTask}
         pollConversationTask={pollConversationTask}
+        notifyConversationTask={notifyConversationTask}
       />,
     );
 
@@ -431,16 +608,18 @@ describe("QuireForge desktop shell", () => {
     );
     expect(await screen.findByText("Task completed")).toBeInTheDocument();
     expect(screen.getAllByText("Reviewing the task.")).toHaveLength(1);
+    expect(notifyConversationTask).toHaveBeenCalledWith(conversationId);
   });
 
   it("cancels pending conversation polling when the shell unmounts", async () => {
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId: "018f0000-0000-7000-8000-000000000010",
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,
@@ -452,7 +631,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         loadConversation={() => Promise.resolve(running)}
         pollConversationTask={pollConversationTask}
@@ -471,12 +650,13 @@ describe("QuireForge desktop shell", () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const approvalId = "018f0000-0000-7000-8000-000000000011";
     const waiting = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "waiting-for-approval",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: {
@@ -526,7 +706,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         loadConversation={() => Promise.resolve(waiting)}
         pollConversationTask={pollConversationTask}
@@ -609,12 +789,13 @@ describe("QuireForge desktop shell", () => {
     });
     const task = (conversationId: string, taskProjectId: string) =>
       conversationSnapshotSchema.parse({
-        schemaVersion: 2,
+        schemaVersion: 3,
         state: "running",
         conversationId,
         projectId: taskProjectId,
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        modelSelection: modelSelection(),
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         pendingApproval: null,
@@ -638,7 +819,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(projects)}
         loadWorktreesTask={() => Promise.resolve(worktrees)}
         loadConversation={() => legacyStatus}
@@ -668,7 +849,7 @@ describe("QuireForge desktop shell", () => {
   it("wires session search and resume through app-owned references", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const lifecycle = sessionLifecycleSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "ready",
       sessions: [
         {
@@ -678,6 +859,7 @@ describe("QuireForge desktop shell", () => {
           title: "Review session wiring",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
+          modelSelection: modelSelection(),
           sandboxMode: "workspace-write",
           approvalPolicy: "on-request",
           state: "completed",
@@ -688,12 +870,13 @@ describe("QuireForge desktop shell", () => {
       diagnosticCode: null,
     });
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,
@@ -712,7 +895,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(attachedProject)}
         loadConversation={() => Promise.resolve(scaffoldConversation)}
         loadSessions={loadSessions}
@@ -732,8 +915,15 @@ describe("QuireForge desktop shell", () => {
       }),
     );
 
+    const sessionWorkspace = screen
+      .getByRole("heading", {
+        name: "Return to work without copying its history.",
+      })
+      .closest("section");
     fireEvent.click(
-      screen.getByText("Review session wiring").closest("button")!,
+      within(sessionWorkspace!).getByRole("button", {
+        name: /Review session wiring/u,
+      }),
     );
     fireEvent.change(screen.getByLabelText("Next task"), {
       target: { value: "Continue from the app-owned reference." },
@@ -744,6 +934,7 @@ describe("QuireForge desktop shell", () => {
       expect(resumeConversationTask).toHaveBeenCalledWith({
         conversationId,
         prompt: "Continue from the app-owned reference.",
+        attachmentIds: [],
       }),
     );
     await waitFor(() =>
@@ -766,7 +957,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
         loadIntegrationCatalogTask={loadIntegrationCatalogTask}
         previewIntegrationMutationTask={previewIntegrationMutationTask}
@@ -779,9 +970,7 @@ describe("QuireForge desktop shell", () => {
         name: "Inspect trust before changing state.",
       }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /IntegrationsM14/u }),
-    ).toBeEnabled();
+    expect(screen.getByRole("link", { name: "Integrations" })).toBeEnabled();
     fireEvent.change(screen.getByLabelText("Category"), {
       target: { value: "plugin" },
     });
@@ -834,7 +1023,7 @@ describe("QuireForge desktop shell", () => {
       <App
         loadBootstrap={() => Promise.resolve(scaffoldBootstrap)}
         loadRuntime={() => Promise.resolve(scaffoldCodexRuntime)}
-        loadAuth={() => Promise.resolve(scaffoldCodexAuth)}
+        loadAuth={() => Promise.resolve(authenticatedAuth)}
         loadProjects={() => Promise.resolve(scaffoldProjectWorkspace)}
         loadIntegrationCatalogTask={loadIntegrationCatalogTask}
         previewIntegrationControlTask={previewIntegrationControlTask}
