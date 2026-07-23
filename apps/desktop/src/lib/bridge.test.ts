@@ -115,12 +115,14 @@ import {
   INTEGRATION_CONTROL_STATUS_COMMAND,
   INTEGRATION_MUTATION_CONFIRM_COMMAND,
   INTEGRATION_MUTATION_PREVIEW_COMMAND,
+  MODEL_SELECTION_UPDATE_COMMAND,
   loadIntegrationCatalog,
   openIntegrationControlBrowser,
   pollIntegrationControl,
   previewIntegrationControl,
   previewIntegrationMutation,
   refreshIntegrationCatalog,
+  updateModelSelection,
 } from "./bridge";
 import { scaffoldBootstrap } from "./contract";
 import { sharedFilePreviewFixture } from "./filePreview";
@@ -624,6 +626,12 @@ describe("desktop bridge", () => {
       attachmentIds: [],
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      selectionPolicy: {
+        ownership: "manual" as const,
+        userLocked: false,
+        allowedModelIds: [],
+        reasoningCeiling: null,
+      },
       sandboxMode: "read-only" as const,
       approvalPolicy: "untrusted" as const,
       integrationEntryIds: [],
@@ -669,6 +677,43 @@ describe("desktop bridge", () => {
         },
       ],
     ]);
+  });
+
+  it("updates only the closed app-owned next-turn selector contract", async () => {
+    const request = {
+      conversationId: "018f0000-0000-7000-8000-000000000010",
+      choice: {
+        modelId: "gpt-5.6-sol",
+        reasoningEffort: "high",
+      },
+      policy: {
+        ownership: "manual" as const,
+        userLocked: true,
+        allowedModelIds: [],
+        reasoningCeiling: null,
+      },
+      pendingAction: "dismiss" as const,
+    };
+    const snapshot = {
+      schemaVersion: 1 as const,
+      availability: "ready" as const,
+      effective: request.choice,
+      pending: null,
+      policy: request.policy,
+      diagnosticCode: null,
+    };
+    const invoke = vi.fn().mockResolvedValue(snapshot);
+
+    await expect(updateModelSelection(request, invoke)).resolves.toEqual(
+      snapshot,
+    );
+    expect(invoke).toHaveBeenCalledWith(MODEL_SELECTION_UPDATE_COMMAND, {
+      request,
+    });
+    await expect(
+      updateModelSelection({ ...request, prompt: "private" } as never, invoke),
+    ).rejects.toThrow();
+    expect(invoke).toHaveBeenCalledTimes(1);
   });
 
   it("rejects path-bearing conversation input before native invocation", async () => {

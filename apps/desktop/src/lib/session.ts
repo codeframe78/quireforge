@@ -9,6 +9,7 @@ import {
   conversationProtocolChoiceSchema,
   conversationSandboxModeSchema,
 } from "./conversation";
+import { modelSelectionSnapshotSchema } from "./modelSelection";
 
 export const conversationContinueRequestSchema = z
   .object({
@@ -57,6 +58,7 @@ const sessionReferenceSchema = z
     title: sessionSearchTermSchema.nullable(),
     modelId: conversationProtocolChoiceSchema,
     reasoningEffort: conversationProtocolChoiceSchema.max(32),
+    modelSelection: modelSelectionSnapshotSchema,
     sandboxMode: conversationSandboxModeSchema,
     approvalPolicy: conversationApprovalPolicySchema,
     state: z.enum([
@@ -96,11 +98,22 @@ const sessionReferenceSchema = z
         message: "Unrestricted execution cannot disable approval prompts",
       });
     }
+    if (
+      session.modelId !== session.modelSelection.effective.modelId ||
+      session.reasoningEffort !==
+        session.modelSelection.effective.reasoningEffort
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Session selection does not match its effective model",
+        path: ["modelSelection"],
+      });
+    }
   });
 
 export const sessionLifecycleSchema = z
   .object({
-    schemaVersion: z.literal(2),
+    schemaVersion: z.literal(3),
     state: z.enum(["empty", "ready", "unavailable"]),
     sessions: z.array(sessionReferenceSchema).max(256),
     diagnosticCode: conversationDiagnosticSchema.nullable(),

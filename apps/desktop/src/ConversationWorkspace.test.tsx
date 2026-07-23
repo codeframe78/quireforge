@@ -13,6 +13,22 @@ import { projectWorkspaceSchema } from "./lib/project";
 
 const projectId = "018f0000-0000-7000-8000-000000000001";
 const conversationId = "018f0000-0000-7000-8000-000000000010";
+const modelSelection = {
+  schemaVersion: 1 as const,
+  availability: "ready" as const,
+  effective: {
+    modelId: "gpt-5.6-sol",
+    reasoningEffort: "high",
+  },
+  pending: null,
+  policy: {
+    ownership: "manual" as const,
+    userLocked: false,
+    allowedModelIds: [],
+    reasoningCeiling: null,
+  },
+  diagnosticCode: null,
+};
 const project = projectWorkspaceSchema.parse({
   schemaVersion: 1,
   state: "ready",
@@ -39,12 +55,13 @@ const project = projectWorkspaceSchema.parse({
 }).projects[0];
 
 const runningConversation = conversationSnapshotSchema.parse({
-  schemaVersion: 2,
+  schemaVersion: 3,
   state: "running",
   conversationId,
   projectId,
   modelId: "gpt-5.6-sol",
   reasoningEffort: "high",
+  modelSelection,
   sandboxMode: "workspace-write",
   approvalPolicy: "on-request",
   pendingApproval: null,
@@ -62,6 +79,7 @@ function renderWorkspace(
     events: [{ type: "lifecycle", sequence: 2, phase: "interrupted" }],
   });
   const onDecideApproval = vi.fn().mockResolvedValue(runningConversation);
+  const onUpdateModelSelection = vi.fn().mockResolvedValue(modelSelection);
   const props: React.ComponentProps<typeof ConversationWorkspace> = {
     availability: "native",
     snapshot: scaffoldConversation,
@@ -77,6 +95,7 @@ function renderWorkspace(
     onStart,
     onInterrupt,
     onDecideApproval,
+    onUpdateModelSelection,
     onAttachmentPick: vi.fn().mockResolvedValue(undefined),
     onAttachmentDrop: vi.fn().mockResolvedValue(undefined),
     onAttachmentCancel: vi.fn().mockResolvedValue(undefined),
@@ -107,6 +126,12 @@ describe("ConversationWorkspace", () => {
         attachmentIds: [],
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        selectionPolicy: {
+          ownership: "manual",
+          userLocked: false,
+          allowedModelIds: [],
+          reasoningCeiling: null,
+        },
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         integrationEntryIds: [],

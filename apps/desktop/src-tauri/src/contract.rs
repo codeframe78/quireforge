@@ -113,6 +113,12 @@ impl DesktopBootstrap {
                     state: CapabilityState::Ready,
                     milestone: 17,
                 },
+                CapabilitySummary {
+                    id: "agent-model-selection",
+                    label: "Policy-bounded next-turn selection",
+                    state: CapabilityState::Ready,
+                    milestone: 18,
+                },
             ],
         }
     }

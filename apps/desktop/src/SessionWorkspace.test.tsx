@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { SessionWorkspace } from "./SessionWorkspace";
 import { scaffoldConversationAttachments } from "./lib/attachment";
+import { scaffoldCodexRuntime } from "./lib/codex";
 import {
   conversationSnapshotSchema,
   scaffoldConversation,
@@ -13,6 +14,22 @@ import { sessionLifecycleSchema } from "./lib/session";
 const projectId = "018f0000-0000-7000-8000-000000000001";
 const parentId = "018f0000-0000-7000-8000-000000000010";
 const forkId = "018f0000-0000-7000-8000-000000000011";
+const modelSelection = {
+  schemaVersion: 1 as const,
+  availability: "ready" as const,
+  effective: {
+    modelId: "gpt-5.6-sol",
+    reasoningEffort: "high",
+  },
+  pending: null,
+  policy: {
+    ownership: "manual" as const,
+    userLocked: false,
+    allowedModelIds: [],
+    reasoningCeiling: null,
+  },
+  diagnosticCode: null,
+};
 
 const projects = projectWorkspaceSchema.parse({
   schemaVersion: 1,
@@ -52,6 +69,7 @@ function session(
     title,
     modelId: "gpt-5.6-sol",
     reasoningEffort: "high",
+    modelSelection,
     sandboxMode: "workspace-write" as const,
     approvalPolicy: "on-request" as const,
     state,
@@ -61,7 +79,7 @@ function session(
 }
 
 const readySnapshot = sessionLifecycleSchema.parse({
-  schemaVersion: 2,
+  schemaVersion: 3,
   state: "ready",
   sessions: [
     session(parentId, "Review lifecycle boundaries", "completed"),
@@ -80,6 +98,7 @@ function renderWorkspace(
     projectId,
     modelId: "gpt-5.6-sol",
     reasoningEffort: "high",
+    modelSelection,
     sandboxMode: "workspace-write",
     approvalPolicy: "on-request",
     events: [],
@@ -87,6 +106,7 @@ function renderWorkspace(
   const props: React.ComponentProps<typeof SessionWorkspace> = {
     availability: "native",
     snapshot: readySnapshot,
+    runtime: scaffoldCodexRuntime,
     projects,
     activeConversationId: null,
     attachments: scaffoldConversationAttachments,
@@ -102,6 +122,7 @@ function renderWorkspace(
     onFork: vi.fn().mockResolvedValue(running),
     onArchive: vi.fn().mockResolvedValue(undefined),
     onRestore: vi.fn().mockResolvedValue(undefined),
+    onUpdateModelSelection: vi.fn().mockResolvedValue(modelSelection),
     onAttachmentPick: vi.fn().mockResolvedValue(undefined),
     onAttachmentDrop: vi.fn().mockResolvedValue(undefined),
     onAttachmentCancel: vi.fn().mockResolvedValue(undefined),
@@ -181,7 +202,7 @@ describe("SessionWorkspace", () => {
 
   it("keeps archive, restore, and missing-session behavior distinct", async () => {
     const archived = sessionLifecycleSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "ready",
       sessions: [session(parentId, "Archived review", "archived")],
       diagnosticCode: null,
@@ -197,7 +218,7 @@ describe("SessionWorkspace", () => {
     ).not.toBeInTheDocument();
 
     const missing = sessionLifecycleSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "ready",
       sessions: [session(forkId, null, "missing")],
       diagnosticCode: null,

@@ -18,7 +18,10 @@ use uuid::Uuid;
 
 use crate::{
     attachment::{ResolvedConversationAttachment, MAX_CONVERSATION_ATTACHMENTS},
-    project::{ConversationReference, ProjectExecutionError, ProjectService},
+    project::{
+        ConversationPendingSelection, ConversationReference, ConversationSelectionMetadata,
+        ProjectExecutionError, ProjectService, StoredConversationReference,
+    },
 };
 
 use super::{
@@ -33,6 +36,15 @@ use super::{
     },
     error::CodexAdapterError,
     integration_control::ResolvedIntegrationMention,
+    model_selection::{
+        current_time_millis, diagnostic_message, AgentSelectionRequest, ModelSelectionApplication,
+        ModelSelectionAvailability, ModelSelectionChoice, ModelSelectionDiagnosticCode,
+        ModelSelectionOwnership, ModelSelectionPolicy, ModelSelectionProvenance,
+        ModelSelectionService, ModelSelectionSnapshot, ModelSelectionUpdateRequest,
+        ModelSelectorArguments, PendingModelSelection, PendingSelectionAction,
+        MODEL_SELECTOR_TOOL_NAME,
+    },
+    types::CodexModel,
 };
 use presentation::{present_path, sanitize_display_text, sanitize_label};
 use types::{
@@ -80,6 +92,10 @@ struct ActiveConversation {
     next_sequence: u64,
     activities: HashMap<String, ActiveActivity>,
     pending_approval: Option<PendingApproval>,
+    model_catalog: Vec<CodexModel>,
+    model_selection: ModelSelectionSnapshot,
+    agent_selection_request: Option<(AgentSelectionRequest, ModelSelectionApplication)>,
+    agent_selection_request_seen: bool,
     process: AppServerProcess,
     finished: bool,
 }
@@ -101,6 +117,8 @@ struct StartedConversation {
     conversation_id: String,
     thread_id: String,
     turn_id: String,
+    model_catalog: Vec<CodexModel>,
+    model_selection: ModelSelectionSnapshot,
 }
 
 #[derive(Clone, Copy)]
@@ -391,9 +409,102 @@ impl ConversationService {
             next_sequence: 3,
             activities: HashMap::new(),
             pending_approval: None,
+            model_catalog: started.model_catalog,
+            model_selection: started.model_selection,
+            agent_selection_request: None,
+            agent_selection_request_seen: false,
             process,
             finished: false,
         })
+    }
+
+    pub async fn update_model_selection(
+        &self,
+        request: ModelSelectionUpdateRequest,
+        projects: &ProjectService,
+    ) -> Result<ModelSelectionSnapshot, ModelSelectionDiagnosticCode> {
+        if validate_uuid_v7(&request.conversation_id).is_err() {
+            return Err(ModelSelectionDiagnosticCode::ConversationNotFound);
+        }
+        let reference = projects
+            .conversation_reference(&request.conversation_id)
+            .map_err(|_| ModelSelectionDiagnosticCode::ConversationNotFound)?;
+        let current = model_selection_from_reference(&reference)
+            .map_err(|_| ModelSelectionDiagnosticCode::MetadataUnavailable)?;
+
+        let mut process = AppServerProcess::spawn(self.command.clone())
+            .map_err(|_| ModelSelectionDiagnosticCode::CatalogUnavailable)?;
+        let catalog = process
+            .discover_models()
+            .await
+            .map(|value| value.0)
+            .map_err(|_| ModelSelectionDiagnosticCode::CatalogUnavailable);
+        let _ = process.shutdown().await;
+        let catalog = catalog?;
+
+        let accepted_pending = if request.pending_action == PendingSelectionAction::Accept {
+            Some(
+                current
+                    .pending
+                    .as_ref()
+                    .ok_or(ModelSelectionDiagnosticCode::InvalidRequest)?
+                    .choice
+                    .clone(),
+            )
+        } else {
+            None
+        };
+        let requested_choice = accepted_pending.unwrap_or_else(|| request.choice.clone());
+        ModelSelectionService::validate_choice(&requested_choice, &catalog)?;
+        ModelSelectionService::validate_policy(&request.policy, &catalog, &current.effective)?;
+        ModelSelectionService::validate_policy_shape(&request.policy, &requested_choice)?;
+
+        let effective = current.effective.clone();
+        let mut pending = match request.pending_action {
+            PendingSelectionAction::Keep => current.pending.clone(),
+            PendingSelectionAction::Accept | PendingSelectionAction::Dismiss => None,
+        };
+        if requested_choice != effective {
+            pending = Some(PendingModelSelection {
+                choice: requested_choice,
+                provenance: ModelSelectionProvenance::User,
+                application: ModelSelectionApplication::Manual,
+                rationale: "User selected this model and reasoning for the next turn.".to_owned(),
+                requested_at_ms: current_time_millis(),
+            });
+        } else if pending.as_ref().is_some_and(|pending| {
+            pending.provenance == ModelSelectionProvenance::Codex
+                && (request.policy.user_locked
+                    || request.policy.ownership == ModelSelectionOwnership::Manual)
+        }) {
+            pending = None;
+        }
+
+        let updated =
+            ModelSelectionSnapshot::ready(current.availability, effective, pending, request.policy);
+        persist_model_selection(projects, &request.conversation_id, &updated, None)
+            .map_err(|_| ModelSelectionDiagnosticCode::MetadataUnavailable)?;
+
+        let slot = {
+            let state = self.state.lock().await;
+            state.active.get(&request.conversation_id).cloned()
+        };
+        if let Some(slot) = slot {
+            let mut active = slot.lock().await;
+            active.model_selection = updated.clone();
+            active.model_catalog = catalog;
+            if active.model_selection.policy.user_locked
+                || active.model_selection.policy.ownership == ModelSelectionOwnership::Manual
+                || active
+                    .model_selection
+                    .pending
+                    .as_ref()
+                    .is_some_and(|pending| pending.provenance == ModelSelectionProvenance::User)
+            {
+                active.agent_selection_request = None;
+            }
+        }
+        Ok(updated)
     }
 
     pub async fn poll(
@@ -424,21 +535,39 @@ impl ConversationService {
                 DRAIN_POLL_WAIT
             };
             match active.process.next_notification_with_timeout(wait).await {
-                Ok(Some(notification)) => match apply_notification(&mut active, notification) {
-                    Ok((event, completed)) => {
-                        if let Some(event) = event {
-                            events.push(event);
+                Ok(Some(notification)) => {
+                    if matches!(
+                        &notification,
+                        AppServerNotification::ConversationRequest(
+                            ConversationServerRequest::DynamicTool { .. }
+                        )
+                    ) {
+                        match handle_dynamic_tool_request(&mut active, notification).await {
+                            Ok(Some(event)) => events.push(event),
+                            Ok(None) => {}
+                            Err(code) => {
+                                terminal = Some(protocol_terminal(code));
+                                break;
+                            }
                         }
-                        if completed.is_some() {
-                            terminal = completed;
+                        continue;
+                    }
+                    match apply_notification(&mut active, notification) {
+                        Ok((event, completed)) => {
+                            if let Some(event) = event {
+                                events.push(event);
+                            }
+                            if completed.is_some() {
+                                terminal = completed;
+                                break;
+                            }
+                        }
+                        Err(code) => {
+                            terminal = Some(protocol_terminal(code));
                             break;
                         }
                     }
-                    Err(code) => {
-                        terminal = Some(protocol_terminal(code));
-                        break;
-                    }
-                },
+                }
                 Ok(None) => break,
                 Err(CodexAdapterError::UnexpectedServerRequest) => {
                     terminal = Some(TerminalState {
@@ -709,6 +838,13 @@ fn approval_response(
     decision: ConversationApprovalDecision,
 ) -> Value {
     match request {
+        ConversationServerRequest::DynamicTool { .. } => json!({
+            "success": false,
+            "contentItems": [{
+                "type": "inputText",
+                "text": "The selector request was canceled before completion."
+            }]
+        }),
         ConversationServerRequest::CommandExecution { .. }
         | ConversationServerRequest::FileChange { .. } => json!({
             "decision": match decision {
@@ -750,21 +886,50 @@ async fn start_on_process(
     {
         return Err(ConversationDiagnosticCode::ReasoningUnavailable);
     }
+    let effective = ModelSelectionChoice {
+        model_id: request.model_id.clone(),
+        reasoning_effort: request.reasoning_effort.clone(),
+    };
+    ModelSelectionService::validate_policy(&request.selection_policy, &models, &effective)
+        .map_err(|_| ConversationDiagnosticCode::InvalidRequest)?;
 
-    let thread_result = process
-        .request(
-            "thread/start",
-            json!({
-                "cwd": cwd,
-                "model": request.model_id,
-                "approvalPolicy": request.approval_policy.as_protocol_value(),
-                "sandbox": request.sandbox_mode.as_protocol_value(),
-            }),
-        )
-        .await
-        .map_err(|error| map_adapter_error(&error))?;
+    let thread_params = json!({
+        "cwd": cwd,
+        "model": request.model_id,
+        "approvalPolicy": request.approval_policy.as_protocol_value(),
+        "sandbox": request.sandbox_mode.as_protocol_value(),
+        "dynamicTools": [ModelSelectionService::dynamic_tool_spec()],
+    });
+    let (thread_result, selection_availability) =
+        match process.request("thread/start", thread_params).await {
+            Ok(result) => (result, ModelSelectionAvailability::Ready),
+            Err(CodexAdapterError::RpcRejected) => {
+                let fallback = process
+                    .request(
+                        "thread/start",
+                        json!({
+                            "cwd": cwd,
+                            "model": request.model_id,
+                            "approvalPolicy": request.approval_policy.as_protocol_value(),
+                            "sandbox": request.sandbox_mode.as_protocol_value(),
+                        }),
+                    )
+                    .await
+                    .map_err(|error| map_adapter_error(&error))?;
+                (fallback, ModelSelectionAvailability::RecommendationOnly)
+            }
+            Err(error) => return Err(map_adapter_error(&error)),
+        };
     let thread = parse_thread_start(thread_result, cwd)?;
     let conversation_id = Uuid::now_v7().to_string();
+    let model_selection = ModelSelectionSnapshot::ready(
+        selection_availability,
+        effective,
+        None,
+        request.selection_policy.clone(),
+    );
+    let allowed_model_ids_json = serde_json::to_string(&model_selection.policy.allowed_model_ids)
+        .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
     projects
         .record_conversation_reference(ConversationReference {
             conversation_id: &conversation_id,
@@ -775,6 +940,14 @@ async fn start_on_process(
             sandbox_mode: request.sandbox_mode.as_protocol_value(),
             approval_policy: request.approval_policy.as_protocol_value(),
             parent_conversation_id: None,
+            selection: ConversationSelectionMetadata {
+                availability: availability_storage_value(model_selection.availability),
+                ownership: model_selection.policy.ownership.as_storage_value(),
+                user_locked: model_selection.policy.user_locked,
+                allowed_model_ids_json: &allowed_model_ids_json,
+                reasoning_ceiling: model_selection.policy.reasoning_ceiling.as_deref(),
+                pending: None,
+            },
         })
         .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
 
@@ -828,6 +1001,8 @@ async fn start_on_process(
         conversation_id,
         thread_id: thread.thread.id,
         turn_id: turn.turn.id,
+        model_catalog: models,
+        model_selection,
     })
 }
 
@@ -844,6 +1019,7 @@ impl ActiveConversation {
             project_id: Some(self.project_id.clone()),
             model_id: Some(self.model_id.clone()),
             reasoning_effort: Some(self.reasoning_effort.clone()),
+            model_selection: Some(self.model_selection.clone()),
             sandbox_mode: Some(self.sandbox_mode),
             approval_policy: Some(self.approval_policy),
             pending_approval: self
@@ -876,6 +1052,16 @@ async fn finish_active(
     if active.finished {
         return active.snapshot(Vec::new(), terminal.diagnostic_code);
     }
+    if persist_model_selection(
+        projects,
+        &active.conversation_id,
+        &active.model_selection,
+        None,
+    )
+    .is_err()
+    {
+        terminal = protocol_terminal(ConversationDiagnosticCode::MetadataUnavailable);
+    }
     if projects
         .record_conversation_status(&active.conversation_id, terminal.storage_status)
         .is_err()
@@ -889,6 +1075,231 @@ async fn finish_active(
     projects.release_execution(&active.project_id);
     active.finished = true;
     active.snapshot(events, terminal.diagnostic_code)
+}
+
+async fn handle_dynamic_tool_request(
+    active: &mut ActiveConversation,
+    notification: AppServerNotification,
+) -> Result<Option<ConversationEvent>, ConversationDiagnosticCode> {
+    let AppServerNotification::ConversationRequest(ConversationServerRequest::DynamicTool {
+        request_id,
+        thread_id,
+        turn_id,
+        call_id: _,
+        namespace,
+        tool,
+        arguments,
+    }) = notification
+    else {
+        return Err(ConversationDiagnosticCode::ProtocolInvalid);
+    };
+    ensure_turn(active, &thread_id, &turn_id)?;
+
+    let result = if active.state != ConversationState::Running
+        || active.pending_approval.is_some()
+        || namespace.is_some()
+        || tool != MODEL_SELECTOR_TOOL_NAME
+        || active.model_selection.availability != ModelSelectionAvailability::Ready
+    {
+        Err(ModelSelectionDiagnosticCode::ControlUnavailable)
+    } else {
+        ModelSelectionService::parse_arguments(arguments)
+    };
+
+    let mut event = None;
+    let (success, text) = match result {
+        Ok(ModelSelectorArguments::Inspect) => match ModelSelectionService::inspection_text(
+            &active.model_selection,
+            &active.model_catalog,
+        ) {
+            Ok(text) => (true, text),
+            Err(code) => (false, diagnostic_message(code).to_owned()),
+        },
+        Ok(ModelSelectorArguments::Request(mut request)) => {
+            if active.agent_selection_request_seen {
+                (
+                    false,
+                    diagnostic_message(ModelSelectionDiagnosticCode::RequestAlreadyMade).to_owned(),
+                )
+            } else {
+                active.agent_selection_request_seen = true;
+                request.rationale = sanitize_display_text(&request.rationale, &active.cwd, 240);
+                let evaluation = if request.rationale.is_empty() {
+                    Err(ModelSelectionDiagnosticCode::InvalidRequest)
+                } else {
+                    ModelSelectionService::evaluate_agent_request(
+                        request,
+                        &active.model_selection.policy,
+                        &active.model_catalog,
+                        active.model_selection.pending.as_ref(),
+                    )
+                };
+                match evaluation {
+                    Ok((request, application)) => {
+                        event = Some(ConversationEvent::ModelSelectionRequested {
+                            sequence: active.take_sequence(),
+                            choice: request.choice.clone(),
+                            application,
+                            rationale: request.rationale.clone(),
+                        });
+                        active.agent_selection_request = Some((request, application));
+                        (
+                            true,
+                            "QuireForge accepted one bounded selector request for evaluation after this turn completes. The executing turn is unchanged.".to_owned(),
+                        )
+                    }
+                    Err(code) => (false, diagnostic_message(code).to_owned()),
+                }
+            }
+        }
+        Err(code) => (false, diagnostic_message(code).to_owned()),
+    };
+
+    active
+        .process
+        .respond_server_request(
+            &request_id,
+            json!({
+                "success": success,
+                "contentItems": [{"type": "inputText", "text": text}],
+            }),
+        )
+        .await
+        .map_err(|error| map_adapter_error(&error))?;
+    Ok(event)
+}
+
+pub(super) fn persist_model_selection(
+    projects: &ProjectService,
+    conversation_id: &str,
+    snapshot: &ModelSelectionSnapshot,
+    effective: Option<(&str, &str)>,
+) -> Result<(), ConversationDiagnosticCode> {
+    let allowed_model_ids_json = serde_json::to_string(&snapshot.policy.allowed_model_ids)
+        .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
+    let pending = snapshot
+        .pending
+        .as_ref()
+        .map(|pending| ConversationPendingSelection {
+            model_id: &pending.choice.model_id,
+            reasoning_effort: &pending.choice.reasoning_effort,
+            rationale: &pending.rationale,
+            provenance: pending.provenance.as_storage_value(),
+            application: pending.application.as_storage_value(),
+            requested_at_ms: pending.requested_at_ms,
+        });
+    projects
+        .record_model_selection(
+            conversation_id,
+            effective,
+            ConversationSelectionMetadata {
+                availability: availability_storage_value(snapshot.availability),
+                ownership: snapshot.policy.ownership.as_storage_value(),
+                user_locked: snapshot.policy.user_locked,
+                allowed_model_ids_json: &allowed_model_ids_json,
+                reasoning_ceiling: snapshot.policy.reasoning_ceiling.as_deref(),
+                pending,
+            },
+        )
+        .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)
+}
+
+pub(super) fn model_selection_from_reference(
+    reference: &StoredConversationReference,
+) -> Result<ModelSelectionSnapshot, ConversationDiagnosticCode> {
+    let availability = match reference.selector_availability.as_str() {
+        "ready" => ModelSelectionAvailability::Ready,
+        "recommendation-only" => ModelSelectionAvailability::RecommendationOnly,
+        "unavailable" => ModelSelectionAvailability::Unavailable,
+        _ => return Err(ConversationDiagnosticCode::MetadataUnavailable),
+    };
+    let ownership = ModelSelectionOwnership::from_storage_value(&reference.selector_mode)
+        .ok_or(ConversationDiagnosticCode::MetadataUnavailable)?;
+    let allowed_model_ids: Vec<String> =
+        serde_json::from_str(&reference.selector_allowed_model_ids_json)
+            .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
+    let effective = ModelSelectionChoice {
+        model_id: reference.model_id.clone(),
+        reasoning_effort: reference.reasoning_effort.clone(),
+    };
+    let policy = ModelSelectionPolicy {
+        ownership,
+        user_locked: reference.selector_user_locked,
+        allowed_model_ids,
+        reasoning_ceiling: reference.selector_reasoning_ceiling.clone(),
+    };
+    ModelSelectionService::validate_policy_shape(&policy, &effective)
+        .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
+
+    let pending = match (
+        reference.selector_pending_model_id.as_ref(),
+        reference.selector_pending_reasoning_effort.as_ref(),
+        reference.selector_pending_rationale.as_ref(),
+        reference.selector_pending_provenance.as_deref(),
+        reference.selector_pending_application.as_deref(),
+        reference.selector_pending_requested_at_ms,
+    ) {
+        (None, None, None, None, None, None) => None,
+        (
+            Some(model_id),
+            Some(reasoning_effort),
+            Some(rationale),
+            Some(provenance),
+            Some(application),
+            Some(requested_at_ms),
+        ) if requested_at_ms >= 0 => {
+            let parsed = ModelSelectionService::parse_arguments(json!({
+                "action": "request",
+                "modelId": model_id,
+                "reasoningEffort": reasoning_effort,
+                "rationale": rationale,
+            }))
+            .map_err(|_| ConversationDiagnosticCode::MetadataUnavailable)?;
+            let ModelSelectorArguments::Request(request) = parsed else {
+                return Err(ConversationDiagnosticCode::MetadataUnavailable);
+            };
+            let pending = PendingModelSelection {
+                choice: request.choice,
+                provenance: ModelSelectionProvenance::from_storage_value(provenance)
+                    .ok_or(ConversationDiagnosticCode::MetadataUnavailable)?,
+                application: ModelSelectionApplication::from_storage_value(application)
+                    .ok_or(ConversationDiagnosticCode::MetadataUnavailable)?,
+                rationale: request.rationale,
+                requested_at_ms,
+            };
+            if !matches!(
+                (pending.provenance, pending.application),
+                (
+                    ModelSelectionProvenance::User,
+                    ModelSelectionApplication::Manual
+                ) | (
+                    ModelSelectionProvenance::Codex,
+                    ModelSelectionApplication::Recommendation
+                ) | (
+                    ModelSelectionProvenance::Codex,
+                    ModelSelectionApplication::Automatic
+                )
+            ) {
+                return Err(ConversationDiagnosticCode::MetadataUnavailable);
+            }
+            Some(pending)
+        }
+        _ => return Err(ConversationDiagnosticCode::MetadataUnavailable),
+    };
+    Ok(ModelSelectionSnapshot::ready(
+        availability,
+        effective,
+        pending,
+        policy,
+    ))
+}
+
+pub(super) fn availability_storage_value(value: ModelSelectionAvailability) -> &'static str {
+    match value {
+        ModelSelectionAvailability::Ready => "ready",
+        ModelSelectionAvailability::RecommendationOnly => "recommendation-only",
+        ModelSelectionAvailability::Unavailable => "unavailable",
+    }
 }
 
 fn apply_notification(
@@ -1084,6 +1495,19 @@ fn apply_notification(
             status,
         } => {
             ensure_turn(active, &thread_id, &turn_id)?;
+            if status == WireTurnStatus::Completed {
+                if let Some((request, application)) = active.agent_selection_request.take() {
+                    active.model_selection.pending = Some(PendingModelSelection {
+                        choice: request.choice,
+                        provenance: ModelSelectionProvenance::Codex,
+                        application,
+                        rationale: request.rationale,
+                        requested_at_ms: current_time_millis(),
+                    });
+                }
+            } else {
+                active.agent_selection_request = None;
+            }
             let terminal = match status {
                 WireTurnStatus::Completed => TerminalState {
                     state: ConversationState::Completed,
@@ -1133,6 +1557,9 @@ fn apply_server_request(
         return Err(ConversationDiagnosticCode::ProtocolInvalid);
     }
     let (thread_id, turn_id, item_id, kind) = match &request {
+        ConversationServerRequest::DynamicTool { .. } => {
+            return Err(ConversationDiagnosticCode::ProtocolInvalid);
+        }
         ConversationServerRequest::CommandExecution {
             thread_id,
             turn_id,
@@ -1290,6 +1717,9 @@ fn present_approval(
     activity_id: String,
 ) -> Result<ConversationApproval, ConversationDiagnosticCode> {
     let (kind, title, reason, details, decisions) = match request {
+        ConversationServerRequest::DynamicTool { .. } => {
+            return Err(ConversationDiagnosticCode::ProtocolInvalid);
+        }
         ConversationServerRequest::CommandExecution {
             command,
             cwd,
@@ -1495,6 +1925,14 @@ fn validate_start_request(
     }
     validate_protocol_choice(&request.model_id, 128)?;
     validate_protocol_choice(&request.reasoning_effort, 32)?;
+    ModelSelectionService::validate_policy_shape(
+        &request.selection_policy,
+        &ModelSelectionChoice {
+            model_id: request.model_id.clone(),
+            reasoning_effort: request.reasoning_effort.clone(),
+        },
+    )
+    .map_err(|_| ConversationDiagnosticCode::InvalidRequest)?;
     if request.sandbox_mode == ConversationSandboxMode::DangerFullAccess
         && request.approval_policy == ConversationApprovalPolicy::Never
     {
@@ -1906,7 +2344,11 @@ printf '%s\n' '{{"method":"turn/completed","params":{{"threadId":"{THREAD_ID}","
                 &projects,
             )
             .await;
-        assert_eq!(completed.state, ConversationState::Completed);
+        assert_eq!(
+            completed.state,
+            ConversationState::Completed,
+            "unexpected selector completion: {completed:?}"
+        );
         assert!(completed.events.iter().any(|event| matches!(
             event,
             ConversationEvent::AgentMessageDelta { delta, .. } if delta == "Review complete."
@@ -2274,6 +2716,135 @@ printf '%s\n' '{{"method":"turn/completed","params":{{"threadId":"{THREAD_ID}","
     }
 
     #[tokio::test]
+    async fn stages_one_policy_bounded_dynamic_selector_request_after_completion() {
+        let projects = ProjectService::in_memory();
+        let (directory, project_id) = attach_project(&projects);
+        let trailing = r#"
+printf '%s\n' '{"id":"inspect-1","method":"item/tool/call","params":{"threadId":"018f0000-0000-7000-8000-000000000020","turnId":"018f0000-0000-7000-8000-000000000030","callId":"inspect-call","namespace":null,"tool":"quireforge_model_selector","arguments":{"action":"inspect"}}}'
+read -r inspect_response
+case "$inspect_response" in *'"id":"inspect-1"'*) ;; *) exit 91 ;; esac
+case "$inspect_response" in *'"success":true'*) ;; *) exit 94 ;; esac
+case "$inspect_response" in *'fixture-terra'*) ;; *) exit 95 ;; esac
+printf '%s\n' '{"id":"request-1","method":"item/tool/call","params":{"threadId":"018f0000-0000-7000-8000-000000000020","turnId":"018f0000-0000-7000-8000-000000000030","callId":"request-call","namespace":null,"tool":"quireforge_model_selector","arguments":{"action":"request","modelId":"fixture-terra","reasoningEffort":"medium","rationale":"Use the allowed model; token=topsecret; never retain /home/alice/private."}}}'
+read -r request_response
+case "$request_response" in *'"id":"request-1"'*'"success":true'*) ;; *) exit 92 ;; esac
+printf '%s\n' '{"id":"request-2","method":"item/tool/call","params":{"threadId":"018f0000-0000-7000-8000-000000000020","turnId":"018f0000-0000-7000-8000-000000000030","callId":"request-call-2","namespace":null,"tool":"quireforge_model_selector","arguments":{"action":"request","modelId":"fixture-model","reasoningEffort":"medium","rationale":"Oscillate back during the same turn."}}}'
+read -r repeated_response
+case "$repeated_response" in *'"id":"request-2"'*) ;; *) exit 93 ;; esac
+case "$repeated_response" in *'"success":false'*) ;; *) exit 96 ;; esac
+case "$repeated_response" in *'Only one model-selection request'*) ;; *) exit 97 ;; esac
+printf '%s\n' '{"method":"turn/completed","params":{"threadId":"018f0000-0000-7000-8000-000000000020","turn":{"id":"018f0000-0000-7000-8000-000000000030","status":"completed"}}}'
+"#;
+        let script = successful_start_script(&directory, trailing).replace(
+            r#"{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]}"#,
+            r#"{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]},{"model":"fixture-terra","displayName":"Fixture Terra","isDefault":false,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]}"#,
+        );
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+        let mut request = start_request(project_id);
+        request.selection_policy = ModelSelectionPolicy {
+            ownership: ModelSelectionOwnership::Automatic,
+            user_locked: false,
+            allowed_model_ids: vec!["fixture-model".to_owned(), "fixture-terra".to_owned()],
+            reasoning_ceiling: Some("medium".to_owned()),
+        };
+
+        let started = service.start(request, &projects).await;
+        let conversation_id = started
+            .conversation_id
+            .clone()
+            .expect("conversation must start");
+        assert!(started
+            .model_selection
+            .as_ref()
+            .is_some_and(|selection| selection.pending.is_none()));
+
+        let completed = service.poll(conversation_id.clone(), &projects).await;
+        assert_eq!(
+            completed.state,
+            ConversationState::Completed,
+            "unexpected dynamic selector completion: {completed:?}"
+        );
+        let pending = completed
+            .model_selection
+            .as_ref()
+            .and_then(|selection| selection.pending.as_ref())
+            .expect("completed request must stage one pending choice");
+        assert_eq!(pending.choice.model_id, "fixture-terra");
+        assert_eq!(pending.provenance, ModelSelectionProvenance::Codex);
+        assert_eq!(pending.application, ModelSelectionApplication::Automatic);
+        assert_eq!(
+            completed
+                .events
+                .iter()
+                .filter(|event| matches!(event, ConversationEvent::ModelSelectionRequested { .. }))
+                .count(),
+            1
+        );
+
+        let stored = projects
+            .conversation_reference(&conversation_id)
+            .expect("pending selector metadata must persist");
+        assert_eq!(
+            stored.selector_pending_model_id.as_deref(),
+            Some("fixture-terra")
+        );
+        assert_eq!(stored.model_id, "fixture-model");
+        let rationale = stored
+            .selector_pending_rationale
+            .as_deref()
+            .expect("bounded selector rationale must persist");
+        assert!(!rationale.contains("topsecret"));
+        assert!(!rationale.contains("/home/alice/private"));
+        assert!(rationale.contains("[redacted]"));
+        assert!(rationale.contains("[outside project]"));
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
+    async fn degrades_to_visible_recommendation_only_when_registration_is_rejected() {
+        let projects = ProjectService::in_memory();
+        let (directory, project_id) = attach_project(&projects);
+        let cwd_json = serde_json::to_string(&directory.to_string_lossy())
+            .expect("temporary cwd must serialize");
+        let script = r#"
+read -r _initialize
+printf '%s\n' '{"id":1,"result":{}}'
+read -r _models
+printf '%s\n' '{"id":2,"result":{"data":[{"model":"fixture-model","displayName":"Fixture model","isDefault":true,"defaultReasoningEffort":"medium","supportedReasoningEfforts":[{"reasoningEffort":"medium"}]}]}}'
+read -r registration
+case "$registration" in *'"dynamicTools"'*'"quireforge_model_selector"'*) ;; *) exit 98 ;; esac
+printf '%s\n' '{"id":3,"error":{"code":-32602,"message":"unsupported field"}}'
+read -r fallback
+case "$fallback" in *'"dynamicTools"'*) exit 99 ;; *) ;; esac
+printf '%s\n' '{"id":4,"result":{"cwd":__CWD__,"thread":{"id":"018f0000-0000-7000-8000-000000000020"}}}'
+read -r _turn
+printf '%s\n' '{"id":5,"result":{"turn":{"id":"018f0000-0000-7000-8000-000000000030","status":"inProgress"}}}'
+printf '%s\n' '{"method":"turn/completed","params":{"threadId":"018f0000-0000-7000-8000-000000000020","turn":{"id":"018f0000-0000-7000-8000-000000000030","status":"completed"}}}'
+"#
+        .replace("__CWD__", &cwd_json);
+        let service =
+            ConversationService::with_command(AppServerCommand::test("sh", &["-c", &script]));
+
+        let started = service.start(start_request(project_id), &projects).await;
+        assert_eq!(started.state, ConversationState::Running);
+        let selection = started
+            .model_selection
+            .as_ref()
+            .expect("selector availability must be visible");
+        assert_eq!(
+            selection.availability,
+            ModelSelectionAvailability::RecommendationOnly
+        );
+        assert!(selection.pending.is_none());
+
+        let conversation_id = started.conversation_id.expect("conversation must start");
+        let completed = service.poll(conversation_id, &projects).await;
+        assert_eq!(completed.state, ConversationState::Completed);
+        fs::remove_dir_all(directory).expect("temporary project must be removed");
+    }
+
+    #[tokio::test]
     async fn rejects_stale_or_unavailable_approval_decisions_without_mutating_the_turn() {
         let (projects, directory, project_id) = attached_project();
         let cwd_json = serde_json::to_string(&directory.to_string_lossy())
@@ -2520,6 +3091,7 @@ printf '%s\n' '{{"method":"item/agentMessage/delta","params":{{"threadId":"018f0
             integration_entry_ids: Vec::new(),
             model_id: "fixture-model".to_owned(),
             reasoning_effort: "medium".to_owned(),
+            selection_policy: ModelSelectionPolicy::default(),
             sandbox_mode: ConversationSandboxMode::ReadOnly,
             approval_policy: ConversationApprovalPolicy::Untrusted,
         }

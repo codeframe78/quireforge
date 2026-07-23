@@ -2,17 +2,21 @@ import conversationFixture from "../../fixtures/conversation.json";
 import conversationRegistryFixture from "../../fixtures/conversation-registry.json";
 import { z } from "zod";
 
+import {
+  modelSelectionChoiceSchema,
+  modelSelectionPolicySchema,
+  modelSelectionProtocolChoiceSchema,
+  modelSelectionSnapshotSchema,
+} from "./modelSelection";
+
 export const conversationIdSchema = z
   .string()
   .regex(
     /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u,
   );
 
-export const conversationProtocolChoiceSchema = z
-  .string()
-  .min(1)
-  .max(128)
-  .regex(/^[A-Za-z0-9._:/-]+$/u);
+export const conversationProtocolChoiceSchema =
+  modelSelectionProtocolChoiceSchema;
 
 function containsUnsafeControl(value: string): boolean {
   return [...value].some((character) => {
@@ -66,6 +70,7 @@ export const conversationStartRequestSchema = z
       .max(8),
     modelId: conversationProtocolChoiceSchema,
     reasoningEffort: conversationProtocolChoiceSchema.max(32),
+    selectionPolicy: modelSelectionPolicySchema,
     sandboxMode: conversationSandboxModeSchema,
     approvalPolicy: conversationApprovalPolicySchema,
   })
@@ -214,6 +219,15 @@ const conversationEventSchema = z.discriminatedUnion("type", [
     .strict(),
   z
     .object({
+      type: z.literal("model-selection-requested"),
+      sequence: sequenceSchema,
+      choice: modelSelectionChoiceSchema,
+      application: z.enum(["manual", "recommendation", "automatic"]),
+      rationale: boundedTextSchema(240),
+    })
+    .strict(),
+  z
+    .object({
       type: z.literal("error"),
       sequence: sequenceSchema,
       code: z.enum([
@@ -285,7 +299,7 @@ const conversationApprovalSchema = z
 
 export const conversationSnapshotSchema = z
   .object({
-    schemaVersion: z.literal(2),
+    schemaVersion: z.literal(3),
     state: z.enum([
       "empty",
       "running",
@@ -301,6 +315,7 @@ export const conversationSnapshotSchema = z
     projectId: conversationIdSchema.nullable(),
     modelId: conversationProtocolChoiceSchema.nullable(),
     reasoningEffort: conversationProtocolChoiceSchema.max(32).nullable(),
+    modelSelection: modelSelectionSnapshotSchema.nullable(),
     sandboxMode: conversationSandboxModeSchema.nullable(),
     approvalPolicy: conversationApprovalPolicySchema.nullable(),
     pendingApproval: conversationApprovalSchema.nullable(),
@@ -314,6 +329,7 @@ export const conversationSnapshotSchema = z
       snapshot.projectId,
       snapshot.modelId,
       snapshot.reasoningEffort,
+      snapshot.modelSelection,
       snapshot.sandboxMode,
       snapshot.approvalPolicy,
     ];

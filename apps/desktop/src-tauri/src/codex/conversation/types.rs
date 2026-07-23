@@ -1,6 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-pub const CONVERSATION_SCHEMA_VERSION: u16 = 2;
+use crate::codex::model_selection::{
+    ModelSelectionApplication, ModelSelectionChoice, ModelSelectionPolicy, ModelSelectionSnapshot,
+};
+
+pub const CONVERSATION_SCHEMA_VERSION: u16 = 3;
 pub const CONVERSATION_REGISTRY_SCHEMA_VERSION: u16 = 1;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
@@ -12,6 +16,7 @@ pub struct ConversationStartRequest {
     pub integration_entry_ids: Vec<String>,
     pub model_id: String,
     pub reasoning_effort: String,
+    pub selection_policy: ModelSelectionPolicy,
     pub sandbox_mode: ConversationSandboxMode,
     pub approval_policy: ConversationApprovalPolicy,
 }
@@ -109,6 +114,7 @@ pub struct ConversationSnapshot {
     pub project_id: Option<String>,
     pub model_id: Option<String>,
     pub reasoning_effort: Option<String>,
+    pub model_selection: Option<ModelSelectionSnapshot>,
     pub sandbox_mode: Option<ConversationSandboxMode>,
     pub approval_policy: Option<ConversationApprovalPolicy>,
     pub pending_approval: Option<ConversationApproval>,
@@ -133,6 +139,7 @@ impl ConversationSnapshot {
             project_id: None,
             model_id: None,
             reasoning_effort: None,
+            model_selection: None,
             sandbox_mode: None,
             approval_policy: None,
             pending_approval: None,
@@ -203,6 +210,12 @@ pub enum ConversationEvent {
         sequence: u64,
         approval_id: String,
         resolution: ConversationApprovalResolution,
+    },
+    ModelSelectionRequested {
+        sequence: u64,
+        choice: ModelSelectionChoice,
+        application: ModelSelectionApplication,
+        rationale: String,
     },
     Error {
         sequence: u64,

@@ -92,6 +92,15 @@ pub(crate) enum ConversationServerDecision {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub(crate) enum ConversationServerRequest {
+    DynamicTool {
+        request_id: ServerRequestId,
+        thread_id: String,
+        turn_id: String,
+        call_id: String,
+        namespace: Option<String>,
+        tool: String,
+        arguments: Value,
+    },
     CommandExecution {
         request_id: ServerRequestId,
         thread_id: String,
@@ -127,7 +136,8 @@ pub(crate) enum ConversationServerRequest {
 impl ConversationServerRequest {
     pub(crate) fn request_id(&self) -> &ServerRequestId {
         match self {
-            Self::CommandExecution { request_id, .. }
+            Self::DynamicTool { request_id, .. }
+            | Self::CommandExecution { request_id, .. }
             | Self::FileChange { request_id, .. }
             | Self::Permissions { request_id, .. } => request_id,
         }
@@ -991,6 +1001,38 @@ fn parse_server_request(
     }
 
     match method {
+        "item/tool/call" => {
+            #[derive(Deserialize)]
+            #[serde(rename_all = "camelCase", deny_unknown_fields)]
+            struct Params {
+                thread_id: String,
+                turn_id: String,
+                call_id: String,
+                #[serde(default)]
+                namespace: Option<String>,
+                tool: String,
+                arguments: Value,
+            }
+            let params: Params = notification_params(message)?;
+            validate_conversation_ids(&params.thread_id, &params.turn_id)?;
+            validate_protocol_identifier(&params.call_id, 128)?;
+            validate_protocol_identifier(&params.tool, 128)?;
+            if let Some(namespace) = params.namespace.as_deref() {
+                validate_protocol_identifier(namespace, 128)?;
+            }
+            if !params.arguments.is_object() {
+                return Err(CodexAdapterError::InvalidProtocolMessage);
+            }
+            Ok(ConversationServerRequest::DynamicTool {
+                request_id,
+                thread_id: params.thread_id,
+                turn_id: params.turn_id,
+                call_id: params.call_id,
+                namespace: params.namespace,
+                tool: params.tool,
+                arguments: params.arguments,
+            })
+        }
         "item/commandExecution/requestApproval" => {
             #[derive(Deserialize)]
             #[serde(rename_all = "camelCase")]
@@ -1982,6 +2024,70 @@ mod tests {
         );
         assert!(!debug.contains("execpolicy_amendment"));
         assert!(!debug.contains("private value is discarded"));
+    }
+
+    #[test]
+    fn parses_only_correlated_dynamic_selector_calls() {
+        let request = json!({
+            "id": "selector-request-1",
+            "method": "item/tool/call",
+            "params": {
+                "threadId": "018f0000-0000-7000-8000-000000000020",
+                "turnId": "018f0000-0000-7000-8000-000000000030",
+                "callId": "selector-call-1",
+                "namespace": null,
+                "tool": "quireforge_model_selector",
+                "arguments": {
+                    "action": "request",
+                    "modelId": "fixture-model",
+                    "reasoningEffort": "medium",
+                    "rationale": "Use the bounded next-turn choice."
+                }
+            }
+        });
+        let parsed = parse_notification(&request).expect("dynamic tool call must parse");
+        let Some(AppServerNotification::ConversationRequest(
+            ConversationServerRequest::DynamicTool {
+                request_id,
+                thread_id,
+                turn_id,
+                call_id,
+                namespace,
+                tool,
+                arguments,
+            },
+        )) = parsed
+        else {
+            panic!("dynamic tool call must normalize");
+        };
+        assert_eq!(
+            request_id,
+            ServerRequestId::String("selector-request-1".to_owned())
+        );
+        assert_eq!(
+            (
+                thread_id.as_str(),
+                turn_id.as_str(),
+                call_id.as_str(),
+                namespace,
+                tool.as_str()
+            ),
+            (
+                "018f0000-0000-7000-8000-000000000020",
+                "018f0000-0000-7000-8000-000000000030",
+                "selector-call-1",
+                None,
+                "quireforge_model_selector"
+            )
+        );
+        assert_eq!(arguments["action"], "request");
+
+        let mut uncorrelated = request;
+        uncorrelated["params"]["callId"] = json!("bad id with spaces");
+        assert!(parse_notification(&uncorrelated).is_err());
+        uncorrelated["params"]["callId"] = json!("selector-call-1");
+        uncorrelated["params"]["arguments"] = json!("raw payload");
+        assert!(parse_notification(&uncorrelated).is_err());
     }
 
     #[test]

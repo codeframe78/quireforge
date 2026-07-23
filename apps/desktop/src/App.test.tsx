@@ -33,6 +33,21 @@ import { worktreeWorkspaceSchema } from "./lib/worktree";
 
 const projectId = "018f0000-0000-7000-8000-000000000001";
 const associationId = "018f0000-0000-7000-8000-000000000002";
+function modelSelection(reasoningEffort = "high") {
+  return {
+    schemaVersion: 1 as const,
+    availability: "ready" as const,
+    effective: { modelId: "gpt-5.6-sol", reasoningEffort },
+    pending: null,
+    policy: {
+      ownership: "manual" as const,
+      userLocked: false,
+      allowedModelIds: [],
+      reasoningCeiling: null,
+    },
+    diagnosticCode: null,
+  };
+}
 const pendingProject = projectWorkspaceSchema.parse({
   ...scaffoldProjectWorkspace,
   pendingAttachment: {
@@ -150,7 +165,7 @@ describe("QuireForge desktop shell", () => {
     expect(
       await screen.findByRole("button", { name: "Continue in browser" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("ready")).toHaveLength(11);
+    expect(screen.getAllByText("ready")).toHaveLength(12);
     expect(screen.queryByText("planned")).not.toBeInTheDocument();
     expect(
       screen.getByText(
@@ -260,6 +275,7 @@ describe("QuireForge desktop shell", () => {
         projectId,
         modelId: "gpt-5.6-sol",
         reasoningEffort: "medium",
+        modelSelection: modelSelection("medium"),
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         events: [{ type: "lifecycle", sequence: 1, phase: "running" }],
@@ -433,7 +449,7 @@ describe("QuireForge desktop shell", () => {
 
   it("blocks a missing cwd and relinks through an explicitly reviewed preview", async () => {
     const preflightProjectDirectory = vi.fn().mockResolvedValue({
-      schemaVersion: 2,
+      schemaVersion: 3,
       projectId,
       cwdReady: false,
       displayPath: "~/work/quireforge-link",
@@ -472,12 +488,13 @@ describe("QuireForge desktop shell", () => {
   it("starts, polls, deduplicates, and completes a native conversation", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,
@@ -543,12 +560,13 @@ describe("QuireForge desktop shell", () => {
 
   it("cancels pending conversation polling when the shell unmounts", async () => {
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId: "018f0000-0000-7000-8000-000000000010",
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,
@@ -579,12 +597,13 @@ describe("QuireForge desktop shell", () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const approvalId = "018f0000-0000-7000-8000-000000000011";
     const waiting = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "waiting-for-approval",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: {
@@ -717,12 +736,13 @@ describe("QuireForge desktop shell", () => {
     });
     const task = (conversationId: string, taskProjectId: string) =>
       conversationSnapshotSchema.parse({
-        schemaVersion: 2,
+        schemaVersion: 3,
         state: "running",
         conversationId,
         projectId: taskProjectId,
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        modelSelection: modelSelection(),
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         pendingApproval: null,
@@ -776,7 +796,7 @@ describe("QuireForge desktop shell", () => {
   it("wires session search and resume through app-owned references", async () => {
     const conversationId = "018f0000-0000-7000-8000-000000000010";
     const lifecycle = sessionLifecycleSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "ready",
       sessions: [
         {
@@ -786,6 +806,7 @@ describe("QuireForge desktop shell", () => {
           title: "Review session wiring",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
+          modelSelection: modelSelection(),
           sandboxMode: "workspace-write",
           approvalPolicy: "on-request",
           state: "completed",
@@ -796,12 +817,13 @@ describe("QuireForge desktop shell", () => {
       diagnosticCode: null,
     });
     const running = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection: modelSelection(),
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: null,

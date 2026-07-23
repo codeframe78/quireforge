@@ -110,6 +110,25 @@ pub(crate) struct ConversationReference<'a> {
     pub sandbox_mode: &'a str,
     pub approval_policy: &'a str,
     pub parent_conversation_id: Option<&'a str>,
+    pub selection: ConversationSelectionMetadata<'a>,
+}
+
+pub(crate) struct ConversationSelectionMetadata<'a> {
+    pub availability: &'a str,
+    pub ownership: &'a str,
+    pub user_locked: bool,
+    pub allowed_model_ids_json: &'a str,
+    pub reasoning_ceiling: Option<&'a str>,
+    pub pending: Option<ConversationPendingSelection<'a>>,
+}
+
+pub(crate) struct ConversationPendingSelection<'a> {
+    pub model_id: &'a str,
+    pub reasoning_effort: &'a str,
+    pub rationale: &'a str,
+    pub provenance: &'a str,
+    pub application: &'a str,
+    pub requested_at_ms: i64,
 }
 
 impl ProjectService {
@@ -821,6 +840,27 @@ impl ProjectService {
             .ok_or(ProjectExecutionError::MetadataUnavailable)?;
         repository
             .update_conversation_archived(conversation_id, archived)
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)
+    }
+
+    pub(crate) fn record_model_selection(
+        &self,
+        conversation_id: &str,
+        effective: Option<(&str, &str)>,
+        selection: ConversationSelectionMetadata<'_>,
+    ) -> Result<(), ProjectExecutionError> {
+        if !valid_id(conversation_id) {
+            return Err(ProjectExecutionError::InvalidProjectId);
+        }
+        let mut repository_guard = self
+            .repository
+            .lock()
+            .map_err(|_| ProjectExecutionError::MetadataUnavailable)?;
+        let repository = repository_guard
+            .as_mut()
+            .ok_or(ProjectExecutionError::MetadataUnavailable)?;
+        repository
+            .update_model_selection(conversation_id, effective, &selection)
             .map_err(|_| ProjectExecutionError::MetadataUnavailable)
     }
 

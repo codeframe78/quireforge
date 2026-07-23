@@ -62,6 +62,7 @@ import {
   startConversation,
   startCodexAuth,
   stageDroppedConversationAttachments,
+  updateModelSelection,
   cancelWorktree,
   closeTerminal,
   confirmWorktree,
@@ -134,6 +135,10 @@ import {
   type IntegrationMutationPreviewSnapshot,
   type IntegrationMutationResultSnapshot,
 } from "./lib/integration";
+import type {
+  ModelSelectionSnapshot,
+  ModelSelectionUpdateRequest,
+} from "./lib/modelSelection";
 import {
   scaffoldSessionLifecycle,
   type ConversationContinueRequest,
@@ -261,6 +266,9 @@ interface AppProps {
   decideConversationApprovalTask?: (
     request: ConversationApprovalDecisionRequest,
   ) => Promise<ConversationSnapshot>;
+  updateModelSelectionTask?: (
+    request: ModelSelectionUpdateRequest,
+  ) => Promise<ModelSelectionSnapshot>;
   loadSessions?: (
     request?: SessionListRequest,
   ) => Promise<SessionLifecycleSnapshot>;
@@ -520,6 +528,7 @@ export default function App({
   notifyConversationTask = notifyConversation,
   interruptConversationTask = interruptConversation,
   decideConversationApprovalTask = decideConversationApproval,
+  updateModelSelectionTask = updateModelSelection,
   loadSessions = loadConversationSessions,
   resumeConversationTask = resumeConversation,
   forkConversationTask = forkConversation,
@@ -1709,6 +1718,49 @@ export default function App({
     }
   }
 
+  async function applyModelSelection(
+    request: ModelSelectionUpdateRequest,
+  ): Promise<ModelSelectionSnapshot> {
+    setConversationBusy(true);
+    setSessionBusy(true);
+    setConversationActionError(false);
+    setSessionActionError(false);
+    try {
+      const result = await updateModelSelectionTask(request);
+      setConversation((current) =>
+        current.conversationId === request.conversationId
+          ? {
+              ...current,
+              modelId: result.effective.modelId,
+              reasoningEffort: result.effective.reasoningEffort,
+              modelSelection: result,
+            }
+          : current,
+      );
+      setSessions((current) => ({
+        ...current,
+        sessions: current.sessions.map((session) =>
+          session.conversationId === request.conversationId
+            ? {
+                ...session,
+                modelId: result.effective.modelId,
+                reasoningEffort: result.effective.reasoningEffort,
+                modelSelection: result,
+              }
+            : session,
+        ),
+      }));
+      return result;
+    } catch (error) {
+      setConversationActionError(true);
+      setSessionActionError(true);
+      throw error;
+    } finally {
+      setConversationBusy(false);
+      setSessionBusy(false);
+    }
+  }
+
   async function refreshSessions(
     request: SessionListRequest = {
       projectId: null,
@@ -2352,6 +2404,7 @@ export default function App({
           <SessionWorkspace
             availability={sessionState}
             snapshot={sessions}
+            runtime={runtime}
             projects={projects.projects}
             activeConversationId={conversation.conversationId}
             attachments={conversationAttachments}
@@ -2375,6 +2428,7 @@ export default function App({
             onRestore={(conversationId) =>
               mutateSession(() => restoreConversationTask(conversationId))
             }
+            onUpdateModelSelection={applyModelSelection}
             onAttachmentPick={chooseConversationAttachments}
             onAttachmentDrop={stageConversationAttachmentDrop}
             onAttachmentCancel={removeConversationAttachment}
@@ -2422,6 +2476,7 @@ export default function App({
             onStart={beginConversation}
             onInterrupt={stopConversation}
             onDecideApproval={applyConversationApproval}
+            onUpdateModelSelection={applyModelSelection}
             onAttachmentPick={chooseConversationAttachments}
             onAttachmentDrop={stageConversationAttachmentDrop}
             onAttachmentCancel={removeConversationAttachment}

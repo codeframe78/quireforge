@@ -1,6 +1,10 @@
 import { useMemo, useRef, useState } from "react";
 
 import { ConversationAttachmentTray } from "./ConversationAttachmentTray";
+import {
+  ModelSelectionPanel,
+  ModelSelectionPolicyFields,
+} from "./ModelSelectionPanel";
 import type {
   ConversationAttachmentDropRequest,
   ConversationAttachmentSnapshot,
@@ -19,6 +23,11 @@ import {
 } from "./lib/conversationView";
 import type { ProjectWorkspaceSnapshot } from "./lib/project";
 import type { IntegrationCatalogSnapshot } from "./lib/integration";
+import {
+  defaultModelSelectionPolicy,
+  type ModelSelectionSnapshot,
+  type ModelSelectionUpdateRequest,
+} from "./lib/modelSelection";
 
 type ConversationAvailability = "checking" | "native" | "preview";
 type Project = ProjectWorkspaceSnapshot["projects"][number];
@@ -40,6 +49,9 @@ interface ConversationWorkspaceProps {
   onDecideApproval: (
     request: ConversationApprovalDecisionRequest,
   ) => Promise<ConversationSnapshot>;
+  onUpdateModelSelection: (
+    request: ModelSelectionUpdateRequest,
+  ) => Promise<ModelSelectionSnapshot>;
   onAttachmentPick: (projectId: string) => Promise<void>;
   onAttachmentDrop: (
     request: ConversationAttachmentDropRequest,
@@ -239,6 +251,14 @@ function EventCard({ event }: { event: ConversationEvent }) {
       </p>
     );
   }
+  if (event.type === "model-selection-requested") {
+    return (
+      <p className="conversation-event__selection">
+        Codex requested {event.choice.modelId} · {event.choice.reasoningEffort}{" "}
+        for the next turn ({event.application}).
+      </p>
+    );
+  }
   if (event.type === "error") {
     return (
       <p className="conversation-event__error" role="alert">
@@ -271,6 +291,7 @@ export function ConversationWorkspace({
   onStart,
   onInterrupt,
   onDecideApproval,
+  onUpdateModelSelection,
   onAttachmentPick,
   onAttachmentDrop,
   onAttachmentCancel,
@@ -286,6 +307,9 @@ export function ConversationWorkspace({
     useState<ConversationStartRequest["sandboxMode"]>("workspace-write");
   const [approvalPolicy, setApprovalPolicy] =
     useState<ConversationStartRequest["approvalPolicy"]>("on-request");
+  const [selectionPolicy, setSelectionPolicy] = useState(
+    defaultModelSelectionPolicy,
+  );
   const [selectedConnectorIds, setSelectedConnectorIds] = useState<Set<string>>(
     new Set(),
   );
@@ -379,6 +403,7 @@ export function ConversationWorkspace({
       integrationEntryIds,
       modelId: effectiveModelId,
       reasoningEffort: effectiveReasoningEffort,
+      selectionPolicy,
       sandboxMode,
       approvalPolicy,
     }),
@@ -390,6 +415,7 @@ export function ConversationWorkspace({
       prompt,
       attachmentIds,
       integrationEntryIds,
+      selectionPolicy,
       sandboxMode,
     ],
   );
@@ -565,6 +591,19 @@ export function ConversationWorkspace({
                   setModelId(event.target.value);
                   if (nextModel) {
                     setReasoningEffort(nextModel.defaultReasoningEffort);
+                    setSelectionPolicy((current) =>
+                      current.ownership === "automatic"
+                        ? {
+                            ...current,
+                            allowedModelIds: [
+                              ...new Set([
+                                ...current.allowedModelIds,
+                                nextModel.id,
+                              ]),
+                            ].slice(0, 32),
+                          }
+                        : current,
+                    );
                   }
                 }}
               >
@@ -633,6 +672,20 @@ export function ConversationWorkspace({
             </label>
           </div>
 
+          {selectedModel && (
+            <ModelSelectionPolicyFields
+              idPrefix="conversation-start-selection"
+              policy={selectionPolicy}
+              effectiveChoice={{
+                modelId: effectiveModelId,
+                reasoningEffort: effectiveReasoningEffort,
+              }}
+              models={runtime.models}
+              disabled={active || busy || !runtimeReady}
+              onChange={setSelectionPolicy}
+            />
+          )}
+
           <div className="conversation-prerequisite" aria-live="polite">
             {availability === "checking" &&
               "Checking the native conversation runtime…"}
@@ -695,6 +748,27 @@ export function ConversationWorkspace({
               <span className="conversation-pulse" aria-hidden="true" />
             )}
           </div>
+
+          {snapshot.conversationId && snapshot.modelSelection && (
+            <ModelSelectionPanel
+              key={[
+                snapshot.conversationId,
+                snapshot.modelSelection.availability,
+                snapshot.modelSelection.effective.modelId,
+                snapshot.modelSelection.effective.reasoningEffort,
+                snapshot.modelSelection.pending?.requestedAtMs ?? "none",
+                snapshot.modelSelection.policy.ownership,
+                snapshot.modelSelection.policy.userLocked,
+                snapshot.modelSelection.policy.allowedModelIds.join(","),
+                snapshot.modelSelection.policy.reasoningCeiling ?? "none",
+              ].join(":")}
+              conversationId={snapshot.conversationId}
+              selection={snapshot.modelSelection}
+              models={runtime.models}
+              disabled={busy || availability !== "native"}
+              onUpdate={onUpdateModelSelection}
+            />
+          )}
 
           <div
             className="conversation-events"

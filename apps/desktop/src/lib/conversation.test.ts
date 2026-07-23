@@ -12,6 +12,20 @@ import {
 
 const conversationId = "018f0000-0000-7000-8000-000000000010";
 const projectId = "018f0000-0000-7000-8000-000000000001";
+const selectionPolicy = {
+  ownership: "manual" as const,
+  userLocked: false,
+  allowedModelIds: [],
+  reasoningCeiling: null,
+};
+const modelSelection = {
+  schemaVersion: 1 as const,
+  availability: "ready" as const,
+  effective: { modelId: "gpt-5.6-sol", reasoningEffort: "high" },
+  pending: null,
+  policy: selectionPolicy,
+  diagnosticCode: null,
+};
 
 describe("conversation contract", () => {
   it("parses the shared empty fixture", () => {
@@ -36,6 +50,7 @@ describe("conversation contract", () => {
         attachmentIds: [],
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        selectionPolicy,
         sandboxMode: "read-only",
         approvalPolicy: "untrusted",
         integrationEntryIds: [],
@@ -50,6 +65,7 @@ describe("conversation contract", () => {
       attachmentIds: [],
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      selectionPolicy,
       sandboxMode: "workspace-write" as const,
       approvalPolicy: "on-request" as const,
       integrationEntryIds: [],
@@ -75,12 +91,13 @@ describe("conversation contract", () => {
 
   it("accepts normalized ordered events without Codex protocol identity", () => {
     const snapshot = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection,
       sandboxMode: "read-only",
       approvalPolicy: "untrusted",
       pendingApproval: null,
@@ -112,12 +129,13 @@ describe("conversation contract", () => {
 
   it("bounds the active registry and requires unique app-owned projects", () => {
     const active = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "running",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection,
       sandboxMode: "read-only",
       approvalPolicy: "untrusted",
       pendingApproval: null,
@@ -174,12 +192,13 @@ describe("conversation contract", () => {
     });
 
     const waiting = conversationSnapshotSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "waiting-for-approval",
       conversationId,
       projectId,
       modelId: "gpt-5.6-sol",
       reasoningEffort: "high",
+      modelSelection,
       sandboxMode: "workspace-write",
       approvalPolicy: "on-request",
       pendingApproval: {

@@ -9,6 +9,7 @@ mod integration_mutation;
 mod integration_service;
 #[cfg(test)]
 mod mock;
+mod model_selection;
 mod probe;
 pub mod types;
 
@@ -26,4 +27,7 @@ pub use conversation::{
 pub use integration_control::IntegrationControlService;
 pub use integration_mutation::IntegrationMutationService;
 pub use integration_service::IntegrationCatalogService;
+pub use model_selection::{
+    ModelSelectionDiagnosticCode, ModelSelectionSnapshot, ModelSelectionUpdateRequest,
+};
 pub use probe::CodexRuntimeService;

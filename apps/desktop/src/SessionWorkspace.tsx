@@ -1,11 +1,17 @@
 import { useMemo, useState, type KeyboardEvent } from "react";
 
 import { ConversationAttachmentTray } from "./ConversationAttachmentTray";
+import { ModelSelectionPanel } from "./ModelSelectionPanel";
 import type {
   ConversationAttachmentDropRequest,
   ConversationAttachmentSnapshot,
 } from "./lib/attachment";
 import type { ConversationSnapshot } from "./lib/conversation";
+import type { CodexRuntimeSnapshot } from "./lib/codex";
+import type {
+  ModelSelectionSnapshot,
+  ModelSelectionUpdateRequest,
+} from "./lib/modelSelection";
 import type { ProjectWorkspaceSnapshot } from "./lib/project";
 import {
   conversationContinueRequestSchema,
@@ -21,6 +27,7 @@ type Session = SessionLifecycleSnapshot["sessions"][number];
 interface SessionWorkspaceProps {
   availability: SessionAvailability;
   snapshot: SessionLifecycleSnapshot;
+  runtime: CodexRuntimeSnapshot;
   projects: ProjectWorkspaceSnapshot["projects"];
   activeConversationId: string | null;
   attachments: ConversationAttachmentSnapshot;
@@ -40,6 +47,9 @@ interface SessionWorkspaceProps {
   ) => Promise<ConversationSnapshot>;
   onArchive: (conversationId: string) => Promise<void>;
   onRestore: (conversationId: string) => Promise<void>;
+  onUpdateModelSelection: (
+    request: ModelSelectionUpdateRequest,
+  ) => Promise<ModelSelectionSnapshot>;
   onAttachmentPick: (projectId: string) => Promise<void>;
   onAttachmentDrop: (
     request: ConversationAttachmentDropRequest,
@@ -76,6 +86,7 @@ function formatUpdated(timestamp: number): string {
 export function SessionWorkspace({
   availability,
   snapshot,
+  runtime,
   projects,
   activeConversationId,
   attachments,
@@ -91,6 +102,7 @@ export function SessionWorkspace({
   onFork,
   onArchive,
   onRestore,
+  onUpdateModelSelection,
   onAttachmentPick,
   onAttachmentDrop,
   onAttachmentCancel,
@@ -447,6 +459,35 @@ export function SessionWorkspace({
                         <dd>{selectedSession.approvalPolicy}</dd>
                       </div>
                     </dl>
+
+                    <ModelSelectionPanel
+                      key={[
+                        selectedSession.conversationId,
+                        selectedSession.modelSelection.availability,
+                        selectedSession.modelSelection.effective.modelId,
+                        selectedSession.modelSelection.effective
+                          .reasoningEffort,
+                        selectedSession.modelSelection.pending?.requestedAtMs ??
+                          "none",
+                        selectedSession.modelSelection.policy.ownership,
+                        selectedSession.modelSelection.policy.userLocked,
+                        selectedSession.modelSelection.policy.allowedModelIds.join(
+                          ",",
+                        ),
+                        selectedSession.modelSelection.policy
+                          .reasoningCeiling ?? "none",
+                      ].join(":")}
+                      conversationId={selectedSession.conversationId}
+                      selection={selectedSession.modelSelection}
+                      models={runtime.models}
+                      disabled={
+                        busy ||
+                        availability !== "native" ||
+                        selectedSession.state === "running" ||
+                        runtime.availability !== "ready"
+                      }
+                      onUpdate={onUpdateModelSelection}
+                    />
 
                     {!["archived", "missing", "running"].includes(
                       selectedSession.state,

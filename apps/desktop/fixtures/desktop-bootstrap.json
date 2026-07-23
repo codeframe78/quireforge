@@ -74,6 +74,12 @@
       "label": "Read-only scheduled task catalog",
       "state": "ready",
       "milestone": 17
+    },
+    {
+      "id": "agent-model-selection",
+      "label": "Policy-bounded next-turn selection",
+      "state": "ready",
+      "milestone": 18
     }
   ]
 }

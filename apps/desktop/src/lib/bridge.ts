@@ -69,6 +69,12 @@ import {
   type IntegrationMutationResultSnapshot,
 } from "./integration";
 import {
+  modelSelectionSnapshotSchema,
+  modelSelectionUpdateRequestSchema,
+  type ModelSelectionSnapshot,
+  type ModelSelectionUpdateRequest,
+} from "./modelSelection";
+import {
   conversationSnapshotSchema,
   conversationRegistrySchema,
   conversationStartRequestSchema,
@@ -190,6 +196,7 @@ export const CONVERSATION_POLL_COMMAND = "conversation_poll";
 export const CONVERSATION_INTERRUPT_COMMAND = "conversation_interrupt";
 export const CONVERSATION_APPROVAL_DECIDE_COMMAND =
   "conversation_approval_decide";
+export const MODEL_SELECTION_UPDATE_COMMAND = "model_selection_update";
 export const CONVERSATION_SESSIONS_COMMAND = "conversation_sessions";
 export const CONVERSATION_RESUME_COMMAND = "conversation_resume";
 export const CONVERSATION_FORK_COMMAND = "conversation_fork";
@@ -746,6 +753,17 @@ export async function decideConversationApproval(
     request: reviewedRequest,
   });
   return conversationSnapshotSchema.parse(payload);
+}
+
+export async function updateModelSelection(
+  request: ModelSelectionUpdateRequest,
+  invokeFunction: InvokeFunction = invokeTauri,
+): Promise<ModelSelectionSnapshot> {
+  const reviewedRequest = modelSelectionUpdateRequestSchema.parse(request);
+  const payload = await invokeFunction(MODEL_SELECTION_UPDATE_COMMAND, {
+    request: reviewedRequest,
+  });
+  return modelSelectionSnapshotSchema.parse(payload);
 }
 
 export async function loadConversationSessions(

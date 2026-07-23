@@ -10,6 +10,19 @@ import {
 
 const conversationId = "018f0000-0000-7000-8000-000000000010";
 const projectId = "018f0000-0000-7000-8000-000000000001";
+const modelSelection = {
+  schemaVersion: 1 as const,
+  availability: "ready" as const,
+  effective: { modelId: "gpt-5.6-sol", reasoningEffort: "high" },
+  pending: null,
+  policy: {
+    ownership: "manual" as const,
+    userLocked: false,
+    allowedModelIds: [],
+    reasoningCeiling: null,
+  },
+  diagnosticCode: null,
+};
 
 describe("session lifecycle contract", () => {
   it("parses the shared normalized empty fixture", () => {
@@ -50,7 +63,7 @@ describe("session lifecycle contract", () => {
 
   it("accepts bounded app-owned lifecycle metadata", () => {
     const parsed = sessionLifecycleSchema.parse({
-      schemaVersion: 2,
+      schemaVersion: 3,
       state: "ready",
       sessions: [
         {
@@ -60,6 +73,7 @@ describe("session lifecycle contract", () => {
           title: "Review the session boundary",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
+          modelSelection,
           sandboxMode: "read-only",
           approvalPolicy: "untrusted",
           state: "interrupted",
@@ -75,7 +89,7 @@ describe("session lifecycle contract", () => {
 
   it("rejects raw protocol, path, transcript, and inconsistent metadata", () => {
     const valid = {
-      schemaVersion: 2 as const,
+      schemaVersion: 3 as const,
       state: "ready" as const,
       sessions: [
         {
@@ -85,6 +99,7 @@ describe("session lifecycle contract", () => {
           title: "Review the session boundary",
           modelId: "gpt-5.6-sol",
           reasoningEffort: "high",
+          modelSelection,
           sandboxMode: "read-only" as const,
           approvalPolicy: "untrusted" as const,
           state: "completed" as const,

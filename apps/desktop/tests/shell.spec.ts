@@ -29,6 +29,41 @@ const nativeIntegrationCatalog = {
   ),
 };
 
+const modelSelectionFixture = {
+  schemaVersion: 1,
+  availability: "ready",
+  effective: {
+    modelId: "gpt-5.6-sol",
+    reasoningEffort: "high",
+  },
+  pending: null,
+  policy: {
+    ownership: "manual",
+    userLocked: false,
+    allowedModelIds: [],
+    reasoningCeiling: null,
+  },
+  diagnosticCode: null,
+} as const;
+
+const recommendationSelectionFixture = {
+  ...modelSelectionFixture,
+  pending: {
+    choice: {
+      modelId: "gpt-5.6-terra",
+      reasoningEffort: "high",
+    },
+    provenance: "codex",
+    application: "recommendation",
+    rationale: "Use the bounded lower-latency option for the next turn.",
+    requestedAtMs: 1_700_000_001_500,
+  },
+  policy: {
+    ...modelSelectionFixture.policy,
+    ownership: "recommend",
+  },
+} as const;
+
 const nativeResponses = {
   desktop_bootstrap: {
     schemaVersion: 1,
@@ -107,6 +142,12 @@ const nativeResponses = {
         state: "ready",
         milestone: 17,
       },
+      {
+        id: "agent-model-selection",
+        label: "Policy-bounded next-turn selection",
+        state: "ready",
+        milestone: 18,
+      },
     ],
   },
   codex_runtime_probe: {
@@ -129,6 +170,13 @@ const nativeResponses = {
         isDefault: true,
         defaultReasoningEffort: "low",
         supportedReasoningEfforts: ["low", "medium", "high", "xhigh", "max"],
+      },
+      {
+        id: "gpt-5.6-terra",
+        displayName: "GPT-5.6 Terra",
+        isDefault: false,
+        defaultReasoningEffort: "medium",
+        supportedReasoningEfforts: ["medium", "high"],
       },
     ],
     diagnosticCode: null,
@@ -388,12 +436,13 @@ const nativeResponses = {
     diagnosticCode: null,
   },
   conversation_status: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     state: "empty",
     conversationId: null,
     projectId: null,
     modelId: null,
     reasoningEffort: null,
+    modelSelection: null,
     sandboxMode: null,
     approvalPolicy: null,
     pendingApproval: null,
@@ -412,7 +461,7 @@ const nativeResponses = {
     diagnosticCode: null,
   },
   conversation_sessions: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     state: "ready",
     sessions: [
       {
@@ -422,6 +471,7 @@ const nativeResponses = {
         title: "Review lifecycle boundaries",
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        modelSelection: recommendationSelectionFixture,
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         state: "completed",
@@ -435,6 +485,7 @@ const nativeResponses = {
         title: "Try the smaller adapter",
         modelId: "gpt-5.6-sol",
         reasoningEffort: "high",
+        modelSelection: modelSelectionFixture,
         sandboxMode: "workspace-write",
         approvalPolicy: "on-request",
         state: "interrupted",
@@ -444,6 +495,7 @@ const nativeResponses = {
     ],
     diagnosticCode: null,
   },
+  model_selection_update: modelSelectionFixture,
 } as const;
 
 const liveTerminalSnapshot = {
@@ -497,12 +549,13 @@ async function installNativeFixture(
 }
 
 const approvalConversation = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   state: "waiting-for-approval",
   conversationId: "018f0000-0000-7000-8000-000000000020",
   projectId: "018f0000-0000-7000-8000-000000000001",
   modelId: "gpt-5.6-sol",
   reasoningEffort: "high",
+  modelSelection: modelSelectionFixture,
   sandboxMode: "workspace-write",
   approvalPolicy: "on-request",
   pendingApproval: {
@@ -655,6 +708,14 @@ test("native session fixture renders grouping, tabs, and bounded controls", asyn
     page.getByRole("tab", { name: "Review lifecycle boundaries" }),
   ).toHaveAttribute("aria-selected", "true");
   await expect(page.getByLabel("Next task")).toBeVisible();
+  await expect(page.getByText("Effective now")).toBeVisible();
+  await expect(page.getByText("Pending next turn")).toBeVisible();
+  await expect(page.getByText("Requested by Codex")).toBeVisible();
+  await expect(
+    page.getByText("Recommendation — never automatic"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dismiss" }).click();
+  await expect(page.getByText("No change")).toBeVisible();
   await expect(page.getByRole("button", { name: "Resume" })).toBeDisabled();
   await expect(
     page.getByRole("heading", { name: "A real shell, rooted where you work." }),

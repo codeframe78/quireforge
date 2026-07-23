@@ -1,10 +1,11 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "state": "empty",
   "conversationId": null,
   "projectId": null,
   "modelId": null,
   "reasoningEffort": null,
+  "modelSelection": null,
   "sandboxMode": null,
   "approvalPolicy": null,
   "pendingApproval": null,

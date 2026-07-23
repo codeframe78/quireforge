@@ -22,7 +22,8 @@ use codex::{
     CodexRuntimeService, ConversationApprovalDecisionRequest, ConversationContinueRequest,
     ConversationDiagnosticCode, ConversationRegistrySnapshot, ConversationService,
     ConversationSnapshot, ConversationStartRequest, IntegrationCatalogService,
-    IntegrationControlService, IntegrationMutationService, SessionLifecycleSnapshot,
+    IntegrationControlService, IntegrationMutationService, ModelSelectionDiagnosticCode,
+    ModelSelectionSnapshot, ModelSelectionUpdateRequest, SessionLifecycleSnapshot,
 };
 use contract::DesktopBootstrap;
 use desktop::{
@@ -709,6 +710,15 @@ async fn conversation_approval_decide(
 }
 
 #[tauri::command]
+async fn model_selection_update(
+    request: ModelSelectionUpdateRequest,
+    service: tauri::State<'_, ConversationService>,
+    projects: tauri::State<'_, ProjectService>,
+) -> Result<ModelSelectionSnapshot, ModelSelectionDiagnosticCode> {
+    service.update_model_selection(request, &projects).await
+}
+
+#[tauri::command]
 async fn conversation_sessions(
     request: codex::SessionListRequest,
     service: tauri::State<'_, ConversationService>,
@@ -993,6 +1003,7 @@ pub fn run() {
             conversation_poll,
             conversation_interrupt,
             conversation_approval_decide,
+            model_selection_update,
             conversation_sessions,
             conversation_resume,
             conversation_fork,
