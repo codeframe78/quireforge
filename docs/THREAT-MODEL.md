@@ -549,13 +549,18 @@ Controls:
 - Use a dedicated SSH key, strict host verification, an exact destination, and
   explicit generated-file manifests; never use plain FTP or wildcard-copy the
   repository into public storage.
-- For Cloudflare Pages, constrain GitHub/app or API-token permissions, prevent
-  fork previews from receiving secrets, verify the custom domain before DNS
-  cutover, and avoid dangling CNAME takeover risk.
-- Keep the prior production state recoverable until Pages TLS, headers,
-  redirects, assets, and rollback have been verified.
-- Require two-factor authentication on the Cloudflare owner account before
-  Pages project creation, GitHub integration, token issuance, or DNS cutover.
+- Keep Webuzo authoritative for the exact domain, document root, origin SSL,
+  ownership, and generated VirtualHost; do not hand-edit generated or global
+  server configuration.
+- Build outside public storage, deploy only a reviewed manifest-bound static
+  artifact, and reject source, Git metadata, credentials, private documents,
+  dependency trees, logs, and source maps.
+- Keep the prior QuireForge document root and a verified Restic snapshot
+  recoverable until origin and Cloudflare TLS, headers, routes, assets, and
+  rollback have been verified.
+- Use a least-privilege Cloudflare token only for an approved exact-host DNS
+  operation; never expose the origin through a new public port or alter apex,
+  mail, status, or unrelated project records.
 - Prefer versioned releases and atomic switching; preserve the previous release
   until post-deployment checks pass.
 - Produce checksums and provenance/signatures in release milestones.

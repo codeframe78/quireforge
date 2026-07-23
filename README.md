@@ -13,8 +13,8 @@
 > or distributed by OpenAI. QuireForge is an unofficial native Linux workspace
 > for Codex.
 
-QuireForge is an early-stage open-source project building a native graphical
-Codex workspace for Linux. It works toward a direct, local-first project model:
+QuireForge is an early-stage privately developed project building a native
+graphical Codex workspace for Linux. It works toward a direct, local-first project model:
 user-selected directories remain in place and Codex operates against those
 original directories through supported interfaces. The original Codex
 discovery, QuireForge identity, governance, and the local static website
@@ -96,15 +96,21 @@ one-use default-application handoff for a revalidated preview plus fixed-copy
 background approval/completion/failure notifications. React receives no
 absolute path or notification content input, and generic opener IPC remains
 unavailable. Full Wayland/X11-session acceptance is recorded separately.
-Cloudflare Pages is the selected production host, but the site has not been
-deployed. There is no application package to install yet.
+Webuzo is the selected static origin host, with Cloudflare retained as the DNS,
+TLS, and cache edge. The reviewed static site is publicly deployed at
+`https://quireforge.jamesjennison.net` through the approved proxied Cloudflare
+record, with trusted edge and origin TLS. There is no application package to
+install yet. The repository and development activity remain private.
 
 ## Project status
 
 - Supported distributions: none yet; Ubuntu support is being evaluated.
 - Installation: not available before the packaging milestone.
-- Website: the Astro site builds and passes local responsive/accessibility
-  checks for `https://quireforge.jamesjennison.net`; it is not deployed.
+- Website: the Astro site builds, passes local responsive/accessibility checks,
+  and is publicly deployed at `https://quireforge.jamesjennison.net` through
+  Webuzo and Cloudflare. Live desktop/mobile accessibility and Lighthouse
+  validation pass. The canonical hostname uses verified Webuzo-managed
+  automatic origin TLS.
 - Integration support: runtime compatibility retains Codex CLI 0.144.6
   fixtures and now includes a reviewed 0.145.0 integration schema subset.
   Account status and Codex-managed authentication are implemented; the 13A
@@ -131,21 +137,20 @@ deployed. There is no application package to install yet.
   checkpoint.
 - CI status: repository, website, and desktop quality gates are configured for
   pull requests and `main` pushes; deployment remains separately gated.
-- Current milestone: Milestone 15 is implemented and verified locally. Native
-  Wayland evidence now covers project, file, and image pickers, bounded preview,
-  a real Nautilus image drop, and fixed-copy notification delivery; complete
-  XWayland and true-X11 handoff paths remain separately recorded. Milestone 16,
-  the complete static Cloudflare Pages website, is next. Unsupported generic
-  openers, generic file attachments, and integration-management paths remain
-  unavailable.
+- Current milestone: Milestone 15 is implemented and verified locally, and the
+  Webuzo-hosted static website is complete through production Milestone 16.
+  Native Wayland evidence covers project, file, and image pickers, bounded
+  preview, a real Nautilus image drop, and fixed-copy notification delivery;
+  complete XWayland and true-X11 handoff paths remain separately recorded.
+  Milestone 17 is next. Unsupported generic openers, generic file attachments,
+  and integration-management paths remain unavailable.
 - Known limitations: Codex-directed model/reasoning selection is not yet
   implemented and is deferred to Milestone 18 after its integration and
   advanced-feature prerequisites; the current turn cannot replace its own
   executing model. Concurrency is capped at four active worktree tasks; durable
   task recovery, automatic conflict resolution, attached-worktree cleanup,
   force/prune workflows, advanced remote operations, installable packages,
-  releases, public deployment, and production Lighthouse evidence do not exist
-  yet.
+  and releases do not exist yet.
 
 ## Discovery documents
 
@@ -154,8 +159,13 @@ deployed. There is no application package to install yet.
 - [Compatibility](docs/COMPATIBILITY.md)
 - [Feature parity](docs/FEATURE-PARITY.md)
 - [Threat model](docs/THREAT-MODEL.md)
-- [Cloudflare Pages capability audit](docs/CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md)
-- [Cloudflare Pages deployment](docs/CLOUDFLARE-PAGES-DEPLOYMENT.md)
+- [Historical Cloudflare Pages capability audit](docs/CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md)
+- [Webuzo deployment](docs/WEBUZO-DEPLOYMENT.md)
+- [Webuzo static-hosting decision](docs/DECISIONS/0024-webuzo-static-website-hosting.md)
+- [Milestone 16A website reconciliation](docs/MILESTONE_16A_WEBSITE_RECONCILIATION.md)
+- [Milestone 16B origin-only staging](docs/MILESTONE_16B_ORIGIN_STAGING.md)
+- [Milestone 16C production activation](docs/MILESTONE_16C_PRODUCTION_ACTIVATION.md)
+- [Milestone 16D automatic SSL enrollment](docs/MILESTONE_16D_AUTOMATIC_SSL.md)
 - [Website architecture](docs/WEBSITE.md)
 - [Building](docs/BUILDING.md)
 - [Testing](docs/TESTING.md)
@@ -167,6 +177,7 @@ deployed. There is no application package to install yet.
 - [Confirmed integration authorization and controls decision](docs/DECISIONS/0020-confirmed-integration-authorization-and-controls.md)
 - [Safe project file previews decision](docs/DECISIONS/0021-safe-project-file-previews.md)
 - [Bounded conversation image attachments decision](docs/DECISIONS/0022-bounded-conversation-image-attachments.md)
+- [Reviewed desktop handoffs and notifications decision](docs/DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md)
 - [Superseded GitHub Pages plan](docs/GITHUB-PAGES.md)
 - [Permanent identity decision](docs/DECISIONS/0003-permanent-quireforge-identity.md)
 - [Native approval and activity decision](docs/DECISIONS/0011-native-approvals-and-activity-contract.md)
@@ -186,7 +197,7 @@ guaranteed public catalog.
 
 ## Permanent identity
 
-The repository is `codeframe78/quireforge`. Future application and
+The private repository is `James-Jennison/quireforge`. Future application and
 packaging work must use `quireforge` for the executable and Debian package,
 `QuireForge` for the desktop display name and AppImage basename, and
 `io.github.codeframe78.QuireForge` as the application identifier. Its syntax is
@@ -199,10 +210,12 @@ The canonical desktop entry is
 
 The production website target is
 `https://quireforge.jamesjennison.net`, hosted as a static Astro site on
-Cloudflare Pages. Cloudflare is authoritative DNS. GitHub remains the source,
-CI, issue, and release host. GitHub Pages is disabled and is not the production
-host. The website source is under `apps/website/`; project creation, DNS, and
-deployment remain separately approval-gated.
+Webuzo. Cloudflare remains the authoritative DNS, proxied TLS, and cache edge.
+The source repository, CI, issues, and development activity remain private and
+are not linked from the public artifact. GitHub Pages and Cloudflare Pages are
+disabled and are not production fallbacks. The website source is under
+`apps/website/`; future DNS, TLS, hosting, and deployment changes remain
+separately approval-gated.
 
 ## Website development
 

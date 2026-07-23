@@ -26,6 +26,7 @@ test("all public routes render their semantic shell", async ({ page }) => {
     await expect(page.locator("footer")).toContainText(
       "unofficial community project",
     );
+    await expect(page.locator('a[href*="github.com"]')).toHaveCount(0);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
@@ -36,20 +37,14 @@ test("all public routes render their semantic shell", async ({ page }) => {
   }
 });
 
-test("home page has no automatically detectable accessibility violations", async ({
+test("all public routes have no automatically detectable accessibility violations", async ({
   page,
 }) => {
-  await page.goto("/");
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test("integration guidance has no automatically detectable accessibility violations", async ({
-  page,
-}) => {
-  await page.goto("/integrations/");
-  const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations).toEqual([]);
+  for (const route of routes) {
+    await page.goto(route);
+    const results = await new AxeBuilder({ page }).analyze();
+    expect(results.violations, `${route} should pass axe`).toEqual([]);
+  }
 });
 
 test("theme control changes and persists the selected theme", async ({

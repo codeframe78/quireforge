@@ -18,9 +18,10 @@ GitHub repository identity, original local working-copy path, and branding
 assets are handled as separately verified and approval-gated migration steps.
 
 The working copy moved through a controlled Codex-session handoff to
-`/mnt/faststorage/quireforge`. The existing GitHub repository was renamed in
-place to `codeframe78/quireforge`; neither operation authorized a push, merge,
-website deployment, or release.
+`/mnt/faststorage/quireforge`. The existing GitHub repository was first renamed
+in place and was later transferred to the private
+`James-Jennison/quireforge` organization location. None of those operations
+authorized a push, public source link, website deployment, or release.
 
 Migration status: the tracked identity contract, authoritative naming audit,
 in-place GitHub repository rename, local working-copy handoff, and core vector
@@ -29,7 +30,7 @@ repository guidance, contribution/security/conduct/support policies, issue and
 pull-request templates, dependency automation, and initial repository CI. The
 work through Milestone 6 is merged on `main`. Milestone 2 added the local static
 website, production web exports, and automated website quality gates without
-creating a Cloudflare project or deployment. Milestone 3 added the locally verified Tauri
+creating a hosting project or deployment. Milestone 3 added the locally verified Tauri
 desktop foundation, narrow typed IPC contract, Linux app icons, and desktop
 quality gates without producing an installable package. Milestone 4 added the
 versioned Codex boundary, supervised app-server probe, normalized model catalog,
@@ -80,9 +81,10 @@ Milestone 14A establishes the confirmed native plugin and marketplace mutation
 boundary. Milestone 14B adds the user-facing Integration Center over that
 boundary without broadening it. Milestone 14C adds only reviewed connector/MCP
 authorization, skill enablement, refresh, and connector prompt mentions. Later
-Milestones 15A and 15B add bounded local preview and conversation-image
-surfaces. Milestones 15C–17 still need to establish the remaining desktop and
-advanced-feature prerequisites before that control is implemented.
+Milestones 15A–15C complete the bounded local preview, conversation-image, and
+desktop-integration surfaces. Milestone 16 completes the production static
+website. Milestone 17 still needs to establish the remaining advanced-feature
+prerequisites before that control is implemented.
 
 ## Status
 
@@ -90,7 +92,7 @@ advanced-feature prerequisites before that control is implemented.
 | --------: | ----------------------------------------------------------------- | ------------ | ------------------------------------------------------------------- |
 |         0 | Existing project and feasibility discovery                        | Very large   | Complete; merged to `main`                                          |
 |         1 | QuireForge rename, move, GitHub migration, and governance closure | Medium       | Complete; merged to `main`                                          |
-|         2 | QuireForge brand and Cloudflare website foundation                | Large        | Complete; merged to `main`; not deployed                            |
+|         2 | QuireForge brand and static website foundation                    | Large        | Complete; merged to `main`; deployed later through Milestone 16     |
 |         3 | Desktop scaffold consolidation                                    | Large        | Complete; merged to `main`; not packaged                            |
 |         4 | Codex process adapter and contracts                               | Very large   | Complete; merged to `main`                                          |
 |         5 | Authentication and onboarding                                     | Medium       | Complete; merged to `main`                                          |
@@ -103,13 +105,13 @@ advanced-feature prerequisites before that control is implemented.
 |        12 | Integrated terminal                                               | Large        | Complete; merged to `main`; not packaged                            |
 |        13 | Integration discovery and compatibility                           | Very large   | Complete through 13B; verified locally                              |
 |        14 | Integration Center and installation workflows                     | Very large   | Complete through 14C; merged and verified on `main`                 |
-|        15 | File previews and desktop integration                             | Large        | In progress; 15A–15B implemented and verified locally               |
-|        16 | Complete Cloudflare Pages website                                 | Very large   | Planned                                                             |
+|        15 | File previews and desktop integration                             | Large        | Complete through 15C; verified locally                              |
+|        16 | Complete Webuzo-hosted static website                              | Very large   | Complete through 16D; production and automatic origin TLS renewal active |
 |        17 | Scheduled tasks and advanced supported features                   | Medium–Large | Planned/dependency-gated                                            |
 |        18 | Agent-directed model and reasoning selection                      | Large        | Planned/dependency-gated                                            |
 |        19 | Security, accessibility, and performance hardening                | Very large   | Planned                                                             |
 |        20 | Packaging and release automation                                  | Large        | Planned                                                             |
-|        21 | Cloudflare Pages production deployment and beta release           | Very large   | Planned/approval-gated                                              |
+|        21 | Beta package publication and download activation                  | Very large   | Planned/approval-gated                                              |
 
 ## Milestone definitions
 
@@ -575,16 +577,27 @@ unrelated user-file access, billable model call, package, release, or
 deployment. Its production native Wayland project/file/image picker, bounded-
 preview, real Nautilus-drop, and fixed-copy notification evidence is complete
 against disposable app data. Complete XWayland and true-X11 picker/preview/
-default-application/attachment paths remain separately recorded. Milestone 16
+default-application/attachment paths remain separately recorded. Milestone 17
 is the next planned implementation milestone.
 
-### 16 — Complete Cloudflare Pages Website
+### 16 — Complete the Webuzo-Hosted Static Website
 
-Build Home, Features, Integrations, Downloads, Installation, Documentation,
-Compatibility, Roadmap, Changelog, Security/Privacy, Contributing, FAQ,
-Troubleshooting, About, authentic screenshots, and comprehensive
-production-origin/responsive/accessibility validation. Build a verified static
-artifact and deploy only to separately approved non-production staging.
+Milestone 16A reconciles Home, Features, Integrations, Downloads, Installation,
+Documentation, Compatibility, Roadmap, Releases, Security/Privacy, Development,
+FAQ, Troubleshooting, and About for a public site backed by private source. It
+retains the approved design, removes private repository/activity links,
+supersedes the unimplemented Cloudflare Pages plan, and produces a verified
+Apache-compatible static artifact.
+
+Milestone 16B created the isolated Webuzo origin and staged the reviewed
+artifact without public DNS. Trusted origin TLS, route/header validation, and
+rollback rehearsal passed. Milestone 16C separately activated the canonical
+hostname after owner approval. Public DNS, Full (Strict), scoped HSTS, live
+route/accessibility checks, 100/100/100/100 mobile and desktop Lighthouse
+results, and post-launch recovery verification passed. Milestone 16D then
+completed provider-managed automatic origin TLS and renewal validation. Private
+provider identifiers and operational diagnostics remain outside source
+control.
 
 ### 17 — Scheduled Tasks and Advanced Features
 
@@ -632,13 +645,14 @@ Produce AppImage and Debian packages on an appropriate baseline, checksums,
 release workflows, install/upgrade/uninstall tests, and website download data.
 Do not publish a release without approval.
 
-### 21 — Cloudflare Pages Production Deployment and Beta Release
+### 21 — Beta Package Publication and Download Activation
 
-Run final website/package QA; confirm project, custom domain, artifact, DNS
-cutover, and rollback; request approval for Cloudflare production deployment;
-verify DNS, HTTPS, headers, live assets, the unaffected main site, and rollback;
-then request separate beta-release approval and verify downloads and checksums.
-Deployment and release remain independently approval-gated.
+Run final package and supported-platform QA; confirm the approved distribution
+location, release artifact, checksums, provenance, download data, and rollback;
+then request beta-publication approval. Update the already hosted website only
+with the approved package metadata and verify downloads, installation guidance,
+known limitations, and checksums. Website updates and application release
+publication remain independently approval-gated.
 
 ## Forecast policy
 

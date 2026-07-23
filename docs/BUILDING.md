@@ -78,11 +78,14 @@ pnpm preview
 
 The generated static artifact is `apps/website/dist/`. It is ignored by Git and
 must not contain credentials, local account data, Codex state, or locally
-installed integration information.
+installed integration information. It contains the domain-scoped Apache
+`.htaccess` used by the Webuzo-managed production origin.
 
 The production origin is `https://quireforge.jamesjennison.net` with base path
-`/`. Local development continues to use Astro's local origin. No server runtime,
-database, Pages Function, or Cloudflare adapter is required.
+`/`. Local development continues to use Astro's local origin. No database,
+persistent process, reverse proxy, Pages Function, Cloudflare adapter, or Astro
+server adapter is required. Cloudflare remains the public edge, not the origin
+host.
 
 ## Develop and build the desktop scaffold
 

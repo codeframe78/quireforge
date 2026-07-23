@@ -1,9 +1,11 @@
 export const site = {
   name: "QuireForge",
   tagline: "Build boldly. Work locally.",
-  description: "An unofficial native Linux workspace for Codex.",
+  description:
+    "An early-stage native Linux workspace concept for local, observable, and approval-aware Codex workflows.",
   origin: "https://quireforge.jamesjennison.net",
-  repository: "https://github.com/codeframe78/quireforge",
+  masterOrigin: "https://jamesjennison.net",
+  statusOrigin: "https://status.jamesjennison.net",
 } as const;
 
 export type NavigationItem = {
@@ -32,12 +34,12 @@ export const footerNavigation: Array<{
     ],
   },
   {
-    title: "Get QuireForge",
+    title: "Availability",
     links: [
       { label: "Downloads", href: "/downloads/" },
       { label: "Installation", href: "/installation/" },
       { label: "Releases", href: "/releases/" },
-      { label: "GitHub", href: site.repository },
+      { label: "Project status", href: "/roadmap/" },
     ],
   },
   {
@@ -45,20 +47,17 @@ export const footerNavigation: Array<{
     links: [
       { label: "Documentation", href: "/documentation/" },
       { label: "Security & privacy", href: "/security/" },
-      { label: "Contributing", href: "/contributing/" },
+      { label: "Development", href: "/contributing/" },
       { label: "About", href: "/about/" },
     ],
   },
   {
-    title: "Help",
+    title: "Ecosystem",
     links: [
-      { label: "FAQ", href: "/faq/" },
-      { label: "Troubleshooting", href: "/troubleshooting/" },
-      { label: "Report an issue", href: `${site.repository}/issues` },
-      {
-        label: "Support policy",
-        href: `${site.repository}/blob/main/SUPPORT.md`,
-      },
+      { label: "James Jennison", href: site.masterOrigin },
+      { label: "All projects", href: `${site.masterOrigin}/projects/` },
+      { label: "Service status", href: site.statusOrigin },
+      { label: "Contact", href: `${site.masterOrigin}/contact/` },
     ],
   },
 ];
@@ -83,48 +82,45 @@ export const sitePages: SitePage[] = [
   {
     slug: "features",
     eyebrow: "Product direction",
-    title: "A Linux workspace built around the repository you already have.",
+    title: "A Linux workspace shaped around the project you already have.",
     description:
       "QuireForge is being designed for direct local-directory work, observable Codex tasks, deliberate approvals, and native Linux workflows.",
-    status: "Native conversation runtime implemented locally · UI pending",
+    status: "Product direction · private development",
     sections: [
       {
         heading: "Projects stay where they are",
         paragraphs: [
-          "Attach an existing local directory and keep working against the original path. QuireForge does not require an import folder, background upload, or duplicate repository.",
+          "The product direction is to attach an existing local directory and keep working against its original location. QuireForge is not intended to require an import folder, background upload, or duplicate project tree.",
         ],
         items: [
           "Persistent project-to-directory associations",
-          "Git repository and linked-worktree identity detection",
-          "Missing, moved, read-only, removable, and network-path states",
-          "Explicit detach and re-link actions that never delete source files",
+          "Visible Git and worktree context",
+          "Clear missing, moved, read-only, removable, and network-path states",
+          "Explicit detach and re-link actions that do not delete project files",
         ],
       },
       {
         heading: "Codex work you can follow",
         paragraphs: [
-          "The planned desktop interface separates commentary, commands, approvals, file changes, plans, and final results instead of flattening them into terminal text.",
+          "The planned desktop experience separates commentary, commands, approvals, file changes, plans, and final results instead of flattening every event into an opaque transcript.",
         ],
         items: [
-          "Concurrent conversations and isolated worktrees",
-          "Streamed progress with interruption and recovery",
-          "Exact command and filesystem approval details",
-          "Git status, diff review, previews, and a real PTY terminal",
+          "Observable progress and interruption states",
+          "Clear command and filesystem approval details",
+          "Git-aware review and project context",
+          "Native Linux handoffs and terminal workflows where appropriate",
         ],
       },
       {
         heading: "Capability-aware by design",
         paragraphs: [
-          "QuireForge will probe the installed Codex version and expose only supported models, reasoning levels, session operations, and integrations. Unknown support is reported as unknown—not promoted as compatibility.",
+          "QuireForge is intended to show only capabilities supported by the installed Codex environment. Unknown support should remain unknown rather than being promoted as compatibility.",
         ],
       },
     ],
     links: [
-      {
-        label: "Read the architecture",
-        href: `${site.repository}/blob/main/docs/ARCHITECTURE.md`,
-      },
-      { label: "Follow the roadmap", href: "/roadmap/" },
+      { label: "Follow the public roadmap", href: "/roadmap/" },
+      { label: "Read the project guide", href: "/documentation/" },
     ],
   },
   {
@@ -132,43 +128,37 @@ export const sitePages: SitePage[] = [
     eyebrow: "Integration Center",
     title: "Supported integrations, without an invented catalog.",
     description:
-      "QuireForge will surface apps and connectors, plugins, skills, MCP servers, and marketplaces only when supported Codex interfaces expose them.",
-    status: "Compatibility research complete · UI pending",
+      "QuireForge is intended to surface apps and connectors, plugins, skills, MCP servers, and marketplaces only when supported Codex interfaces expose them.",
+    status: "Product direction · availability not promised",
     sections: [
       {
         heading: "Five categories, kept distinct",
         items: [
           "Apps and connectors link Codex to supported external services and may require official authorization.",
-          "Plugins are installable Codex bundles that may include skills, connectors, MCP configuration, hooks, and assets.",
+          "Plugins are installable bundles that may include skills, connectors, MCP configuration, hooks, or assets.",
           "Skills are reusable workflows that may be built in, local, or plugin-provided.",
           "MCP servers expose local or remote tools and may require separate authentication.",
-          "Marketplaces are curated, managed, repository, community, or local catalog sources.",
+          "Marketplaces are catalog sources with their own publishers, trust boundaries, and policies.",
         ],
       },
       {
         heading: "Compatibility is contextual",
         paragraphs: [
-          "Availability can depend on the installed Codex version, account plan, workspace policy, administrator approval, region, operating system, runtime dependencies, network access, and authentication state.",
-          "When Codex cannot enumerate or manage a class of integrations programmatically, QuireForge will explain the limitation and offer the closest official workflow.",
+          "Availability may depend on the installed Codex version, account plan, workspace policy, administrator approval, region, operating system, runtime dependencies, network access, and authentication state.",
+          "When an integration cannot be inspected or managed through a supported interface, QuireForge should explain that boundary rather than fabricate control.",
         ],
       },
       {
         heading: "Installation is a security decision",
         paragraphs: [
-          "Plugins, hooks, MCP servers, and marketplace sources can execute code or access data. QuireForge will show publisher and source metadata, bundled capabilities, requested filesystem and network access, and any unknowns before confirmation.",
-          "Connector credentials remain owned by Codex, the connector, or the operating system. QuireForge will never request passwords or store OAuth tokens in its SQLite database.",
+          "Plugins, hooks, MCP servers, and marketplace sources can execute code or access data. The intended review experience makes available publisher, source, capability, permission, and uncertainty information visible before confirmation.",
+          "Connector credentials remain owned by Codex, the connector, or the operating system. QuireForge is not intended to collect service passwords or copy provider-owned authorization tokens into its application data.",
         ],
       },
     ],
     links: [
-      {
-        label: "Integration research",
-        href: `${site.repository}/blob/main/docs/CODEX-INTEGRATION.md`,
-      },
-      {
-        label: "Integration security",
-        href: `${site.repository}/blob/main/docs/THREAT-MODEL.md`,
-      },
+      { label: "Review the product principles", href: "/features/" },
+      { label: "Read security & privacy", href: "/security/" },
     ],
   },
   {
@@ -176,7 +166,7 @@ export const sitePages: SitePage[] = [
     eyebrow: "Downloads",
     title: "Packages will arrive after the application earns them.",
     description:
-      "QuireForge does not have an installable release yet. AppImage and Debian packages are scheduled for the packaging milestone after desktop functionality and security testing.",
+      "QuireForge has no public or supported download. AppImage and Debian packages remain planned for a later, separately approved release milestone.",
     status: "No downloads available",
     sections: [
       {
@@ -184,23 +174,20 @@ export const sitePages: SitePage[] = [
         items: [
           "AppImage for a portable Linux installation",
           "Debian package for supported Ubuntu systems",
-          "Checksums and provenance attached to approved GitHub Releases",
-          "Documented upgrade and uninstall behavior that preserves projects and Codex sessions",
+          "Published checksums and release notes for every approved artifact",
+          "Documented upgrade and uninstall behavior that preserves user projects",
         ],
       },
       {
         heading: "Avoid unofficial artifacts",
         paragraphs: [
-          "Until the project publishes an approved release, files claiming to be QuireForge packages are not project releases. Future downloads will link directly to the dedicated GitHub repository and include verification instructions.",
+          "No file currently claiming to be a QuireForge installer is an approved project release. When verified packages exist, this website will provide the authoritative download and verification guidance.",
         ],
       },
     ],
     links: [
-      { label: "Watch GitHub releases", href: `${site.repository}/releases` },
-      {
-        label: "Packaging plan",
-        href: `${site.repository}/blob/main/docs/ROADMAP.md`,
-      },
+      { label: "Read the release policy", href: "/releases/" },
+      { label: "Follow the public roadmap", href: "/roadmap/" },
     ],
   },
   {
@@ -208,58 +195,59 @@ export const sitePages: SitePage[] = [
     eyebrow: "Installation",
     title: "Installation guidance will follow verified packages.",
     description:
-      "There is no supported QuireForge installation today. Website and desktop development are documented, but the verified scaffold is not a package or release.",
+      "There is no supported QuireForge installation today. Development builds are not public packages or releases.",
     status: "Not yet installable",
     sections: [
       {
         heading: "Target environment",
         items: [
-          "Ubuntu LTS is the primary distribution target.",
-          "Wayland and X11 behavior will be tested separately.",
-          "Codex and Git remain external runtime prerequisites.",
-          "The application will use XDG configuration, data, cache, and state locations.",
+          "Ubuntu LTS is the initial Linux distribution target.",
+          "Wayland and X11 behavior require separate validation.",
+          "Codex and Git are expected to remain external prerequisites.",
+          "Application data should follow Linux XDG location conventions.",
         ],
       },
       {
         heading: "Uninstall safety",
         paragraphs: [
-          "Removing QuireForge must not delete attached directories, Git repositories, worktrees, uncommitted changes, or Codex-owned sessions. Application metadata cleanup will remain a separate explicit operation.",
-        ],
-      },
-    ],
-    links: [{ label: "Track packaging progress", href: "/roadmap/" }],
-  },
-  {
-    slug: "documentation",
-    eyebrow: "Documentation",
-    title: "The decisions are public before the implementation lands.",
-    description:
-      "Architecture, compatibility findings, security boundaries, hosting decisions, and milestone status are maintained in the repository.",
-    status: "Discovery documentation available",
-    sections: [
-      {
-        heading: "Start here",
-        items: [
-          "Architecture and service boundaries",
-          "Codex integration research and feature parity",
-          "Compatibility and Linux prerequisites",
-          "Threat model and directory-attachment safety",
-          "Cloudflare Pages capability and deployment planning",
-        ],
-      },
-      {
-        heading: "Documentation grows with the product",
-        paragraphs: [
-          "Website build and test guides are executable today. Desktop, packaging, user, integration, and release guides will become executable as their owning milestones are implemented. Planned behavior is always labeled separately from working behavior.",
+          "Removing QuireForge must not delete attached directories, Git repositories, worktrees, uncommitted changes, or Codex-owned sessions. Application metadata cleanup should remain a separate, explicit operation.",
         ],
       },
     ],
     links: [
+      { label: "Check download availability", href: "/downloads/" },
+      { label: "Track the release path", href: "/roadmap/" },
+    ],
+  },
+  {
+    slug: "documentation",
+    eyebrow: "Documentation",
+    title: "Public guidance, without exposing private engineering work.",
+    description:
+      "This website documents QuireForge's public purpose, product direction, availability, compatibility boundaries, and safety principles.",
+    status: "Public project overview available",
+    sections: [
       {
-        label: "Browse repository docs",
-        href: `${site.repository}/tree/main/docs`,
+        heading: "Available here",
+        items: [
+          "Product direction and local-project principles",
+          "Integration categories and capability boundaries",
+          "Compatibility targets and current availability",
+          "Security, privacy, release, and troubleshooting guidance",
+          "A deliberately high-level public roadmap",
+        ],
       },
-      { label: "Read the README", href: `${site.repository}#readme` },
+      {
+        heading: "Engineering material remains private",
+        paragraphs: [
+          "Source code, detailed architecture records, internal milestones, development activity, and issue tracking are not publicly linked while QuireForge is in private development.",
+          "Planned behavior is labeled separately from available behavior throughout this site.",
+        ],
+      },
+    ],
+    links: [
+      { label: "Explore the features", href: "/features/" },
+      { label: "Read the FAQ", href: "/faq/" },
     ],
   },
   {
@@ -267,72 +255,68 @@ export const sitePages: SitePage[] = [
     eyebrow: "Compatibility",
     title: "Detected at runtime, stated with evidence.",
     description:
-      "QuireForge will distinguish stable official interfaces, experimental official interfaces, local functionality, and unsupported features.",
-    status: "Ubuntu and Codex validation in progress",
+      "QuireForge is intended to distinguish supported interfaces, experimental interfaces, local functionality, and unavailable features.",
+    status: "Linux support targets under evaluation",
     sections: [
       {
-        heading: "Current baseline",
+        heading: "Current public baseline",
         items: [
-          "Ubuntu LTS is the primary Linux target; supported versions are not yet declared.",
-          "Codex capability findings currently reflect CLI 0.144.6 and must be probed at runtime.",
-          "Cloudflare Pages is compatible with the static Astro website design.",
-          "AppImage and Debian packaging remain unimplemented and unverified.",
+          "Ubuntu LTS is the initial target; supported versions are not yet declared.",
+          "Codex capabilities may vary by installed version and should be checked at runtime.",
+          "Wayland and X11 behavior require separate evidence.",
+          "AppImage and Debian packaging remain unavailable.",
+          "The static project website is public from a Webuzo-managed origin behind Cloudflare DNS and proxying.",
         ],
       },
       {
         heading: "Honest degradation",
         paragraphs: [
-          "Unavailable controls will be disabled with useful explanations. QuireForge will not infer connector access, model availability, plugin support, or administrator permission from documentation alone.",
+          "Unavailable controls should remain disabled with useful explanations. QuireForge should not infer connector access, model availability, plugin support, or administrator permission from documentation alone.",
         ],
       },
     ],
     links: [
-      {
-        label: "Detailed compatibility matrix",
-        href: `${site.repository}/blob/main/docs/COMPATIBILITY.md`,
-      },
+      { label: "Read installation targets", href: "/installation/" },
+      { label: "Understand integrations", href: "/integrations/" },
     ],
   },
   {
     slug: "roadmap",
     eyebrow: "Public roadmap",
-    title: "Twenty-one gated milestones, one reviewable step at a time.",
+    title: "A gated path from product foundation to verified release.",
     description:
-      "QuireForge is built milestone by milestone, with model selection, acceptance criteria, tests, documentation, review, and explicit approval for external actions.",
-    status: "Milestone 7A native runtime complete locally · Milestone 7B next",
+      "QuireForge moves through reviewable phases while detailed milestones, source activity, and internal implementation records remain private.",
+    status: "Early development · no release date announced",
     sections: [
       {
-        heading: "Completed locally",
+        heading: "Foundation",
         items: [
-          "Milestone 0: project, Codex, GitHub, hosting, DNS, and feasibility discovery",
-          "Milestone 1: permanent identity reconciliation and open-source governance",
-          "Milestone 2: brand consumption, Astro foundation, responsive layout, accessibility, and Cloudflare-compatible static output",
-          "Milestone 3: Tauri, React, TypeScript, and Rust desktop scaffold with typed IPC and local Wayland verification",
-          "Milestone 4: supervised Codex app-server probe, normalized runtime contracts, deterministic mocks, and bounded failure recovery",
-          "Milestone 5: Codex-owned browser/device authentication, normalized account state, cancellation, logout confirmation, and redacted recovery",
-          "Milestone 6: native local-directory attachment, app-owned metadata, identity-aware preflight, and accessible project controls",
-          "Milestone 7A: verified-cwd conversation start, bounded normalized streaming, exact-turn interruption, and reference-only metadata",
+          "Original project identity and product principles established",
+          "Static website and public information architecture deployed and validated",
+          "Security, privacy, accessibility, and compatibility treated as product boundaries",
         ],
       },
       {
-        heading: "Next gated milestone",
+        heading: "Private development",
         items: [
-          "Milestone 7B: user-facing conversation composer, stream, controls, and accessible task states",
+          "Native Linux workspace and local-project workflows",
+          "Observable Codex tasks, approvals, review, and recovery",
+          "Capability-aware integration and desktop behavior",
         ],
       },
       {
-        heading: "Later",
+        heading: "Before public availability",
         items: [
-          "Milestones 13–14: integration discovery and management",
-          "Milestones 19–20: packages, approved deployment, and beta release",
+          "Complete security, accessibility, performance, and compatibility review",
+          "Produce and verify supported installation packages",
+          "Publish release notes, checksums, installation guidance, and known limitations",
+          "Obtain separate approval for beta publication and downloads",
         ],
       },
     ],
     links: [
-      {
-        label: "Full roadmap and acceptance model",
-        href: `${site.repository}/blob/main/docs/ROADMAP.md`,
-      },
+      { label: "Check current availability", href: "/downloads/" },
+      { label: "Read the project guide", href: "/documentation/" },
     ],
   },
   {
@@ -340,26 +324,29 @@ export const sitePages: SitePage[] = [
     eyebrow: "Releases",
     title: "No release until the core workflow is safe and testable.",
     description:
-      "The repository has not published a QuireForge release. Approved packages will be distributed through GitHub Releases with checksums and release notes.",
-    status: "Pre-release development",
+      "QuireForge has not published an application release. Future packages require verification, documentation, and separate owner approval.",
+    status: "Pre-release private development",
     sections: [
       {
         heading: "Release requirements",
         items: [
-          "Install, upgrade, and uninstall tests on supported Ubuntu",
-          "Verified local-directory and Codex working-directory behavior",
+          "Install, upgrade, and uninstall tests on declared Linux targets",
+          "Verified local-project and Codex working-directory behavior",
           "Security, accessibility, and integration supply-chain review",
           "Reproducible AppImage and Debian artifacts with checksums",
           "Separately approved publication and website download links",
         ],
       },
+      {
+        heading: "Authoritative release channel",
+        paragraphs: [
+          "When a release is approved, this website will identify the supported version, provide verification guidance, and link only to the owner-approved distribution location.",
+        ],
+      },
     ],
     links: [
-      {
-        label: "View changelog",
-        href: `${site.repository}/blob/main/CHANGELOG.md`,
-      },
-      { label: "GitHub Releases", href: `${site.repository}/releases` },
+      { label: "Check downloads", href: "/downloads/" },
+      { label: "Review compatibility", href: "/compatibility/" },
     ],
   },
   {
@@ -368,66 +355,60 @@ export const sitePages: SitePage[] = [
     title: "Local access deserves explicit boundaries.",
     description:
       "QuireForge is designed to keep directory access, command approval, integration permissions, and credential ownership visible and separate.",
-    status: "Threat model published · implementation pending",
+    status: "Public principles · private engineering review",
     sections: [
       {
         heading: "Data ownership",
         items: [
-          "QuireForge owns only its application metadata.",
+          "QuireForge should own only the application metadata it needs.",
           "Git remains authoritative for repository state.",
-          "Codex remains authoritative for authentication, sessions, and supported integration state.",
-          "Connector secrets never belong in QuireForge SQLite or support bundles.",
+          "Codex remains authoritative for its authentication, sessions, and supported integration state.",
+          "Connector secrets do not belong in QuireForge application data or support bundles.",
         ],
       },
       {
-        heading: "Report privately",
+        heading: "Security reporting before release",
         paragraphs: [
-          "Do not post credentials, private source code, connector data, or exploit details in public issues. Follow the repository security policy to request a private reporting route.",
+          "There is no public application release to report against today. A dedicated private security-reporting path and disclosure guidance must be published before beta availability.",
+          "Do not send credentials, private source code, access tokens, or exploit details through ordinary public contact channels.",
         ],
       },
     ],
     links: [
+      { label: "Read the project FAQ", href: "/faq/" },
       {
-        label: "Security policy",
-        href: `${site.repository}/blob/main/SECURITY.md`,
-      },
-      {
-        label: "Threat model",
-        href: `${site.repository}/blob/main/docs/THREAT-MODEL.md`,
+        label: "General project contact",
+        href: `${site.masterOrigin}/contact/`,
       },
     ],
   },
   {
     slug: "contributing",
-    eyebrow: "Contributing",
-    title: "Help shape a careful Linux-native Codex workspace.",
+    eyebrow: "Development",
+    title: "Public contribution intake is not open yet.",
     description:
-      "Contributions are welcome across Rust, TypeScript, Linux integration, accessibility, security, testing, documentation, and visual design.",
-    status: "Governance baseline available",
+      "QuireForge is currently developed in a private repository, without public source, issues, pull requests, or contribution workflows.",
+    status: "Private development",
     sections: [
       {
-        heading: "Before opening a pull request",
+        heading: "Current boundary",
         items: [
-          "Read the active milestone and relevant architecture decisions.",
-          "Keep changes focused and preserve existing work.",
-          "Add deterministic tests without billable model calls or real authorization.",
-          "Document security, privacy, accessibility, and compatibility effects.",
-          "Never submit credentials, personal Codex data, or private fixtures.",
+          "The source repository is private and is not linked from this website.",
+          "Development activity and detailed internal milestones are not published.",
+          "Public issue and pull-request intake are not available.",
+          "Private access is not an invitation to redistribute project material.",
         ],
       },
       {
-        heading: "License and conduct",
+        heading: "A future contribution model",
         paragraphs: [
-          "QuireForge uses the Apache License 2.0. Community participation follows the Contributor Covenant-based Code of Conduct in the repository.",
+          "If public contribution opens later, this page will document the supported workflow, conduct expectations, security boundary, license treatment, and review requirements before accepting submissions.",
         ],
       },
     ],
     links: [
-      {
-        label: "Contribution guide",
-        href: `${site.repository}/blob/main/CONTRIBUTING.md`,
-      },
-      { label: "Open issues", href: `${site.repository}/issues` },
+      { label: "Follow the public roadmap", href: "/roadmap/" },
+      { label: "About QuireForge", href: "/about/" },
     ],
   },
   {
@@ -435,70 +416,71 @@ export const sitePages: SitePage[] = [
     eyebrow: "FAQ",
     title: "Straight answers for an early-stage project.",
     description:
-      "QuireForge is public by design about what exists, what is planned, and what depends on supported Codex interfaces.",
+      "QuireForge's public website separates product direction from current availability and keeps private engineering work private.",
     sections: [
       {
         heading: "Is QuireForge made by OpenAI?",
         paragraphs: [
-          "No. QuireForge is an independent, unofficial community project. OpenAI does not make, endorse, support, or distribute it.",
+          "No. QuireForge is an independent, unofficial project. OpenAI does not make, endorse, support, or distribute it.",
         ],
       },
       {
         heading: "Can I install it today?",
         paragraphs: [
-          "Not yet. The website, desktop scaffold, and non-billable Codex runtime probe are locally verified, but neither an AppImage nor a Debian package has been produced. The downloads page will remain explicit until verified packages exist.",
+          "No. There is no approved AppImage, Debian package, beta, or supported installation. The downloads page will remain explicit until verified packages exist.",
         ],
       },
       {
-        heading: "Will it copy or upload my repository?",
+        heading: "Is the source repository public?",
         paragraphs: [
-          "The product requirement is to attach and work against your original local directory in place. QuireForge must not silently copy, relocate, upload, or replace it.",
+          "No. The project website is public, while the source repository, issue tracking, detailed milestones, and development activity remain private.",
+        ],
+      },
+      {
+        heading: "Will it copy or upload my project?",
+        paragraphs: [
+          "The product requirement is to attach and work against an original local directory in place. QuireForge must not silently copy, relocate, upload, or replace it.",
         ],
       },
       {
         heading: "Will every ChatGPT app work?",
         paragraphs: [
-          "No such claim is possible. QuireForge will show only integrations exposed through supported Codex or ChatGPT mechanisms for the installed version, account, region, and workspace policy.",
+          "No such claim is possible. QuireForge should show only integrations supported for the installed Codex environment, account, region, and workspace policy.",
         ],
       },
     ],
     links: [
       { label: "Read troubleshooting guidance", href: "/troubleshooting/" },
+      { label: "Check current availability", href: "/downloads/" },
     ],
   },
   {
     slug: "troubleshooting",
     eyebrow: "Troubleshooting",
-    title: "Start with the boundary that owns the failure.",
+    title: "There is no public application build to support yet.",
     description:
-      "Future diagnostics will distinguish QuireForge, Codex, Git, the project directory, Linux desktop services, and integrations instead of collapsing errors together.",
-    status: "End-user diagnostics not implemented",
+      "Current guidance covers website availability and future diagnostic boundaries without implying that a supported QuireForge package exists.",
+    status: "Application support not yet open",
     sections: [
       {
-        heading: "Before reporting a development issue",
+        heading: "Before public release",
         items: [
-          "Record the QuireForge revision and Linux distribution.",
-          "Record Codex and Git versions without including credentials.",
-          "Describe whether the path is local, removable, network-backed, a symlink, or a worktree.",
-          "Sanitize usernames, absolute paths, source code, account IDs, private URLs, and tokens.",
+          "Do not install files presented as unofficial QuireForge packages.",
+          "Use the downloads page to confirm whether an approved release exists.",
+          "Check the public service-status page if this website is unavailable.",
+          "Never include credentials, tokens, private source, or personal Codex data in ordinary support requests.",
         ],
       },
       {
-        heading: "Account and policy limitations",
+        heading: "Future diagnostic boundary",
         paragraphs: [
-          "QuireForge cannot grant Codex entitlements, workspace permissions, connector authorization, or regional availability. Those failures must be handled through the official provider or workspace administrator.",
+          "Supported diagnostics should distinguish QuireForge, Codex, Git, the selected project directory, Linux desktop services, and integrations instead of collapsing unrelated failures together.",
         ],
       },
     ],
     links: [
-      {
-        label: "Support guide",
-        href: `${site.repository}/blob/main/SUPPORT.md`,
-      },
-      {
-        label: "Report a sanitized issue",
-        href: `${site.repository}/issues/new/choose`,
-      },
+      { label: "Check service status", href: site.statusOrigin },
+      { label: "Read the FAQ", href: "/faq/" },
     ],
   },
   {
@@ -506,7 +488,7 @@ export const sitePages: SitePage[] = [
     eyebrow: "About",
     title: "A native Linux home for deliberate Codex work.",
     description:
-      "QuireForge exists to make local project identity, streamed work, approvals, Git review, terminals, and supported integrations feel coherent on Linux.",
+      "QuireForge is an early-stage project by James Jennison exploring coherent local project identity, observable workflows, approvals, review, and supported integrations on Linux.",
     sections: [
       {
         heading: "Why QuireForge",
@@ -517,19 +499,19 @@ export const sitePages: SitePage[] = [
       {
         heading: "Independent by design",
         paragraphs: [
-          "The visual identity and implementation are original. QuireForge does not redistribute or reverse engineer OpenAI's Windows application, imitate protected branding, or promise proprietary access without a documented interface.",
+          "The visual identity and project direction are original. QuireForge does not redistribute OpenAI applications, imitate protected branding, or promise proprietary access without a supported interface.",
         ],
       },
       {
-        heading: "Open source",
+        heading: "Public project, private development",
         paragraphs: [
-          "The project is developed publicly under the Apache License 2.0 with a documented roadmap, security boundaries, and milestone acceptance process.",
+          "This website presents the approved public project identity and product direction. Source code, issue tracking, detailed milestones, and development activity remain private for now.",
         ],
       },
     ],
     links: [
-      { label: "View the source", href: site.repository },
-      { label: "Read the roadmap", href: "/roadmap/" },
+      { label: "James Jennison project hub", href: site.masterOrigin },
+      { label: "Read the public roadmap", href: "/roadmap/" },
     ],
   },
 ];

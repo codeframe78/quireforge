@@ -7,7 +7,7 @@ released a usable application.
 
 ### Added
 
-- Dedicated public repository and an explicit unofficial-project disclaimer.
+- Dedicated repository and an explicit unofficial-project disclaimer.
 - Milestone 0 Codex integration, compatibility, feature-parity, architecture,
   threat-model, GitHub Pages, roadmap, and architecture-decision documentation.
 - Permanent QuireForge identity contract covering application, package,
@@ -15,6 +15,22 @@ released a usable application.
 - Original path-based QuireForge mark, wordmark, light/dark lockups, favicon,
   application-icon source, social card, palette, and brand usage guidance.
 - Cloudflare Pages capability findings and a deployment plan.
+- Webuzo static-hosting architecture, isolated deployment/rollback planning,
+  and an Apache-compatible artifact policy that supersede the unimplemented
+  Cloudflare Pages deployment plan.
+- Origin-only Webuzo staging for the private-safe static artifact, including an
+  isolated provider-managed destination, route/header/redirect validation,
+  trusted origin TLS, and a verified restoration rehearsal. No public DNS or
+  Cloudflare setting changed during staging.
+- Approved production activation at
+  `https://quireforge.jamesjennison.net` using one proxied Cloudflare record,
+  Full (Strict) origin validation, domain-scoped HSTS, immutable hashed-asset
+  caching, verified backup/restore, and public desktop/mobile quality checks.
+  No `www`, mail, wildcard, analytics, public source, or unrelated DNS record
+  was added.
+- Enrolled only the canonical QuireForge hostname in Webuzo-managed automatic
+  origin TLS. Trusted certificate coverage, provider-managed renewal state, and
+  pre/post recovery checks passed without retaining operational identifiers.
 - Sanitized owner-mediated Cloudflare account audit covering the Free plan,
   Workers & Pages availability, DNS, managed TLS, and security settings.
 - ADR 0006 selecting Cloudflare Pages as the production website host and
@@ -36,8 +52,11 @@ released a usable application.
 - Deterministic website type, lint, format, unit, artifact, route, responsive,
   theme, and axe-core accessibility checks in local scripts and minimum-
   permission GitHub Actions.
-- Cloudflare Pages security headers with a strict static-site content policy;
-  HSTS remains intentionally deferred until live HTTPS is verified.
+- Strict Apache/Cloudflare security headers with a static-site content policy
+  and domain-scoped HSTS enabled only after live origin and edge HTTPS passed.
+- A private-safe public content model that removes source, issues, releases,
+  contribution workflows, detailed milestones, and development activity from
+  the generated website while preserving all established routes.
 - Website build and testing documentation with an explicit no-deployment
   boundary.
 - A pinned Tauri 2, React 19, TypeScript, Vite, and Rust desktop package under
@@ -308,10 +327,10 @@ released a usable application.
   and Debian package remain `quireforge`.
 - Defined app-server initialization as `clientInfo.name = "quireforge"`,
   `clientInfo.title = "QuireForge"`, and the real application version.
-- Selected `https://quireforge.jamesjennison.net` as the production website;
-  GitHub remains the source, CI, issue, and release host.
-- Selected Cloudflare Pages as the production host. Codex changed no provider,
-  DNS, project, or production setting as part of that decision.
+- Selected `https://quireforge.jamesjennison.net` as the production website.
+- Recorded the former Cloudflare Pages hosting choice without creating a
+  provider project, DNS record, or deployment; ADR 0024 later supersedes that
+  choice with a Webuzo static origin and private-source boundary.
 - Recorded the owner's separately completed move of authoritative DNS to
   Cloudflare and the temporary absence of the QuireForge hostname in the new
   zone; no DNS record was created by Codex.
@@ -402,6 +421,9 @@ released a usable application.
 - The GitHub repository was renamed in place to `codeframe78/quireforge`, and
   the intact working copy moved to `/mnt/faststorage/quireforge`, through
   separate approval-gated operations.
+- The repository was later transferred to the private
+  `James-Jennison/quireforge` organization location without changing the
+  installed application identifier or publishing source links.
 - No released or development application data was detected under the temporary
   identity, so there is currently no user configuration to move. Future
   releases must preserve old data and never modify Codex-owned authentication

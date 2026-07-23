@@ -24,24 +24,24 @@ Definitions used here:
 
 ## Cumulative project totals
 
-Last updated: `2026-07-22T17:42:22-07:00`
+Last updated: `2026-07-22T20:51:22-07:00`
 
 | Measure                                   | Cumulative record                                                                                                                                            |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Total milestones planned                  | 22 major milestones (0–21); Milestones 13 and 14 use separately gated submilestones                                                                          |
-| Total milestone entries completed         | 21 (Milestones 0–12, 13A–13B, 14A–14C, and local 15A–15C checkpoints); Milestone 15 is complete locally                                                      |
-| Milestones in progress                    | None; Milestone 16 is the next planned milestone                                                                                                              |
-| Confirmed/reconstructed active execution  | Approximately 25.05–32.13 hours                                                                                                                              |
-| Confirmed/reconstructed automated wait    | Approximately 7.03–7.92 hours; early uninstrumented waits excluded                                                                                           |
+| Total milestone entries completed         | 25 (Milestones 0–12 and submilestones 13A–16D); Milestone 16 is complete                                                                                      |
+| Milestones in progress                    | None; Milestone 17 is the next planned milestone                                                                                                              |
+| Confirmed/reconstructed active execution  | Approximately 25.05–32.13 hours; uninstrumented Milestone 16 work excluded                                                                                   |
+| Confirmed/reconstructed automated wait    | Approximately 7.03–7.92 hours; early and Milestone 16 uninstrumented waits excluded                                                                          |
 | Reconstructed user-blocked time           | At least 11.73 hours, plus unmeasured early approvals/prerequisites                                                                                          |
 | Counted project time                      | Approximately 32.08–40.05 hours                                                                                                                              |
 | Total elapsed across completed milestones | At least 39.90 evidenced hours; exact historical total is unknown                                                                                            |
-| Average counted time                      | Approximately 1.53–1.91 hours per completed milestone entry                                                                                                  |
+| Average counted time                      | Approximately 1.53–1.91 hours across the 21 timed completed entries                                                                                          |
 | Median counted time                       | Approximately 0.81 hour using reconstructed range midpoints                                                                                                  |
 | Longest completed milestone               | Milestone 11, approximately 5.45–7.72 counted hours                                                                                                          |
 | Shortest completed milestone              | Milestone 0, approximately 0.15 counted hours                                                                                                                |
 | Comparable forecast versus actual         | Milestones 3–15C forecast 89.75–155.50 active hours in aggregate and used approximately 28.55–36.52 counted hours, about 59%–82% below the forecast envelope |
-| Confidence classifications                | 8 Confirmed, 11 Reconstructed, 2 Estimated, 0 Unknown completed entries                                                                                      |
+| Confidence classifications                | 8 Confirmed, 11 Reconstructed, 2 Estimated, 4 Unknown completed entries                                                                                      |
 
 The cumulative active and automated ranges are derived from historical reports
 and workflow evidence that were recorded with different granularity. They are
@@ -74,6 +74,10 @@ range endpoints.
 | 15A       | Local    | `2026-07-22T12:48:19-07:00` | `2026-07-22T13:35:21-07:00` | M15 aggregate: 4.5–8 h active        |     ~0.60 h |        ~0.13 h |                    0.00 h |               0.73 h |        0.78 h | Directionally 90.4% below aggregate midpoint | Confirmed |
 | 15B       | Local    | `2026-07-22T13:44:10-07:00` | `2026-07-22T14:25:43-07:00` | 2.5–4.5 h active; 3–5.5 h elapsed    |     ~0.60 h |        ~0.08 h |                    0.00 h |               0.68 h |        0.69 h | ~2.90 h / 82.9% below midpoint  | Confirmed     |
 | 15C       | Local    | `2026-07-22T14:30:59-07:00` | `2026-07-22T17:42:22-07:00` | 2–4 h active; 2.5–5 h elapsed        |     ~3.01 h |        ~0.18 h |                    0.00 h |               3.19 h |        3.19 h | ~0.01 h / 0.3% above midpoint   | Confirmed     |
+| 16A       | Complete | Not recorded                | `2026-07-22T19:07:10-07:00` | Not recorded                         |     Unknown |        Unknown |                   Unknown |             Excluded |       Unknown | Not measurable                  | Unknown       |
+| 16B       | Complete | Not recorded                | `2026-07-22T19:46:24-07:00` | Not recorded                         |     Unknown |        Unknown |                   Unknown |             Excluded |       Unknown | Not measurable                  | Unknown       |
+| 16C       | Complete | Not recorded                | `2026-07-22T20:05:13-07:00` | Not recorded                         |     Unknown |        Unknown |                   Unknown |             Excluded |       Unknown | Not measurable                  | Unknown       |
+| 16D       | Complete | Not recorded                | `2026-07-22T20:17:45-07:00` | Not recorded                         |     Unknown |        Unknown |                   Unknown |             Excluded |       Unknown | Not measurable                  | Unknown       |
 
 Variance uses the midpoint of the historical forecast and counted-time ranges.
 It is included only where a recorded forecast exists and should not be read as
@@ -842,3 +846,55 @@ greater precision than the underlying ranges.
 - **Status:** Completed locally with Confirmed confidence. No push, merge,
   package, release, deployment, hosting mutation, personal Codex-state access,
   or live/billable model call was performed.
+
+## Milestone 16A — Private-safe website reconciliation
+
+- **Objective:** Reconcile the established Astro site for a public presence
+  backed by private source and replace the unimplemented Cloudflare Pages
+  origin plan with a Webuzo-compatible static artifact.
+- **Completion:** `2026-07-22T19:07:10-07:00`, from the recorded source commit.
+- **Timing:** Start, active, automated-wait, and user-blocked intervals were not
+  prospectively recorded and are excluded from cumulative time calculations.
+- **Evidence:** Static artifact validation, repository checks, browser and axe
+  checks, and mobile/desktop Lighthouse acceptance are summarized in
+  [the 16A report](MILESTONE_16A_WEBSITE_RECONCILIATION.md).
+- **Confidence:** **Unknown** for time measurement; completion is recorded.
+
+## Milestone 16B — Webuzo origin-only staging
+
+- **Objective:** Stage the reviewed artifact on an isolated provider-managed
+  origin, verify trusted TLS and recovery, and leave public DNS unchanged.
+- **Completion:** `2026-07-22T19:46:24-07:00`, after the staging and TLS
+  acceptance commits.
+- **Timing:** Not prospectively recorded and excluded from cumulative time
+  calculations.
+- **Evidence:** The sanitized acceptance record preserves route, header, TLS,
+  isolation, and rollback outcomes without provider identifiers. See
+  [the 16B report](MILESTONE_16B_ORIGIN_STAGING.md).
+- **Confidence:** **Unknown** for time measurement; completion is recorded.
+
+## Milestone 16C — Production activation
+
+- **Objective:** Activate only the canonical hostname through the approved
+  Cloudflare DNS/proxy edge and validate the public static site.
+- **Completion:** `2026-07-22T20:05:13-07:00`, from the recorded activation
+  commit.
+- **Timing:** Not prospectively recorded and excluded from cumulative time
+  calculations.
+- **Evidence:** Public routes, TLS, scoped HSTS, accessibility, Lighthouse, and
+  rollback outcomes are summarized in
+  [the 16C report](MILESTONE_16C_PRODUCTION_ACTIVATION.md).
+- **Confidence:** **Unknown** for time measurement; completion is recorded.
+
+## Milestone 16D — Automatic origin TLS
+
+- **Objective:** Enroll the canonical origin certificate in provider-managed
+  automatic renewal without changing unrelated DNS or hosting state.
+- **Completion:** `2026-07-22T20:17:45-07:00`, from the recorded acceptance
+  commit.
+- **Timing:** Not prospectively recorded and excluded from cumulative time
+  calculations.
+- **Evidence:** Trusted certificate coverage, renewal state, public health, and
+  recovery outcomes are summarized in
+  [the 16D report](MILESTONE_16D_AUTOMATIC_SSL.md).
+- **Confidence:** **Unknown** for time measurement; completion is recorded.

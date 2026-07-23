@@ -817,9 +817,13 @@ print the account-visible catalog.
 - Confirm no clipped text, horizontal scroll, stale identity, or broken asset.
 - Confirm Downloads and Installation do not claim an unreleased package.
 - Confirm the unofficial-project disclaimer remains visible.
-- Confirm the built `_headers`, `robots.txt`, sitemap, manifest, icons, and 404
+- Confirm the built `.htaccess`, `robots.txt`, sitemap, manifest, icons, and 404
   page are present.
 
-Production-origin Lighthouse and live-header measurements are deferred until a
-separately approved Cloudflare preview or production deployment exists. Any
-miss against the published quality targets must be recorded with remediation.
+Milestone 16C completed production-origin and Cloudflare-edge header,
+desktop/mobile Lighthouse, route, overflow, and axe measurements. Both
+Lighthouse profiles scored 100 for Performance, Accessibility, Best Practices,
+and SEO; all 28 live route/profile combinations passed with no automatically
+detectable axe violations. Future deployments must repeat these measurements,
+and any miss against the published quality targets requires recorded
+remediation.

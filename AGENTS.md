@@ -45,7 +45,8 @@ specific approval required for that action.
 ## Implementation direction
 
 - Desktop: Tauri 2, Rust, Tokio, React, TypeScript, and Vite.
-- Website: Astro static output on Cloudflare Pages.
+- Website: Astro static output on a Webuzo-managed Apache origin; Cloudflare is
+  DNS/proxy only, and Cloudflare Pages remains disabled.
 - Metadata: migrated SQLite owned by QuireForge; never a credential store.
 - IPC: small typed commands and normalized events; the frontend must not consume
   raw Codex protocol messages or spawn arbitrary processes.

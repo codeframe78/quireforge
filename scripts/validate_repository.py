@@ -38,7 +38,7 @@ REQUIRED_PATHS = (
     "pnpm-workspace.yaml",
     "apps/website/astro.config.mjs",
     "apps/website/package.json",
-    "apps/website/public/_headers",
+    "apps/website/public/.htaccess",
     "apps/website/src/data/site.ts",
     "apps/website/src/pages/404.astro",
     "apps/website/src/pages/index.astro",
@@ -166,10 +166,12 @@ REQUIRED_PATHS = (
     "docs/BUILDING.md",
     "docs/LOCAL-BUILD-PERFORMANCE.md",
     "docs/MILESTONE-FORECASTS.md",
+    "docs/MILESTONE_16A_WEBSITE_RECONCILIATION.md",
     "docs/ROADMAP.md",
     "docs/TESTING.md",
     "docs/THREAT-MODEL.md",
     "docs/WEBSITE.md",
+    "docs/WEBUZO-DEPLOYMENT.md",
     "docs/DECISIONS/0007-quireforge-metadata-sqlite.md",
     "docs/DECISIONS/0008-native-conversation-runtime.md",
     "docs/DECISIONS/0011-native-approvals-and-activity-contract.md",
@@ -179,6 +181,11 @@ REQUIRED_PATHS = (
     "docs/DECISIONS/0020-confirmed-integration-authorization-and-controls.md",
     "docs/DECISIONS/0021-safe-project-file-previews.md",
     "docs/DECISIONS/0022-bounded-conversation-image-attachments.md",
+    "docs/DECISIONS/0023-reviewed-desktop-handoffs-and-notifications.md",
+    "docs/DECISIONS/0024-webuzo-static-website-hosting.md",
+    "docs/MILESTONE_16B_ORIGIN_STAGING.md",
+    "docs/MILESTONE_16C_PRODUCTION_ACTIVATION.md",
+    "docs/MILESTONE_16D_AUTOMATIC_SSL.md",
     "scripts/generate_codex_schema_fixtures.py",
 )
 
@@ -191,7 +198,7 @@ IDENTITY_EXPECTATIONS = {
         "https://quireforge.jamesjennison.net",
     ),
     "docs/DECISIONS/0003-permanent-quireforge-identity.md": (
-        "codeframe78/quireforge",
+        "James-Jennison/quireforge",
         "~/.config/quireforge",
         "~/.local/share/quireforge",
         "~/.cache/quireforge",
@@ -313,7 +320,8 @@ def repository_files() -> list[Path]:
         check=True,
         capture_output=True,
     )
-    return [ROOT / item.decode() for item in result.stdout.split(b"\0") if item]
+    paths = [ROOT / item.decode() for item in result.stdout.split(b"\0") if item]
+    return [path for path in paths if path.exists() or path.is_symlink()]
 
 
 def link_target(raw: str) -> str:

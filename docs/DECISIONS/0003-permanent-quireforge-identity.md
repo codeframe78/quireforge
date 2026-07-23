@@ -1,6 +1,7 @@
 # ADR 0003: Permanent QuireForge Identity
 
-- Status: Accepted; website-hosting decision amended by ADR 0006
+- Status: Accepted; source location and website hosting amended on 2026-07-22
+  by [ADR 0024](0024-webuzo-static-website-hosting.md)
 - Date: 2026-07-19
 - Decision owners: Project maintainers
 
@@ -24,7 +25,7 @@ The permanent identity is:
 | Product display name | `QuireForge` |
 | Tagline | `Build boldly. Work locally.` |
 | Description | `An unofficial native Linux workspace for Codex` |
-| GitHub repository | `codeframe78/quireforge` |
+| GitHub repository | `James-Jennison/quireforge` (private) |
 | Executable | `quireforge` |
 | Debian package | `quireforge` |
 | AppImage basename | `QuireForge` |
@@ -36,7 +37,7 @@ The permanent identity is:
 | Default cache path | `~/.cache/quireforge` |
 | Default state path | `~/.local/state/quireforge` |
 | Production website | `https://quireforge.jamesjennison.net` |
-| Website host | Cloudflare Pages |
+| Website host | Webuzo origin behind Cloudflare |
 
 The home-relative storage paths are documentation shorthand. Implementations
 must honor the XDG base-directory environment and APIs. QuireForge logs belong
@@ -47,8 +48,10 @@ application identity. Functional validation against the actual Tauri, GTK,
 desktop-entry, D-Bus, and packaging versions remains mandatory during
 application scaffolding. The desktop filename decision is explained in
 [ADR 0004](0004-linux-desktop-entry-identity.md).
-The production-hosting decision is explained in
-[ADR 0006](0006-cloudflare-pages-production-hosting.md).
+The current production-hosting and private-source boundary is explained in
+[ADR 0024](0024-webuzo-static-website-hosting.md). The legacy reverse-DNS
+application identifier is intentionally retained as an installed compatibility
+contract; transferring the source repository does not authorize changing it.
 
 ## Integration identity boundary
 

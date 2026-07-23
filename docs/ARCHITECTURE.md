@@ -1,9 +1,9 @@
 # Architecture
 
-Status: Milestone 0 application proposal with the website foundation and
-desktop implementation through the locally verified Milestone 15. Packaging,
-deployment, and unsupported integration-management expansion remain subject to
-separately gated work.
+Status: desktop implementation is locally verified through Milestone 15 and
+the static website is complete through production Milestone 16. Packaging,
+release publication, and unsupported integration-management expansion remain
+subject to separately gated work.
 
 QuireForge is an unofficial native Linux workspace for Codex. It is not made,
 endorsed, supported, or distributed by OpenAI.
@@ -845,14 +845,17 @@ consume layered CSS tokens and approved vector/raster brand exports. Screenshots
 and compatibility data are curated release assets; local project, connector,
 and account data never enter the site build.
 
-Production is `https://quireforge.jamesjennison.net` on Cloudflare Pages.
-GitHub owns source, validation, issues, and release binaries; GitHub Pages
-remains disabled. Cloudflare is authoritative DNS. The deployment adapter
-builds a static artifact, creates isolated previews, applies version-controlled
-headers/redirects, and promotes only an approved production-branch deployment.
-DNS cutover is independently approval-gated and recoverable. The generated
-artifact is checked for routes, links, assets, canonical metadata, disclaimers,
-inline code, and version-controlled headers before browser tests exercise its
+Production is `https://quireforge.jamesjennison.net` on a Webuzo-managed
+Apache origin, with Cloudflare retained as authoritative DNS and the proxied
+TLS/cache edge. Source, validation, issues, and development activity remain
+private; GitHub Pages and Cloudflare Pages remain disabled. The deployment
+workflow builds outside public storage, records a per-file artifact manifest,
+uses origin-only staging, applies a version-controlled Apache `.htaccess`, and
+promotes only an exact approved artifact to the Webuzo-reported document root.
+Domain creation, staging, and the one-record DNS cutover completed through
+separate approvals and remain independently recoverable. The generated artifact
+is checked for routes, links, assets, canonical metadata, disclaimers, inline
+code, and version-controlled headers before browser tests exercise its
 desktop/mobile structure, themes, overflow, and accessibility baseline.
 
 ## Testing seams
@@ -874,8 +877,8 @@ Most tests require neither model calls nor third-party authorization.
 - Exact frontend state/query libraries.
 - Whether repository-scoped integration settings should be edited directly or
   only through Codex-supported configuration RPCs.
-- Cloudflare Git integration versus protected GitHub Actions direct upload,
-  pending project-level permission review.
+- Long-term manual artifact promotion versus a separately approved
+  least-privilege protected deployment workflow.
 - Functional validation that the selected Tauri, GTK, desktop-entry, D-Bus,
   and packaging toolchain versions preserve the canonical application ID and
   reverse-DNS desktop filename.

@@ -1,6 +1,7 @@
 # Compatibility
 
-Status: desktop work through Milestone 15 is implemented and verified locally.
+Status: desktop work through Milestone 15 is implemented and verified locally,
+and the static website is complete through production Milestone 16.
 Milestone 15C has production native Wayland picker, preview, real-drop, and
 fixed-copy notification evidence plus separately recorded complete XWayland and
 true-X11 handoff/attachment paths.
@@ -22,9 +23,9 @@ the real toolchain rather than inferred from documentation alone:
 | AppImage release basename      | `QuireForge`                               | Project release policy; verify the final workflow-renamed artifact                         |
 | Application identifier         | `io.github.codeframe78.QuireForge`         | Verified as the running GTK/D-Bus application identity on Wayland                          |
 | XDG directory leaf             | `quireforge`                               | Verified with isolated temporary XDG data; no personal persistent application data created |
-| GitHub repository              | `codeframe78/quireforge`                   | Connected and renamed in place                                                             |
-| Production website             | `https://quireforge.jamesjennison.net`     | Confirmed target; DNS/TLS present, site not deployed                                       |
-| Website host                   | Cloudflare Pages                           | Public and owner-mediated account capabilities reviewed; project setup pending             |
+| GitHub repository              | `James-Jennison/quireforge`                | Private source location; not a public website link                                         |
+| Production website             | `https://quireforge.jamesjennison.net`     | Public through the approved Webuzo origin and proxied Cloudflare record                     |
+| Website host                   | Webuzo-managed Apache behind Cloudflare    | Production active; private provider identifiers remain outside source control                |
 
 Tauri, Cargo, React, TypeScript, Vite, and Astro configuration now consume the
 applicable identity contracts. Package installation, desktop-entry output,
@@ -326,12 +327,16 @@ and the draft attachment was removed without changing the selected source.
 
 ## Website-host compatibility
 
-The static Astro design is compatible with Cloudflare Pages static output,
-preview deployments, custom domains, headers, and redirects. Account-level
-inspection is complete; project-specific GitHub integration remains pending.
-See the [Cloudflare audit](CLOUDFLARE-PAGES-CAPABILITY-AUDIT.md).
+The static Astro design produces a Webuzo-compatible artifact with a scoped
+Apache `.htaccess`. Production validation confirmed the Webuzo-managed origin,
+Cloudflare Full (Strict), canonical routing, trusted TLS, security headers,
+backup/rollback readiness, and the absence of a persistent application runtime.
+Provider account names, paths, addresses, record IDs, certificate details, and
+backup identifiers remain outside source control. See
+[Webuzo Deployment](WEBUZO-DEPLOYMENT.md).
 
-GitHub Pages remains disabled and is not a production fallback.
+GitHub Pages and Cloudflare Pages remain disabled and are not production
+fallbacks.
 
 ## Known discovery limitations
 
