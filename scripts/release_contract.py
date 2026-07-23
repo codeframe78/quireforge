@@ -48,6 +48,26 @@ def run(
     )
 
 
+def appimagetool_command(
+    appimagetool: Path,
+    runtime: Path,
+    appdir: Path,
+    output: Path,
+) -> list[str]:
+    return [
+        str(appimagetool),
+        "--no-appstream",
+        "--runtime-file",
+        str(runtime),
+        str(appdir),
+        str(output),
+    ]
+
+
+def appstream_validation_command(validator: str, metadata: Path) -> list[str]:
+    return [validator, "validate", "--no-net", str(metadata)]
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as source:

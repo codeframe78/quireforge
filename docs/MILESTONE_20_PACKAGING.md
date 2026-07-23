@@ -34,6 +34,9 @@ verification, and rollback.
   yields the reviewed hash.
 - AppImage repacking uses a checksum-pinned runtime rather than an unreviewed
   downloaded runtime.
+- AppImage repacking disables appimagetool's network-dependent homepage check;
+  QuireForge validates the packaged AppStream metadata explicitly afterward
+  with `appstreamcli validate --no-net`.
 - GitHub workflow dependencies use immutable commit revisions and minimum
   permissions.
 
@@ -73,7 +76,7 @@ Both payloads contain:
 
 The accepted local pass completed:
 
-- six dependency-free package-contract unit tests;
+- seven dependency-free package-contract unit tests;
 - exact release-manifest, artifact-set, sizes, hashes, and checksum-file
   validation;
 - Debian control, dependency, payload, desktop-file, AppStream, md5sums, and

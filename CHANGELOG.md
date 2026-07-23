@@ -468,6 +468,10 @@ released a usable application.
 
 ### Fixed
 
+- Fixed Linux release packaging depending on appimagetool's external homepage
+  reachability check. AppImage repacking now skips that duplicate network
+  probe while the artifact gate still validates both packaged AppStream
+  records explicitly with `appstreamcli validate --no-net`.
 - Fixed the native production window rendering only its black background. The
   Tauri `freezePrototype` option made the current production bundle fail before
   mounting with a read-only `Object.prototype.toString` error. QuireForge now
