@@ -97,6 +97,12 @@ repository is therefore an access-controlled review/provenance record, not an
 anonymous public download channel. The public website must not link those
 private release URLs or imply that they are publicly retrievable.
 
+The `quireforge-release` environment now exists with one custom deployment
+policy admitting only tags matching `v*`. The current GitHub plan rejected
+required-reviewer and wait-timer rules, so those protections are not claimed.
+The workflow's exact operation, confirmation phrase, tag ref, clean manifest,
+pinned builder, checksum attestation, and prerelease flags remain mandatory.
+
 The prepared public layout uses the owner-hosted QuireForge origin:
 
 ```text
@@ -109,8 +115,9 @@ promotion before package bytes are placed on the Webuzo-managed origin.
 Provider account names, server addresses, document roots, backup identifiers,
 and credentials remain execution-time private data and must not enter source.
 The production beta also needs an approved private security-reporting route;
-the current ordinary contact path is not a substitute for receiving
-vulnerability details.
+the existing security policy resolves that route through the `codeframe78`
+GitHub profile only to request a private channel without including
+vulnerability details in the initial message.
 
 ## Publication handoff
 
@@ -128,8 +135,8 @@ The remaining terminal sequence is deliberately split:
    hashes, and install/launch each downloaded format through disposable QA.
 6. Only then copy the public version, UTC date, manifest/checksum URLs, package
    URLs, sizes, and hashes into `apps/website/src/data/downloads.ts`.
-7. Configure the separately approved private security-reporting URL without
-   exposing credentials or private provider data.
+7. Retain the approved security-contact route and verify that its public copy
+   requests a private channel without soliciting vulnerability details.
 8. Run the full website unit, build, artifact, desktop/mobile, accessibility,
    link, origin, and rollback gates, then obtain separate website-deployment
    approval.

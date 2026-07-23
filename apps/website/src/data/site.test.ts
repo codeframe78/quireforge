@@ -30,8 +30,6 @@ describe("site information architecture", () => {
     const publicContent = JSON.stringify({ footerNavigation, site, sitePages });
 
     for (const marker of [
-      "github.com",
-      "codeframe78",
       "James-Jennison/quireforge",
       "/issues",
       "/pulls",
@@ -51,10 +49,14 @@ describe("site information architecture", () => {
       "quireforge.jamesjennison.net",
       "status.jamesjennison.net",
     ]);
+    const allowedExactUrls = new Set(["https://github.com/codeframe78"]);
 
     for (const link of [...pageLinks, ...footerLinks]) {
       if (link.href.startsWith("https://")) {
-        expect(allowedHosts.has(new URL(link.href).hostname)).toBe(true);
+        const url = new URL(link.href);
+        expect(
+          allowedHosts.has(url.hostname) || allowedExactUrls.has(url.href),
+        ).toBe(true);
       }
     }
   });
@@ -63,6 +65,7 @@ describe("site information architecture", () => {
     expect(site.name).toBe("QuireForge");
     expect(site.tagline).toBe("Build boldly. Work locally.");
     expect(site.origin).toBe("https://quireforge.jamesjennison.net");
+    expect(site.securityReportUrl).toBe("https://github.com/codeframe78");
   });
 
   it("keeps package download data inactive before publication approval", () => {

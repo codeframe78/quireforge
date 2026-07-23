@@ -26,7 +26,9 @@ test("all public routes render their semantic shell", async ({ page }) => {
     await expect(page.locator("footer")).toContainText(
       "unofficial community project",
     );
-    await expect(page.locator('a[href*="github.com"]')).toHaveCount(0);
+    await expect(
+      page.locator('a[href*="github.com/James-Jennison/quireforge"]'),
+    ).toHaveCount(0);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
     );

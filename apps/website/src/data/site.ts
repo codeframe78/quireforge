@@ -12,7 +12,7 @@ export const site = {
   origin: "https://quireforge.jamesjennison.net",
   masterOrigin: "https://jamesjennison.net",
   statusOrigin: "https://status.jamesjennison.net",
-  securityReportUrl: null as string | null,
+  securityReportUrl: "https://github.com/codeframe78",
 } as const;
 
 const availabilityErrors = validateDownloadAvailability(
@@ -510,7 +510,7 @@ export const sitePages: SitePage[] = [
         ? {
             heading: "Report a beta security issue privately",
             paragraphs: [
-              "Use the dedicated security-reporting link for suspected vulnerabilities. Do not send credentials, private source code, access tokens, or exploit details through ordinary public contact channels.",
+              "Use the security-contact link to request a private reporting channel without including vulnerability details in the initial message. Do not send credentials, private source code, access tokens, or proof-of-concept exploits through ordinary public contact channels.",
             ],
           }
         : {
@@ -525,7 +525,7 @@ export const sitePages: SitePage[] = [
       ...(publishedRelease && site.securityReportUrl
         ? [
             {
-              label: "Report a security issue privately",
+              label: "Request a private security channel",
               href: site.securityReportUrl,
             },
           ]
