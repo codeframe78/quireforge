@@ -97,7 +97,7 @@ export function validateDownloadAvailability(
 
   const expectedFilenames: Record<DownloadFormat, string> = {
     appimage: `QuireForge-${release.version}-x86_64.AppImage`,
-    deb: `quireforge_${release.version.replace("-", "~")}_amd64.deb`,
+    deb: `quireforge_${release.version.replace("-", ".")}_amd64.deb`,
   };
   const seen = new Set<DownloadFormat>();
   for (const download of release.downloads) {

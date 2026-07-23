@@ -5,6 +5,15 @@ released a usable application.
 
 ## Unreleased
 
+### Fixed
+
+- Prepared immutable `0.1.0-beta.2` artifacts after GitHub Releases normalized
+  the tilde in the beta 1 Debian asset name. The downloadable file is now
+  `quireforge_0.1.0.beta.2_amd64.deb`, while its Debian control version remains
+  `0.1.0~beta.2` so the eventual stable package sorts after the prerelease.
+- Added a release-contract helper and Python/website assertions that keep the
+  GitHub-safe outer Debian filename distinct from its internal package version.
+
 ### Added
 
 - A dedicated full-history public-disclosure audit covering every reachable

@@ -1,19 +1,20 @@
 # Releasing QuireForge
 
-Status: Milestone 21B has refreshed the verified local release-candidate
-pipeline and prepared dormant public-download validation. Nothing in this
-procedure constitutes publication approval. The first beta, owner-hosted
-artifact promotion, website download activation, and public rollback remain
-separately approval-gated operations.
+Status: Milestone 21B has published beta 1 as a public GitHub provenance record
+and prepared the immutable beta 2 filename correction. Owner-hosted artifact
+promotion, website download activation, and public rollback remain separately
+approval-gated operations.
 
 ## Release artifact contract
 
 The Linux beta contract is:
 
-- application version `0.1.0-beta.1`;
+- application version `0.1.0-beta.2`;
 - x86_64 architecture only;
-- `QuireForge-0.1.0-beta.1-x86_64.AppImage`;
-- `quireforge_0.1.0~beta.1_amd64.deb`, using Debian's `~` prerelease ordering;
+- `QuireForge-0.1.0-beta.2-x86_64.AppImage`;
+- `quireforge_0.1.0.beta.2_amd64.deb`, using a GitHub-safe dot in the outer
+  filename while the package control version remains `0.1.0~beta.2` for
+  Debian prerelease ordering;
 - `SHA256SUMS` covering exactly both installable artifacts; and
 - `release-manifest.json` recording version, source commit/tree state, pinned
   builder identity, artifact names, formats, architecture, sizes, and hashes.
@@ -77,7 +78,7 @@ Do not select `publish-approved-beta` until all of these are true:
 
 1. Milestone 21 publication approval explicitly covers the exact version,
    source commit/tag, two artifacts, distribution location, and rollback plan.
-2. The source tree is clean and the reviewed tag is exactly `v0.1.0-beta.1`.
+2. The source tree is clean and the reviewed tag is exactly `v0.1.0-beta.2`.
 3. The tag points to the reviewed source and is available to the workflow.
 4. The protected `quireforge-release` GitHub environment exists with the
    required reviewers or deployment policy.
@@ -101,7 +102,7 @@ The prepared public layout is a versioned directory on the owner-hosted
 QuireForge origin:
 
 ```text
-https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/
+https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/
 ```
 
 This path remains a proposal until the exact public distribution target,
@@ -174,6 +175,15 @@ credentials, sessions, QuireForge metadata, or unrelated hosting state.
   candidates have checksums and manifest evidence but no external attestation.
 - AppImage and Debian public promotion, website activation, and public
   rollback verification remain separately approved Milestone 21B operations.
+
+## Superseded beta 1
+
+GitHub normalized the `~` in beta 1's uploaded Debian asset name to `.`, while
+the beta 1 manifest and checksum file still named the pre-upload filename.
+Those immutable files are retained as evidence and beta 1 must not be promoted
+to the owner-hosted download origin. Beta 2 corrects the contract at source so
+its manifest, checksum file, upload name, and public download name are
+identical. Never replace beta 1 assets in place.
 
 References:
 

@@ -13,6 +13,7 @@ from scripts.release_contract import (
     appimagetool_command,
     appstream_validation_command,
     architectures,
+    debian_artifact_filename,
     debian_version,
     matches_cleared_appimage_marker,
     replace_control_field,
@@ -22,18 +23,29 @@ from scripts.release_contract import (
 
 class PackageContractTests(unittest.TestCase):
     def test_all_source_versions_match_the_beta_candidate(self) -> None:
-        self.assertEqual(source_version(), "0.1.0-beta.1")
+        self.assertEqual(source_version(), "0.1.0-beta.2")
 
-    def test_debian_prerelease_orders_with_a_tilde(self) -> None:
-        self.assertEqual(debian_version("0.1.0-beta.1"), "0.1.0~beta.1")
+    def test_debian_metadata_and_artifact_versions_are_deliberately_distinct(
+        self,
+    ) -> None:
+        self.assertEqual(debian_version("0.1.0-beta.2"), "0.1.0~beta.2")
+        self.assertEqual(
+            debian_artifact_filename("0.1.0-beta.2"),
+            "quireforge_0.1.0.beta.2_amd64.deb",
+        )
+        self.assertNotIn("~", debian_artifact_filename("0.1.0-beta.2"))
         self.assertEqual(debian_version("0.1.0"), "0.1.0")
+        self.assertEqual(
+            debian_artifact_filename("0.1.0"),
+            "quireforge_0.1.0_amd64.deb",
+        )
         self.assertEqual(architectures(), ("x86_64", "amd64", "amd64"))
 
     def test_control_replacement_is_exact_and_fails_closed(self) -> None:
-        control = "Package: quire-forge\nVersion: 0.1.0-beta.1\n"
+        control = "Package: quire-forge\nVersion: 0.1.0-beta.2\n"
         self.assertEqual(
             replace_control_field(control, "Package", "quireforge"),
-            "Package: quireforge\nVersion: 0.1.0-beta.1\n",
+            "Package: quireforge\nVersion: 0.1.0-beta.2\n",
         )
         with self.assertRaises(RuntimeError):
             replace_control_field(control, "Architecture", "amd64")

@@ -20,6 +20,7 @@ from release_contract import (
     architectures,
     builder_record,
     cargo_target_dir,
+    debian_artifact_filename,
     debian_version,
     package_output_dir,
     replace_control_field,
@@ -204,7 +205,7 @@ def main() -> int:
             raise RuntimeError(f"refusing unexpected package output: {existing}")
 
     timestamp = source_date_epoch()
-    deb_output = output_dir / f"{DEBIAN_PACKAGE}_{debian_version(version)}_{deb_arch}.deb"
+    deb_output = output_dir / debian_artifact_filename(version, deb_arch)
     appimage_output = (
         output_dir / f"{APPIMAGE_BASENAME}-{version}-{release_arch}.AppImage"
     )

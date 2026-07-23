@@ -116,6 +116,17 @@ def debian_version(version: str) -> str:
     return f"{base}~{prerelease}" if prerelease else base
 
 
+def debian_artifact_filename(version: str, architecture: str = "amd64") -> str:
+    """Return the GitHub-safe outer filename for a Debian package.
+
+    Debian prereleases retain ``~`` in their control metadata so they sort
+    before the corresponding stable version. GitHub Releases normalizes ``~``
+    in uploaded asset names, so the outer filename deliberately uses ``.``.
+    """
+    artifact_version = debian_version(version).replace("~", ".")
+    return f"{DEBIAN_PACKAGE}_{artifact_version}_{architecture}.deb"
+
+
 def architectures() -> tuple[str, str, str]:
     machine = platform.machine()
     if machine not in {"x86_64", "amd64"}:

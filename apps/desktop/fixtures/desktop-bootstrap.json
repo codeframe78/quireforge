@@ -6,7 +6,7 @@
     "description": "An unofficial native Linux workspace for Codex",
     "identifier": "io.github.codeframe78.QuireForge",
     "executable": "quireforge",
-    "version": "0.1.0-beta.1"
+    "version": "0.1.0-beta.2"
   },
   "capabilities": [
     {

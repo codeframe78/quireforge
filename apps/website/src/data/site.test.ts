@@ -86,33 +86,33 @@ describe("site information architecture", () => {
     const published: DownloadAvailability = {
       schemaVersion: 1,
       state: "published",
-      statusLabel: "Beta 0.1.0-beta.1",
+      statusLabel: "Beta 0.1.0-beta.2",
       plannedFormats: ["appimage", "deb"],
       release: {
-        version: "0.1.0-beta.1",
+        version: "0.1.0-beta.2",
         publishedAt: "2026-07-23T20:00:00Z",
         manifestUrl:
-          "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/release-manifest.json",
+          "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/release-manifest.json",
         checksumUrl:
-          "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/SHA256SUMS",
+          "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/SHA256SUMS",
         downloads: [
           {
             format: "appimage",
-            filename: "QuireForge-0.1.0-beta.1-x86_64.AppImage",
+            filename: "QuireForge-0.1.0-beta.2-x86_64.AppImage",
             architecture: "x86_64",
             byteSize: 83_634_680,
             sha256:
               "0a0e793815faee2c16036610afeef1c1e3912be4b40aa0f2209f3cd57bc3f56f",
-            url: "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/QuireForge-0.1.0-beta.1-x86_64.AppImage",
+            url: "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/QuireForge-0.1.0-beta.2-x86_64.AppImage",
           },
           {
             format: "deb",
-            filename: "quireforge_0.1.0~beta.1_amd64.deb",
+            filename: "quireforge_0.1.0.beta.2_amd64.deb",
             architecture: "x86_64",
             byteSize: 4_467_044,
             sha256:
               "a56e894dab67e675bcbc553b9958cc884e50b73a2c0216213d22777ed47f4a18",
-            url: "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/quireforge_0.1.0~beta.1_amd64.deb",
+            url: "https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/quireforge_0.1.0.beta.2_amd64.deb",
           },
         ],
       },
@@ -130,7 +130,7 @@ describe("site information architecture", () => {
         throw new Error("published fixture is missing its AppImage");
       }
       appimage.url =
-        "https://github.com/James-Jennison/quireforge/releases/download/v0.1.0-beta.1/QuireForge-0.1.0-beta.1-x86_64.AppImage";
+        "https://github.com/James-Jennison/quireforge/releases/download/v0.1.0-beta.2/QuireForge-0.1.0-beta.2-x86_64.AppImage";
     }
     expect(validateDownloadAvailability(wrongOrigin, site.origin)).toContain(
       "appimage URL is outside the approved release path",
@@ -147,7 +147,7 @@ describe("site information architecture", () => {
     const invalidManifest = structuredClone(published);
     if (invalidManifest.state === "published") {
       invalidManifest.release.manifestUrl =
-        "https://quireforge.jamesjennison.net/downloads/release-manifest.json?version=0.1.0-beta.1";
+        "https://quireforge.jamesjennison.net/downloads/release-manifest.json?version=0.1.0-beta.2";
     }
     expect(
       validateDownloadAvailability(invalidManifest, site.origin),
@@ -179,7 +179,7 @@ describe("site information architecture", () => {
 
     const incoherentVersion = structuredClone(published);
     if (incoherentVersion.state === "published") {
-      incoherentVersion.release.version = "0.1.0-beta.2";
+      incoherentVersion.release.version = "0.1.0-beta.3";
     }
     expect(
       validateDownloadAvailability(incoherentVersion, site.origin),

@@ -27,10 +27,10 @@ the real toolchain rather than inferred from documentation alone:
 | Product/window/desktop display | `QuireForge`                               | Verified in Tauri configuration and local Wayland launch                                   |
 | Executable and Debian package  | `quireforge`                               | Exact Debian control, payload, lifecycle, and local launch verified                        |
 | Desktop entry filename         | `io.github.codeframe78.QuireForge.desktop` | Exact Debian and AppImage payload names and fields verified                                |
-| AppImage release basename      | `QuireForge`                               | `QuireForge-0.1.0-beta.1-x86_64.AppImage` convention verified locally                     |
+| AppImage release basename      | `QuireForge`                               | `QuireForge-0.1.0-beta.2-x86_64.AppImage` convention verified locally                     |
 | Application identifier         | `io.github.codeframe78.QuireForge`         | Verified as the running GTK/D-Bus application identity on Wayland                          |
 | XDG directory leaf             | `quireforge`                               | Verified with isolated temporary XDG data; no personal persistent application data created |
-| GitHub repository              | `James-Jennison/quireforge`                | Private source location; not a public website link                                         |
+| GitHub repository              | `James-Jennison/quireforge`                | Public source, issue, provenance, and secondary prerelease location                        |
 | Production website             | `https://quireforge.jamesjennison.net`     | Public through the approved Webuzo origin and proxied Cloudflare record                    |
 | Website host                   | Webuzo-managed Apache behind Cloudflare    | Production active; private provider identifiers remain outside source control              |
 

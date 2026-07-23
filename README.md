@@ -122,11 +122,12 @@ one-use default-application handoff for a revalidated preview plus fixed-copy
 background approval/completion/failure notifications. React receives no
 absolute path or notification content input, and generic opener IPC remains
 unavailable. Full Wayland/X11-session acceptance is recorded separately.
-Milestone 20 adds local `0.1.0-beta.1` x86_64 AppImage and Debian release
-candidates built and launched on a pinned Ubuntu 22.04 baseline. Their package
-identity, checksums, GLIBC baseline, install/upgrade/uninstall behavior, and
-data-preserving removal are verified. The manual release workflow remains
-publication-gated, and website download data remains inactive.
+Milestone 20 adds x86_64 AppImage and Debian release candidates built and
+launched on a pinned Ubuntu 22.04 baseline. Their package identity, checksums,
+GLIBC baseline, install/upgrade/uninstall behavior, and data-preserving removal
+are verified. The current `0.1.0-beta.2` contract uses a GitHub-safe outer
+Debian filename while retaining Debian prerelease ordering inside the package.
+Website download data remains inactive.
 Milestone 21A adds the product startup experience: an authenticated
 Codex-owned access gate, a responsive QuireForge home informed by the approved
 three-region visual reference, product navigation without internal milestone
@@ -203,9 +204,10 @@ download yet. The source repository and development activity are public.
   also implemented and verified locally. Milestone 19's pre-packaging
   hardening pass and Milestone 20 packaging/release automation are implemented
   and verified locally. Milestone 21A product readiness is also implemented and
-  verified locally. Milestone 21B local release readiness has passed; exact
-  source/tag publication, owner-hosted package promotion, anonymous retrieval,
-  website download activation, and deployment are next and remain separately
+  verified locally. Milestone 21B local release readiness has passed and the
+  public beta 1 evidence is retained as superseded; beta 2 corrects its Debian
+  asset-name mismatch. Owner-hosted package promotion, anonymous retrieval,
+  website download activation, and deployment remain separately
   approval-gated.
   Native Wayland evidence covers project, file, and image pickers, bounded
   preview, a real Nautilus image drop, and fixed-copy notification delivery;
@@ -218,8 +220,9 @@ download yet. The source repository and development activity are public.
   unavailable; the current turn cannot replace its own executing model.
   Concurrency is capped at four active worktree tasks; durable
   task recovery, automatic conflict resolution, attached-worktree cleanup,
-  force/prune workflows, advanced remote operations, public package downloads,
-  and releases do not exist yet. The Tauri Linux dependency graph retains
+  force/prune workflows, advanced remote operations, owner-hosted public
+  package downloads, and stable releases do not exist yet. The Tauri Linux
+  dependency graph retains
   explicitly reviewed GTK3 maintenance and GLib iterator advisories, and
   `freezePrototype` remains disabled because enabling it prevents the current
   production frontend from mounting. The Milestone 21B audit refresh found no
@@ -246,7 +249,8 @@ download yet. The source repository and development activity are public.
 - [Testing](docs/TESTING.md)
 - [Release procedure](docs/RELEASING.md)
 - [Staged beta installation](docs/BETA-INSTALLATION.md)
-- [Draft 0.1.0-beta.1 release notes](docs/RELEASE_NOTES_0.1.0_BETA_1.md)
+- [0.1.0-beta.2 release notes](docs/RELEASE_NOTES_0.1.0_BETA_2.md)
+- [Superseded 0.1.0-beta.1 release notes](docs/RELEASE_NOTES_0.1.0_BETA_1.md)
 - [Milestone 21B release readiness](docs/MILESTONE_21B_RELEASE_READINESS.md)
 - [Public disclosure audit](docs/PUBLIC_DISCLOSURE_AUDIT.md)
 - [Public-source and runner-boundary decision](docs/DECISIONS/0027-public-source-and-runner-boundary.md)

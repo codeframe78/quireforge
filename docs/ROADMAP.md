@@ -739,9 +739,12 @@ packages, hashes, sizes, and manifest/checksum URLs while the committed state
 remains unavailable. A full-history disclosure audit found no credentials or
 secrets, the accepted residual identity/path/log disclosures are documented,
 and the repository is approved for public visibility with fork-origin code
-excluded from persistent self-hosted runners. GitHub release/provenance and
-exact owner-hosted package promotion, public retrieval checks, website
-activation, and deployment remain separate terminal gates. See the
+excluded from persistent self-hosted runners. The public beta 1 GitHub
+prerelease and attestations exposed a tilde-normalized Debian asset-name
+mismatch; beta 2 corrects the outer name while preserving the internal Debian
+prerelease version. Beta 1 remains immutable and superseded. Exact owner-hosted
+package promotion, public retrieval checks, website activation, and deployment
+remain separate terminal gates. See the
 [Milestone 21B release-readiness report](MILESTONE_21B_RELEASE_READINESS.md).
 
 ## Forecast policy

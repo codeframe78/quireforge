@@ -1,9 +1,10 @@
 # QuireForge Beta Installation
 
-Status: reviewed release-candidate copy only. There is no public QuireForge
-download yet. Use these instructions only after the production Downloads page
-names an approved version and provides the package, `SHA256SUMS`, and release
-manifest from the same approved origin.
+Status: reviewed beta 2 copy. The public GitHub prerelease is a secondary
+artifact/provenance record; there is no owner-hosted QuireForge download yet.
+Use these instructions only after the production Downloads page names an
+approved version and provides the package, `SHA256SUMS`, and release manifest
+from the same approved origin.
 
 ## Initial beta target
 
@@ -36,20 +37,20 @@ record for independent review.
 The approved filename is:
 
 ```text
-QuireForge-0.1.0-beta.1-x86_64.AppImage
+QuireForge-0.1.0-beta.2-x86_64.AppImage
 ```
 
 After checksum verification:
 
 ```bash
-chmod 0755 QuireForge-0.1.0-beta.1-x86_64.AppImage
-./QuireForge-0.1.0-beta.1-x86_64.AppImage
+chmod 0755 QuireForge-0.1.0-beta.2-x86_64.AppImage
+./QuireForge-0.1.0-beta.2-x86_64.AppImage
 ```
 
 If the system does not provide FUSE, the reviewed AppImage runtime supports:
 
 ```bash
-./QuireForge-0.1.0-beta.1-x86_64.AppImage --appimage-extract-and-run
+./QuireForge-0.1.0-beta.2-x86_64.AppImage --appimage-extract-and-run
 ```
 
 The AppImage is not registered with `apt`. Replace it manually when a later
@@ -60,15 +61,19 @@ approved version is published; removing the file uninstalls that copy.
 The approved filename is:
 
 ```text
-quireforge_0.1.0~beta.1_amd64.deb
+quireforge_0.1.0.beta.2_amd64.deb
 ```
 
 After checksum verification, use `apt` so Ubuntu can resolve the declared GTK
 and WebKitGTK dependencies:
 
 ```bash
-sudo apt install ./quireforge_0.1.0~beta.1_amd64.deb
+sudo apt install ./quireforge_0.1.0.beta.2_amd64.deb
 ```
+
+The dot in the downloaded filename is intentional. After installation,
+`dpkg-query -W -f='${Version}\n' quireforge` reports the internal Debian version
+`0.1.0~beta.2`, whose tilde keeps it ordered before the future stable `0.1.0`.
 
 Remove the package with:
 

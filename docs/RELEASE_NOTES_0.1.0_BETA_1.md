@@ -1,8 +1,9 @@
 # QuireForge 0.1.0-beta.1 Release Notes
 
-Status: reviewed draft for the first beta. This document does not announce or
-authorize a release. The production Downloads page remains the availability
-authority.
+Status: superseded historical release. GitHub normalized the Debian asset's
+tilde after upload, so its public name does not match the immutable beta 1
+manifest and checksum record. Do not promote or install beta 1; use beta 2.
+The production Downloads page remains the owner-hosted availability authority.
 
 ## Highlights
 

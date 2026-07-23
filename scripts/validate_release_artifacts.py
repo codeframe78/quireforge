@@ -18,6 +18,7 @@ from release_contract import (
     LEGACY_DESKTOP,
     ROOT,
     appstream_validation_command,
+    debian_artifact_filename,
     debian_version,
     package_output_dir,
     replace_control_field,
@@ -192,7 +193,7 @@ def deb_field(package: Path, field: str) -> str:
 
 
 def validate_debian(package: Path, version: str) -> None:
-    expected_name = f"quireforge_{debian_version(version)}_amd64.deb"
+    expected_name = debian_artifact_filename(version)
     if package.name != expected_name:
         raise RuntimeError(f"Debian filename mismatch: {package.name}")
     expected_fields = {

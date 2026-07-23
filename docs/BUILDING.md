@@ -1,13 +1,13 @@
 # Building QuireForge
 
-Status: the website and desktop code through Milestone 20 can be
+Status: the website and desktop code through Milestone 21B can be
 developed and built locally, including Codex/authentication, project and
 conversation lifecycle, reviewed Git/worktree workflows, the native terminal,
 normalized/confirmed integration workflows, bounded project-file previews, and
 private conversation-image attachments, reviewed default-application handoffs,
 privacy-safe background notifications, policy-bounded next-turn selection,
-hardening, and local Linux packaging. Local installable candidates exist; no
-public release or activated website download exists.
+hardening, and local Linux packaging. A public GitHub prerelease exists as a
+secondary artifact/provenance record; owner-hosted downloads remain inactive.
 
 ## Supported development baseline
 
@@ -130,11 +130,15 @@ Successful candidates are written to:
 
 ```text
 target/ubuntu-22.04/release/packages/
-├── QuireForge-0.1.0-beta.1-x86_64.AppImage
-├── quireforge_0.1.0~beta.1_amd64.deb
+├── QuireForge-0.1.0-beta.2-x86_64.AppImage
+├── quireforge_0.1.0.beta.2_amd64.deb
 ├── release-manifest.json
 └── SHA256SUMS
 ```
+
+The dot in the outer Debian filename is intentional because GitHub Releases
+normalizes tildes in asset names. The package's internal Debian version remains
+`0.1.0~beta.2`, preserving correct prerelease ordering before `0.1.0`.
 
 The directory is ignored by Git. A dirty source tree deliberately produces a
 `local-candidate` manifest; only a clean exact-tag build can pass the separate

@@ -1,20 +1,27 @@
 # Milestone 21B Release-Readiness Report
 
 Status: local package/platform preflight, dormant website activation hardening,
-and the guarded GitHub package build are complete. The first tagged publication
-attempt built, uploaded, and revalidated the exact packages but could not create
-an attestation while the organization repository was private on its current
-plan. The full-history disclosure audit and public-source transition are
-approved. No GitHub release, owner-hosted package promotion, website download
+the full-history disclosure audit, public-source transition, and first GitHub
+prerelease are complete. The immutable beta 1 record exposed a Debian
+asset-name mismatch caused by GitHub's tilde normalization. Beta 2 corrects the
+outer filename at source. No owner-hosted package promotion, website download
 activation, or website deployment has completed.
 
 ## Outcome
 
-The `0.1.0-beta.1` packages have passed a fresh clean Ubuntu 22.04 container
-build, disposable Debian lifecycle checks, repeated byte-identical
-normalization, current-host AppImage and extracted-Debian launches, and native
-pixel review of the Milestone 21A account gate. Public installation and
-limitation copy is staged without claiming that a release exists.
+The `0.1.0-beta.1` packages passed a fresh clean Ubuntu 22.04 container build,
+disposable Debian lifecycle checks, repeated byte-identical normalization,
+current-host AppImage and extracted-Debian launches, and native pixel review of
+the Milestone 21A account gate. They were published with attestations as a
+public GitHub prerelease, but GitHub normalized the Debian asset's `~` to `.`
+after upload while the immutable manifest and checksum file retained the
+original name. Beta 1 is therefore superseded and must not be promoted.
+
+The `0.1.0-beta.2` source contract emits
+`quireforge_0.1.0.beta.2_amd64.deb` while retaining `0.1.0~beta.2` in Debian
+control metadata. Package validation and website download validation assert the
+same distinction so GitHub, manifest, checksum, and later owner-hosted names
+remain identical.
 
 The website still commits `state: "unavailable"` and `release: null`. Its
 dormant published path now validates a complete two-package record before a
@@ -108,7 +115,7 @@ pinned builder, checksum attestation, and prerelease flags remain mandatory.
 The prepared public layout uses the owner-hosted QuireForge origin:
 
 ```text
-https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.1/
+https://quireforge.jamesjennison.net/downloads/v0.1.0-beta.2/
 ```
 
 That path is a recommendation, not an authorization or deployment record. The
@@ -126,7 +133,7 @@ vulnerability details in the initial message.
 The remaining terminal sequence is deliberately split:
 
 1. Freeze and rebuild the exact clean source; record its manifest and hashes.
-2. Approve the exact commit, tag `v0.1.0-beta.1`, public GitHub
+2. Approve the exact commit, tag `v0.1.0-beta.2`, public GitHub
    release/provenance operation, and rollback boundary before any push, tag,
    or workflow dispatch.
 3. Independently verify the four resulting files against the reviewed
@@ -146,6 +153,10 @@ The remaining terminal sequence is deliberately split:
 No step inherits authority from the previous one. In particular, a public
 GitHub prerelease does not authorize an owner-hosted server upload, and a
 public package upload does not authorize changing the website.
+
+Beta 1's release, assets, checksums, manifest, and attestations remain immutable
+historical evidence. The correction uses beta 2; it does not delete or replace
+beta 1 files.
 
 ## Rollback
 
